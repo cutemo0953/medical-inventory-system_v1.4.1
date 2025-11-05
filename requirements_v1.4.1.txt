@@ -1,0 +1,17 @@
+# 醫療站庫存管理系統 v1.4.1
+# Python 依賴套件清單
+
+# Web Framework
+fastapi==0.104.1
+
+# ASGI Server
+uvicorn[standard]==0.24.0
+
+# 資料驗證
+pydantic==2.5.0
+
+# CORS 中介軟體（已包含在 FastAPI 中）
+# starlette (FastAPI 依賴)
+
+# 安裝指令:
+# pip3 install -r requirements.txt --break-system-packages

@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>醫療站庫存管理系統 v1.4.1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        
+        /* 淺 teal 背景漸變 */
+        body {
+            background: linear-gradient(135deg, #f0f9f8 0%, #e6f7f5 25%, #f5f8ff 50%, #faf5ff 75%, #fff 100%);
+            background-attachment: fixed;
+        }
+
+        /* 自定義滾動條 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* 表格斑馬紋優化 */
+        .table-hover tbody tr:hover {
+            background-color: #f0f9ff;
+            transition: background-color 0.2s;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div x-data="medicalInventory()" x-init="init()" x-cloak class="max-w-7xl mx-auto p-6">
+        
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <svg class="w-10 h-10 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">醫療站庫存系統</h1>
+                        <p class="text-sm text-gray-500">v1.4.1 - 手術記錄版</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-600">站點: <span class="font-semibold text-teal-600" x-text="stationId"></span></p>
+                    <p class="text-xs text-gray-400" x-text="currentTime"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 統計卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">總物品數</p>
+                        <p class="text-2xl font-bold text-gray-800" x-text="stats.totalItems"></p>
+                    </div>
+                    <div class="p-3 bg-blue-100 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">庫存警戒</p>
+                        <p class="text-2xl font-bold text-orange-600" x-text="stats.lowStockItems"></p>
+                    </div>
+                    <div class="p-3 bg-orange-100 rounded-lg">
+                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">血袋庫存</p>
+                        <p class="text-2xl font-bold text-red-600"><span x-text="stats.totalBlood"></span> U</p>
+                    </div>
+                    <div class="p-3 bg-red-100 rounded-lg">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">設備警報</p>
+                        <p class="text-2xl font-bold text-purple-600" x-text="stats.equipmentAlerts"></p>
+                    </div>
+                    <div class="p-3 bg-purple-100 rounded-lg">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分頁選單 -->
+        <div class="bg-white rounded-xl shadow mb-6">
+            <div class="flex space-x-1 p-2">
+                <button @click="switchTab('items')" 
+                        :class="currentTab === 'items' ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
+                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200">
+                    📦 物品查詢
+                </button>
+                <button @click="switchTab('receive')" 
+                        :class="currentTab === 'receive' ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
+                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200">
+                    📥 進貨
+                </button>
+                <button @click="switchTab('consume')" 
+                        :class="currentTab === 'consume' ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
+                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200">
+                    📤 消耗
+                </button>
+                <button @click="switchTab('blood')" 
+                        :class="currentTab === 'blood' ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
+                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200">
+                    🩸 血袋
+                </button>
+                <button @click="switchTab('equipment')" 
+                        :class="currentTab === 'equipment' ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
+                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200">
+                    🔧 設備
+                </button>
+                <button @click="switchTab('surgery')" 
+                        :class="currentTab === 'surgery' ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
+                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200">
+                    🏥 手術記錄
+                </button>
+            </div>
+        </div>
+
+        <!-- 物品查詢分頁 -->
+        <div x-show="currentTab === 'items'" class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">📦 庫存查詢</h2>
+                <div class="flex gap-2">
+                    <button @click="showAddItemModal = true" class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
+                        ➕ 新增物品
+                    </button>
+                    <button @click="loadItems()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        🔄 重新載入
+                    </button>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 table-hover">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">代碼</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名稱</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分類</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">庫存</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最小庫存</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">單位</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="item in items" :key="item.code">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900" x-text="item.code"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="item.name"></td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800" x-text="item.category"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span :class="item.current_stock < item.min_stock ? 'text-red-600 font-bold' : 'text-green-600 font-semibold'" 
+                                          x-text="item.current_stock"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="item.min_stock"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="item.unit"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                    <button @click="editItem(item)" class="text-blue-600 hover:text-blue-800">編輯</button>
+                                    <button @click="deleteItem(item.code, item.name)" class="text-red-600 hover:text-red-800">刪除</button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 進貨分頁 -->
+        <div x-show="currentTab === 'receive'" class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">📥 進貨登記</h2>
+            
+            <form @submit.prevent="submitReceive()" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼 *</label>
+                        <select x-model="receiveForm.itemCode" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                            <option value="">請選擇物品</option>
+                            <template x-for="item in items" :key="item.code">
+                                <option :value="item.code" x-text="`${item.code} - ${item.name}`"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">數量 *</label>
+                        <input type="number" x-model="receiveForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">批號</label>
+                        <input type="text" x-model="receiveForm.batchNumber" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">效期</label>
+                        <input type="date" x-model="receiveForm.expiryDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">備註</label>
+                        <textarea x-model="receiveForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <button type="submit" class="bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 transition-colors">
+                        ✅ 確認進貨
+                    </button>
+                    <button type="button" @click="resetReceiveForm()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                        🔄 重置
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 消耗分頁 -->
+        <div x-show="currentTab === 'consume'" class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">📤 消耗登記</h2>
+            
+            <form @submit.prevent="submitConsume()" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼 *</label>
+                        <select x-model="consumeForm.itemCode" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                            <option value="">請選擇物品</option>
+                            <template x-for="item in items" :key="item.code">
+                                <option :value="item.code" x-text="`${item.code} - ${item.name} (庫存: ${item.current_stock})`"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">數量 *</label>
+                        <input type="number" x-model="consumeForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">用途說明 *</label>
+                        <textarea x-model="consumeForm.purpose" required rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <button type="submit" class="bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 transition-colors">
+                        ✅ 確認消耗
+                    </button>
+                    <button type="button" @click="resetConsumeForm()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                        🔄 重置
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 血袋分頁 -->
+        <div x-show="currentTab === 'blood'" class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">🩸 血袋管理</h2>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <template x-for="blood in bloodInventory" :key="blood.blood_type">
+                    <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-red-300 transition-colors">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-red-600" x-text="blood.blood_type"></div>
+                            <div class="text-3xl font-bold text-gray-800 my-2" x-text="blood.quantity"></div>
+                            <div class="text-sm text-gray-500">單位 (U)</div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 血袋入庫 -->
+                <div class="border-2 border-green-200 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-green-700 mb-4">📥 血袋入庫</h3>
+                    <form @submit.prevent="submitBloodReceive()" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">血型 *</label>
+                            <select x-model="bloodReceiveForm.bloodType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                                <option value="">請選擇血型</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">數量 (U) *</label>
+                            <input type="number" x-model="bloodReceiveForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                        </div>
+                        <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                            ✅ 確認入庫
+                        </button>
+                    </form>
+                </div>
+
+                <!-- 血袋出庫 -->
+                <div class="border-2 border-red-200 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-red-700 mb-4">📤 血袋出庫</h3>
+                    <form @submit.prevent="submitBloodConsume()" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">血型 *</label>
+                            <select x-model="bloodConsumeForm.bloodType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                                <option value="">請選擇血型</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">數量 (U) *</label>
+                            <input type="number" x-model="bloodConsumeForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                        </div>
+                        <button type="submit" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                            ✅ 確認出庫
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 設備分頁 -->
+        <div x-show="currentTab === 'equipment'" class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">🔧 設備管理</h2>
+                <div class="flex gap-2">
+                    <button @click="showAddEquipmentModal = true" class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
+                        ➕ 新增設備
+                    </button>
+                    <button @click="loadEquipment()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        🔄 重新載入
+                    </button>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 table-hover">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">設備ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名稱</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分類</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">數量</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">狀態</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">電力</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最後檢查</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="eq in equipment" :key="eq.id">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900" x-text="eq.id"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="eq.name"></td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800" x-text="eq.category"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="eq.quantity"></td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span :class="{
+                                        'bg-green-100 text-green-800': eq.status === 'NORMAL',
+                                        'bg-yellow-100 text-yellow-800': eq.status === 'WARNING',
+                                        'bg-red-100 text-red-800': eq.status === 'ERROR',
+                                        'bg-gray-100 text-gray-800': eq.status === 'UNCHECKED'
+                                    }" class="px-2 py-1 text-xs font-medium rounded-full" x-text="eq.status"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    <span x-show="eq.power_level !== null" x-text="eq.power_level + '%'"></span>
+                                    <span x-show="eq.power_level === null" class="text-gray-400">-</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="eq.last_check ? new Date(eq.last_check).toLocaleString('zh-TW') : '-'"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                    <button @click="checkEquipment(eq)" class="text-green-600 hover:text-green-800">檢查</button>
+                                    <button @click="editEquipment(eq)" class="text-blue-600 hover:text-blue-800">編輯</button>
+                                    <button @click="deleteEquipment(eq.id, eq.name)" class="text-red-600 hover:text-red-800">刪除</button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 手術記錄分頁 -->
+        <div x-show="currentTab === 'surgery'" class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">🏥 手術記錄管理</h2>
+                <div class="flex gap-2">
+                    <button @click="showAddSurgeryModal = true" class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
+                        ➕ 新增手術記錄
+                    </button>
+                    <button @click="exportSurgeryCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        📊 匯出 CSV
+                    </button>
+                    <button @click="loadSurgeryRecords()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        🔄 重新載入
+                    </button>
+                </div>
+            </div>
+
+            <!-- 搜尋篩選 -->
+            <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
+                    <input type="date" x-model="surgerySearchForm.startDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
+                    <input type="date" x-model="surgerySearchForm.endDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">病患姓名</label>
+                    <input type="text" x-model="surgerySearchForm.patientName" placeholder="搜尋病患..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 table-hover">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">記錄編號</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">病患姓名</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">手術類型</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">主刀醫師</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">時長(分)</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="record in surgeryRecords" :key="record.id">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900" x-text="record.record_number"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.record_date"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.patient_name"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.surgery_type"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.surgeon_name"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.duration_minutes || '-'"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <button @click="viewSurgeryDetail(record)" class="text-blue-600 hover:text-blue-800">詳情</button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 新增物品 Modal -->
+        <div x-show="showAddItemModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+            <div @click.away="showAddItemModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">➕ 新增物品</h3>
+                <form @submit.prevent="submitAddItem()" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼 (留空自動生成)</label>
+                        <input type="text" x-model="addItemForm.code" placeholder="留空將自動生成" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">物品名稱 *</label>
+                        <input type="text" x-model="addItemForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">分類 *</label>
+                        <select x-model="addItemForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <option value="手術耗材">手術耗材</option>
+                            <option value="急救物資">急救物資</option>
+                            <option value="藥品">藥品</option>
+                            <option value="防護用品">防護用品</option>
+                            <option value="醫療設備">醫療設備</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">單位</label>
+                        <input type="text" x-model="addItemForm.unit" placeholder="EA" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">最小庫存</label>
+                        <input type="number" x-model="addItemForm.minStock" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
+                            ✅ 確認新增
+                        </button>
+                        <button type="button" @click="showAddItemModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            ❌ 取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 編輯物品 Modal -->
+        <div x-show="showEditItemModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+            <div @click.away="showEditItemModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">✏️ 編輯物品</h3>
+                <form @submit.prevent="submitEditItem()" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼</label>
+                        <input type="text" x-model="editItemForm.code" disabled class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">物品名稱 *</label>
+                        <input type="text" x-model="editItemForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">分類 *</label>
+                        <select x-model="editItemForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <option value="手術耗材">手術耗材</option>
+                            <option value="急救物資">急救物資</option>
+                            <option value="藥品">藥品</option>
+                            <option value="防護用品">防護用品</option>
+                            <option value="醫療設備">醫療設備</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">單位</label>
+                        <input type="text" x-model="editItemForm.unit" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">最小庫存</label>
+                        <input type="number" x-model="editItemForm.minStock" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
+                            ✅ 確認更新
+                        </button>
+                        <button type="button" @click="showEditItemModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            ❌ 取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 新增設備 Modal -->
+        <div x-show="showAddEquipmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+            <div @click.away="showAddEquipmentModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">➕ 新增設備</h3>
+                <form @submit.prevent="submitAddEquipment()" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">設備名稱 *</label>
+                        <input type="text" x-model="addEquipmentForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">分類 *</label>
+                        <select x-model="addEquipmentForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <option value="電力設備">電力設備</option>
+                            <option value="空氣淨化">空氣淨化</option>
+                            <option value="水處理">水處理</option>
+                            <option value="冷藏設備">冷藏設備</option>
+                            <option value="通訊設備">通訊設備</option>
+                            <option value="照明設備">照明設備</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">數量</label>
+                        <input type="number" x-model="addEquipmentForm.quantity" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">備註</label>
+                        <textarea x-model="addEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
+                            ✅ 確認新增
+                        </button>
+                        <button type="button" @click="showAddEquipmentModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            ❌ 取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 編輯設備 Modal -->
+        <div x-show="showEditEquipmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+            <div @click.away="showEditEquipmentModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">✏️ 編輯設備</h3>
+                <form @submit.prevent="submitEditEquipment()" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">設備ID</label>
+                        <input type="text" x-model="editEquipmentForm.id" disabled class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">設備名稱 *</label>
+                        <input type="text" x-model="editEquipmentForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">分類 *</label>
+                        <select x-model="editEquipmentForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <option value="電力設備">電力設備</option>
+                            <option value="空氣淨化">空氣淨化</option>
+                            <option value="水處理">水處理</option>
+                            <option value="冷藏設備">冷藏設備</option>
+                            <option value="通訊設備">通訊設備</option>
+                            <option value="照明設備">照明設備</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">數量</label>
+                        <input type="number" x-model="editEquipmentForm.quantity" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">備註</label>
+                        <textarea x-model="editEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
+                            ✅ 確認更新
+                        </button>
+                        <button type="button" @click="showEditEquipmentModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            ❌ 取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 設備檢查 Modal -->
+        <div x-show="showCheckEquipmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+            <div @click.away="showCheckEquipmentModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">🔍 設備檢查</h3>
+                <form @submit.prevent="submitCheckEquipment()" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">設備名稱</label>
+                        <input type="text" x-model="checkEquipmentForm.name" disabled class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">狀態 *</label>
+                        <select x-model="checkEquipmentForm.status" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <option value="NORMAL">正常 (NORMAL)</option>
+                            <option value="WARNING">警告 (WARNING)</option>
+                            <option value="ERROR">異常 (ERROR)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">電力等級 (0-100%)</label>
+                        <input type="number" x-model="checkEquipmentForm.powerLevel" min="0" max="100" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">備註</label>
+                        <textarea x-model="checkEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
+                            ✅ 確認檢查
+                        </button>
+                        <button type="button" @click="showCheckEquipmentModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            ❌ 取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 新增手術記錄 Modal -->
+        <div x-show="showAddSurgeryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
+            <div @click.away="showAddSurgeryModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 my-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">🏥 新增手術記錄</h3>
+                <form @submit.prevent="submitAddSurgery()" class="space-y-4">
+                    <!-- 基本資訊 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">病患姓名 *</label>
+                            <input type="text" x-model="addSurgeryForm.patientName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">手術類型 *</label>
+                            <input type="text" x-model="addSurgeryForm.surgeryType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">主刀醫師 *</label>
+                            <input type="text" x-model="addSurgeryForm.surgeonName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">麻醉方式</label>
+                            <input type="text" x-model="addSurgeryForm.anesthesiaType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">手術時長 (分鐘)</label>
+                            <input type="number" x-model="addSurgeryForm.durationMinutes" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        </div>
+                    </div>
+
+                    <!-- 備註 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">手術備註</label>
+                        <textarea x-model="addSurgeryForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea>
+                    </div>
+
+                    <!-- 耗材清單 -->
+                    <div class="border-2 border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="text-lg font-semibold text-gray-700">📋 使用耗材</h4>
+                            <button type="button" @click="addConsumptionItem()" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 text-sm">
+                                ➕ 新增耗材
+                            </button>
+                        </div>
+
+                        <div class="space-y-3">
+                            <template x-for="(item, index) in addSurgeryForm.consumptions" :key="index">
+                                <div class="flex gap-2 items-start border border-gray-200 rounded-lg p-3">
+                                    <div class="flex-1 grid grid-cols-3 gap-2">
+                                        <select x-model="item.itemCode" @change="updateConsumptionItemName(index)" required class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                            <option value="">選擇物品</option>
+                                            <template x-for="availableItem in items" :key="availableItem.code">
+                                                <option :value="availableItem.code" x-text="`${availableItem.code} - ${availableItem.name}`"></option>
+                                            </template>
+                                        </select>
+                                        <input type="number" x-model="item.quantity" required min="1" placeholder="數量" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                        <input type="text" x-model="item.unit" readonly placeholder="單位" class="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+                                    </div>
+                                    <button type="button" @click="removeConsumptionItem(index)" class="text-red-600 hover:text-red-800 p-2">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div x-show="addSurgeryForm.consumptions.length === 0" class="text-center text-gray-400 py-4">
+                            尚未新增耗材
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 pt-4">
+                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
+                            ✅ 確認建立
+                        </button>
+                        <button type="button" @click="showAddSurgeryModal = false; resetAddSurgeryForm()" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            ❌ 取消
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 手術詳情 Modal -->
+        <div x-show="showSurgeryDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
+            <div @click.away="showSurgeryDetailModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 my-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">🏥 手術記錄詳情</h3>
+                
+                <template x-if="selectedSurgery">
+                    <div class="space-y-4">
+                        <!-- 基本資訊 -->
+                        <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                            <div>
+                                <p class="text-sm text-gray-600">記錄編號</p>
+                                <p class="font-semibold" x-text="selectedSurgery.record_number"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">日期</p>
+                                <p class="font-semibold" x-text="selectedSurgery.record_date"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">病患姓名</p>
+                                <p class="font-semibold" x-text="selectedSurgery.patient_name"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">當日第 N 台</p>
+                                <p class="font-semibold" x-text="selectedSurgery.surgery_sequence"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">手術類型</p>
+                                <p class="font-semibold" x-text="selectedSurgery.surgery_type"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">主刀醫師</p>
+                                <p class="font-semibold" x-text="selectedSurgery.surgeon_name"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">麻醉方式</p>
+                                <p class="font-semibold" x-text="selectedSurgery.anesthesia_type || '-'"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">手術時長</p>
+                                <p class="font-semibold" x-text="selectedSurgery.duration_minutes ? selectedSurgery.duration_minutes + ' 分鐘' : '-'"></p>
+                            </div>
+                        </div>
+
+                        <!-- 備註 -->
+                        <div x-show="selectedSurgery.remarks" class="bg-yellow-50 p-4 rounded-lg">
+                            <p class="text-sm text-gray-600 mb-1">備註</p>
+                            <p class="text-gray-800" x-text="selectedSurgery.remarks"></p>
+                        </div>
+
+                        <!-- 耗材清單 -->
+                        <div class="border-2 border-gray-200 rounded-lg p-4">
+                            <h4 class="text-lg font-semibold text-gray-700 mb-3">📋 使用耗材</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">代碼</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">名稱</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">數量</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">單位</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        <template x-for="consumption in selectedSurgery.consumptions" :key="consumption.item_code">
+                                            <tr>
+                                                <td class="px-4 py-2 text-sm font-mono" x-text="consumption.item_code"></td>
+                                                <td class="px-4 py-2 text-sm" x-text="consumption.item_name"></td>
+                                                <td class="px-4 py-2 text-sm font-semibold" x-text="consumption.quantity"></td>
+                                                <td class="px-4 py-2 text-sm" x-text="consumption.unit"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="pt-4">
+                            <button type="button" @click="showSurgeryDetailModal = false" class="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                                關閉
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Toast 通知 -->
+        <div x-show="showToast" x-transition class="fixed bottom-4 right-4 z-50" style="display: none;">
+            <div :class="{
+                'bg-green-500': toastType === 'success',
+                'bg-red-500': toastType === 'error',
+                'bg-blue-500': toastType === 'info'
+            }" class="text-white px-6 py-3 rounded-lg shadow-lg">
+                <p x-text="toastMessage"></p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function medicalInventory() {
+            return {
+                // 基本設定
+                apiUrl: 'http://localhost:8000/api',
+                stationId: 'TC-01',
+                currentTab: 'items',
+                currentTime: '',
+                
+                // 資料
+                items: [],
+                bloodInventory: [],
+                equipment: [],
+                surgeryRecords: [],
+                stats: {
+                    totalItems: 0,
+                    lowStockItems: 0,
+                    totalBlood: 0,
+                    equipmentAlerts: 0
+                },
+
+                // Modal 狀態
+                showAddItemModal: false,
+                showEditItemModal: false,
+                showAddEquipmentModal: false,
+                showEditEquipmentModal: false,
+                showCheckEquipmentModal: false,
+                showAddSurgeryModal: false,
+                showSurgeryDetailModal: false,
+
+                // 表單
+                receiveForm: {
+                    itemCode: '',
+                    quantity: 1,
+                    batchNumber: '',
+                    expiryDate: '',
+                    remarks: '',
+                    stationId: 'TC-01'
+                },
+                consumeForm: {
+                    itemCode: '',
+                    quantity: 1,
+                    purpose: '',
+                    stationId: 'TC-01'
+                },
+                bloodReceiveForm: {
+                    bloodType: '',
+                    quantity: 1,
+                    stationId: 'TC-01'
+                },
+                bloodConsumeForm: {
+                    bloodType: '',
+                    quantity: 1,
+                    stationId: 'TC-01'
+                },
+                addItemForm: {
+                    code: '',
+                    name: '',
+                    unit: 'EA',
+                    minStock: 10,
+                    category: '其他'
+                },
+                editItemForm: {
+                    code: '',
+                    name: '',
+                    unit: '',
+                    minStock: 0,
+                    category: ''
+                },
+                addEquipmentForm: {
+                    name: '',
+                    category: '其他',
+                    quantity: 1,
+                    remarks: ''
+                },
+                editEquipmentForm: {
+                    id: '',
+                    name: '',
+                    category: '',
+                    quantity: 1,
+                    remarks: ''
+                },
+                checkEquipmentForm: {
+                    id: '',
+                    name: '',
+                    status: 'NORMAL',
+                    powerLevel: null,
+                    remarks: '',
+                    stationId: 'TC-01'
+                },
+                addSurgeryForm: {
+                    patientName: '',
+                    surgeryType: '',
+                    surgeonName: '',
+                    anesthesiaType: '',
+                    durationMinutes: null,
+                    remarks: '',
+                    consumptions: [],
+                    stationId: 'TC-01'
+                },
+                surgerySearchForm: {
+                    startDate: '',
+                    endDate: '',
+                    patientName: ''
+                },
+                selectedSurgery: null,
+
+                // Toast
+                showToast: false,
+                toastMessage: '',
+                toastType: 'info',
+
+                // 初始化
+                async init() {
+                    this.updateTime();
+                    setInterval(() => this.updateTime(), 1000);
+                    
+                    await this.loadStats();
+                    await this.loadItems();
+                    await this.loadBloodInventory();
+                    await this.loadEquipment();
+                    await this.loadSurgeryRecords();
+                },
+
+                updateTime() {
+                    const now = new Date();
+                    this.currentTime = now.toLocaleString('zh-TW', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    });
+                },
+
+                // 分頁切換
+                switchTab(tab) {
+                    this.currentTab = tab;
+                    if (tab === 'items') this.loadItems();
+                    if (tab === 'blood') this.loadBloodInventory();
+                    if (tab === 'equipment') this.loadEquipment();
+                    if (tab === 'surgery') this.loadSurgeryRecords();
+                },
+
+                // 載入統計
+                async loadStats() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/stats`);
+                        if (response.ok) {
+                            this.stats = await response.json();
+                        }
+                    } catch (error) {
+                        console.error('載入統計失敗:', error);
+                    }
+                },
+
+                // 載入物品
+                async loadItems() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/items`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.items = data.items;
+                        }
+                    } catch (error) {
+                        console.error('載入物品失敗:', error);
+                        this.toast('載入物品失敗', 'error');
+                    }
+                },
+
+                // 新增物品
+                async submitAddItem() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/items`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.addItemForm)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            this.toast(data.message || '物品新增成功', 'success');
+                            this.showAddItemModal = false;
+                            this.resetAddItemForm();
+                            await this.loadItems();
+                            await this.loadStats();
+                        } else {
+                            this.toast(data.detail || '新增失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('新增物品失敗:', error);
+                        this.toast('新增物品失敗', 'error');
+                    }
+                },
+
+                resetAddItemForm() {
+                    this.addItemForm = {
+                        code: '',
+                        name: '',
+                        unit: 'EA',
+                        minStock: 10,
+                        category: '其他'
+                    };
+                },
+
+                // 編輯物品
+                editItem(item) {
+                    this.editItemForm = {
+                        code: item.code,
+                        name: item.name,
+                        unit: item.unit,
+                        minStock: item.min_stock,
+                        category: item.category
+                    };
+                    this.showEditItemModal = true;
+                },
+
+                async submitEditItem() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/items/${this.editItemForm.code}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: this.editItemForm.name,
+                                unit: this.editItemForm.unit,
+                                minStock: this.editItemForm.minStock,
+                                category: this.editItemForm.category
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            this.toast(data.message || '物品更新成功', 'success');
+                            this.showEditItemModal = false;
+                            await this.loadItems();
+                        } else {
+                            this.toast(data.detail || '更新失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('更新物品失敗:', error);
+                        this.toast('更新物品失敗', 'error');
+                    }
+                },
+
+                // 刪除物品
+                async deleteItem(code, name) {
+                    if (!confirm(`確定要刪除物品「${name}」嗎?`)) return;
+                    
+                    try {
+                        const response = await fetch(`${this.apiUrl}/items/${code}`, {
+                            method: 'DELETE'
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            this.toast(data.message || '物品已刪除', 'success');
+                            await this.loadItems();
+                            await this.loadStats();
+                        } else {
+                            this.toast(data.detail || '刪除失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('刪除物品失敗:', error);
+                        this.toast('刪除物品失敗', 'error');
+                    }
+                },
+
+                // 進貨
+                async submitReceive() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/receive`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.receiveForm)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            this.toast(data.message || '進貨記錄成功', 'success');
+                            this.resetReceiveForm();
+                            await this.loadItems();
+                            await this.loadStats();
+                        } else {
+                            this.toast(data.detail || '進貨失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('進貨失敗:', error);
+                        this.toast('進貨失敗', 'error');
+                    }
+                },
+
+                resetReceiveForm() {
+                    this.receiveForm = {
+                        itemCode: '',
+                        quantity: 1,
+                        batchNumber: '',
+                        expiryDate: '',
+                        remarks: '',
+                        stationId: this.stationId
+                    };
+                },
+
+                // 消耗
+                async submitConsume() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/consume`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.consumeForm)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            this.toast(data.message || '消耗記錄成功', 'success');
+                            this.resetConsumeForm();
+                            await this.loadItems();
+                            await this.loadStats();
+                        } else {
+                            this.toast(data.detail || '消耗失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('消耗失敗:', error);
+                        this.toast('消耗失敗', 'error');
+                    }
+                },
+
+                resetConsumeForm() {
+                    this.consumeForm = {
+                        itemCode: '',
+                        quantity: 1,
+                        purpose: '',
+                        stationId: this.stationId
+                    };
+                },
+
+                // 血袋
+                async loadBloodInventory() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/blood/inventory`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.bloodInventory = data.bloodInventory;
+                        }
+                    } catch (error) {
+                        console.error('載入血袋庫存失敗:', error);
+                    }
+                },
+
+                async submitBloodReceive() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/blood/receive`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.bloodReceiveForm)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            this.toast(data.message || '血袋入庫成功', 'success');
+                            this.bloodReceiveForm = { bloodType: '', quantity: 1, stationId: this.stationId };
+                            await this.loadBloodInventory();
+                            await this.loadStats();
+                        } else {
+                            this.toast(data.detail || '入庫失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('血袋入庫失敗:', error);
+                        this.toast('血袋入庫失敗', 'error');
+                    }
+                },
+
+                async submitBloodConsume() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/blood/consume`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.bloodConsumeForm)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            this.toast(data.message || '血袋出庫成功', 'success');
+                            this.bloodConsumeForm = { bloodType: '', quantity: 1, stationId: this.stationId };
+                            await this.loadBloodInventory();
+                            await this.loadStats();
+                        } else {
+                            this.toast(data.detail || '出庫失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('血袋出庫失敗:', error);
+                        this.toast('血袋出庫失敗', 'error');
+                    }
+                },
+
+                // 設備管理
+                async loadEquipment() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/equipment`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.equipment = data.equipment;
+                        }
+                    } catch (error) {
+                        console.error('載入設備失敗:', error);
+                        this.toast('載入設備失敗', 'error');
+                    }
+                },
+
+                async submitAddEquipment() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/equipment`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.addEquipmentForm)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            this.toast(data.message || '設備新增成功', 'success');
+                            this.showAddEquipmentModal = false;
+                            this.resetAddEquipmentForm();
+                            await this.loadEquipment();
+                            await this.loadStats();
+                        } else {
+                            this.toast(data.detail || '新增失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('新增設備失敗:', error);
+                        this.toast('新增設備失敗', 'error');
+                    }
+                },
+
+                resetAddEquipmentForm() {
+                    this.addEquipmentForm = {
+                        name: '',
+                        category: '其他',
+                        quantity: 1,
+                        remarks: ''
+                    };
+                },
+
+                editEquipment(eq) {
+                    this.editEquipmentForm = {
+                        id: eq.id,
+                        name: eq.name,
+                        category: eq.category,
+                        quantity: eq.quantity,
+                        remarks: eq.remarks || ''
+                    };
+                    this.showEditEquipmentModal = true;
+                },
+
+                async submitEditEquipment() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/equipment/${this.editEquipmentForm.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: this.editEquipmentForm.name,
+                                category: this.editEquipmentForm.category,
+                                quantity: this.editEquipmentForm.quantity,
+                                remarks: this.editEquipmentForm.remarks
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            this.toast(data.message || '設備更新成功', 'success');
+                            this.showEditEquipmentModal = false;
+                            await this.loadEquipment();
+                        } else {
+                            this.toast(data.detail || '更新失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('更新設備失敗:', error);
+                        this.toast('更新設備失敗', 'error');
+                    }
+                },
+
+                async deleteEquipment(id, name) {
+                    if (!confirm(`確定要刪除設備「${name}」嗎?`)) return;
+                    
+                    try {
+                        const response = await fetch(`${this.apiUrl}/equipment/${id}`, {
+                            method: 'DELETE'
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            this.toast(data.message || '設備已刪除', 'success');
+                            await this.loadEquipment();
+                            await this.loadStats();
+                        } else {
+                            this.toast(data.detail || '刪除失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('刪除設備失敗:', error);
+                        this.toast('刪除設備失敗', 'error');
+                    }
+                },
+
+                checkEquipment(eq) {
+                    this.checkEquipmentForm = {
+                        id: eq.id,
+                        name: eq.name,
+                        status: 'NORMAL',
+                        powerLevel: eq.power_level,
+                        remarks: '',
+                        stationId: this.stationId
+                    };
+                    this.showCheckEquipmentModal = true;
+                },
+
+                async submitCheckEquipment() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/equipment/check/${this.checkEquipmentForm.id}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                stationId: this.checkEquipmentForm.stationId,
+                                status: this.checkEquipmentForm.status,
+                                powerLevel: this.checkEquipmentForm.powerLevel,
+                                remarks: this.checkEquipmentForm.remarks
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            this.toast(data.message || '設備檢查完成', 'success');
+                            this.showCheckEquipmentModal = false;
+                            await this.loadEquipment();
+                            await this.loadStats();
+                        } else {
+                            this.toast(data.detail || '檢查失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('設備檢查失敗:', error);
+                        this.toast('設備檢查失敗', 'error');
+                    }
+                },
+
+                // 手術記錄
+                async loadSurgeryRecords() {
+                    try {
+                        let url = `${this.apiUrl}/surgery/records?limit=50`;
+                        
+                        if (this.surgerySearchForm.startDate) {
+                            url += `&start_date=${this.surgerySearchForm.startDate}`;
+                        }
+                        if (this.surgerySearchForm.endDate) {
+                            url += `&end_date=${this.surgerySearchForm.endDate}`;
+                        }
+                        if (this.surgerySearchForm.patientName) {
+                            url += `&patient_name=${encodeURIComponent(this.surgerySearchForm.patientName)}`;
+                        }
+                        
+                        const response = await fetch(url);
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.surgeryRecords = data.records;
+                        }
+                    } catch (error) {
+                        console.error('載入手術記錄失敗:', error);
+                        this.toast('載入手術記錄失敗', 'error');
+                    }
+                },
+
+                addConsumptionItem() {
+                    this.addSurgeryForm.consumptions.push({
+                        itemCode: '',
+                        itemName: '',
+                        quantity: 1,
+                        unit: ''
+                    });
+                },
+
+                removeConsumptionItem(index) {
+                    this.addSurgeryForm.consumptions.splice(index, 1);
+                },
+
+                updateConsumptionItemName(index) {
+                    const itemCode = this.addSurgeryForm.consumptions[index].itemCode;
+                    const item = this.items.find(i => i.code === itemCode);
+                    if (item) {
+                        this.addSurgeryForm.consumptions[index].itemName = item.name;
+                        this.addSurgeryForm.consumptions[index].unit = item.unit;
+                    }
+                },
+
+                async submitAddSurgery() {
+                    if (this.addSurgeryForm.consumptions.length === 0) {
+                        this.toast('請至少新增一項耗材', 'error');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`${this.apiUrl}/surgery/record`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.addSurgeryForm)
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            this.toast(data.message || '手術記錄建立成功', 'success');
+                            this.showAddSurgeryModal = false;
+                            this.resetAddSurgeryForm();
+                            await this.loadSurgeryRecords();
+                            await this.loadItems();
+                            await this.loadStats();
+                        } else {
+                            this.toast(data.detail || '建立失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('建立手術記錄失敗:', error);
+                        this.toast('建立手術記錄失敗', 'error');
+                    }
+                },
+
+                resetAddSurgeryForm() {
+                    this.addSurgeryForm = {
+                        patientName: '',
+                        surgeryType: '',
+                        surgeonName: '',
+                        anesthesiaType: '',
+                        durationMinutes: null,
+                        remarks: '',
+                        consumptions: [],
+                        stationId: this.stationId
+                    };
+                },
+
+                viewSurgeryDetail(record) {
+                    this.selectedSurgery = record;
+                    this.showSurgeryDetailModal = true;
+                },
+
+                async exportSurgeryCSV() {
+                    try {
+                        let url = `${this.apiUrl}/surgery/export/csv`;
+                        const params = [];
+                        
+                        if (this.surgerySearchForm.startDate) {
+                            params.push(`start_date=${this.surgerySearchForm.startDate}`);
+                        }
+                        if (this.surgerySearchForm.endDate) {
+                            params.push(`end_date=${this.surgerySearchForm.endDate}`);
+                        }
+                        
+                        if (params.length > 0) {
+                            url += '?' + params.join('&');
+                        }
+                        
+                        window.open(url, '_blank');
+                        this.toast('CSV 匯出成功', 'success');
+                    } catch (error) {
+                        console.error('匯出 CSV 失敗:', error);
+                        this.toast('匯出 CSV 失敗', 'error');
+                    }
+                },
+
+                // Toast 通知
+                toast(message, type = 'info') {
+                    this.toastMessage = message;
+                    this.toastType = type;
+                    this.showToast = true;
+                    setTimeout(() => {
+                        this.showToast = false;
+                    }, 3000);
+                }
+            };
+        }
+    </script>
+</body>
+</html>
