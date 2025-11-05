@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 醫療站庫存管理系統 - 後端 API
-版本: v1.4.1
-新增: 手術記錄管理、匯出功能
+版本: v1.4.2
+更新: UI/UX 全面改版、處置記錄優化、暫存區功能
 """
 
 import logging
@@ -47,11 +47,11 @@ logger = setup_logging()
 
 class Config:
     """系統配置"""
-    VERSION = "1.4.1"
+    VERSION = "1.4.2"
     DATABASE_PATH = "medical_inventory.db"
     STATION_ID = "TC-01"
     DEBUG = True
-    
+
     # 血型列表
     BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']
 
@@ -149,7 +149,7 @@ class ItemUpdateRequest(BaseModel):
 
 
 class SurgeryConsumptionItem(BaseModel):
-    """手術耗材項目"""
+    """處置耗材項目"""
     itemCode: str = Field(..., description="物品代碼")
     itemName: str = Field(..., description="物品名稱")
     quantity: int = Field(..., gt=0, description="數量")
@@ -157,13 +157,13 @@ class SurgeryConsumptionItem(BaseModel):
 
 
 class SurgeryRecordRequest(BaseModel):
-    """手術記錄請求"""
+    """處置記錄請求 (手術、急診縫合、放置胸管等醫療處置)"""
     patientName: str = Field(..., description="病患姓名", min_length=1, max_length=100)
-    surgeryType: str = Field(..., description="手術類型", min_length=1, max_length=200)
-    surgeonName: str = Field(..., description="主刀醫師", min_length=1, max_length=100)
+    surgeryType: str = Field(..., description="處置類型", min_length=1, max_length=200)
+    surgeonName: str = Field(..., description="執行醫師", min_length=1, max_length=100)
     anesthesiaType: Optional[str] = Field(None, description="麻醉方式", max_length=100)
-    durationMinutes: Optional[int] = Field(None, ge=0, description="手術時長(分鐘)")
-    remarks: Optional[str] = Field(None, description="手術備註", max_length=2000)
+    durationMinutes: Optional[int] = Field(None, ge=0, description="處置時長(分鐘)")
+    remarks: Optional[str] = Field(None, description="處置備註", max_length=2000)
     consumptions: List[SurgeryConsumptionItem] = Field(..., description="使用耗材清單")
     stationId: str = Field(default="TC-01", description="站點ID")
 
@@ -287,7 +287,8 @@ class DatabaseManager:
                 )
             """)
             
-            # 手術記錄主檔 (新增)
+            # 處置記錄主檔 (Surgery/Procedure Records)
+            # 涵蓋：手術、急診縫合、放置胸管等所有醫療處置
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS surgery_records (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -305,8 +306,8 @@ class DatabaseManager:
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
-            # 手術耗材明細 (新增)
+
+            # 處置耗材明細
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS surgery_consumptions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -319,18 +320,18 @@ class DatabaseManager:
                     FOREIGN KEY (item_code) REFERENCES items(code)
                 )
             """)
-            
-            # 為手術記錄建立索引
+
+            # 為處置記錄建立索引
             cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_surgery_records_date 
+                CREATE INDEX IF NOT EXISTS idx_surgery_records_date
                 ON surgery_records(record_date)
             """)
             cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_surgery_records_patient 
+                CREATE INDEX IF NOT EXISTS idx_surgery_records_patient
                 ON surgery_records(patient_name)
             """)
             cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_surgery_consumptions_surgery 
+                CREATE INDEX IF NOT EXISTS idx_surgery_consumptions_surgery
                 ON surgery_consumptions(surgery_id)
             """)
             
@@ -456,16 +457,16 @@ class DatabaseManager:
     
     def generate_surgery_record_number(self, record_date: str, patient_name: str, sequence: int) -> str:
         """
-        生成手術記錄編號
+        生成處置記錄編號
         格式: YYYYMMDD-PatientName-N
         例如: 20251104-王小明-1
         """
         date_str = record_date.replace('-', '')
         record_number = f"{date_str}-{patient_name}-{sequence}"
         return record_number
-    
+
     def get_daily_surgery_sequence(self, record_date: str, station_id: str) -> int:
-        """取得當日手術序號"""
+        """取得當日處置序號"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
@@ -484,25 +485,25 @@ class DatabaseManager:
             conn.close()
     
     def create_surgery_record(self, request: SurgeryRecordRequest) -> dict:
-        """建立手術記錄"""
+        """建立處置記錄 (手術、急診縫合、放置胸管等)"""
         conn = self.get_connection()
         cursor = conn.cursor()
-        
+
         try:
             # 取得今天日期
             record_date = datetime.now().strftime('%Y-%m-%d')
-            
-            # 取得當日手術序號
+
+            # 取得當日處置序號
             sequence = self.get_daily_surgery_sequence(record_date, request.stationId)
-            
+
             # 生成記錄編號
             record_number = self.generate_surgery_record_number(
-                record_date, 
-                request.patientName, 
+                record_date,
+                request.patientName,
                 sequence
             )
-            
-            # 插入手術記錄
+
+            # 插入處置記錄
             cursor.execute("""
                 INSERT INTO surgery_records (
                     record_number, record_date, patient_name, surgery_sequence,
@@ -549,36 +550,36 @@ class DatabaseManager:
                 """, (
                     item.itemCode,
                     item.quantity,
-                    f"手術使用 - {record_number}",
+                    f"處置使用 - {record_number}",
                     request.stationId
                 ))
-            
+
             conn.commit()
-            logger.info(f"手術記錄建立成功: {record_number}")
-            
+            logger.info(f"處置記錄建立成功: {record_number}")
+
             return {
                 "success": True,
-                "message": f"手術記錄 {record_number} 建立成功",
+                "message": f"處置記錄 {record_number} 建立成功",
                 "recordNumber": record_number,
                 "surgeryId": surgery_id,
                 "sequence": sequence
             }
-        
+
         except Exception as e:
             conn.rollback()
-            logger.error(f"建立手術記錄失敗: {e}")
-            raise HTTPException(status_code=500, detail=f"建立手術記錄失敗: {str(e)}")
+            logger.error(f"建立處置記錄失敗: {e}")
+            raise HTTPException(status_code=500, detail=f"建立處置記錄失敗: {str(e)}")
         finally:
             conn.close()
     
     def get_surgery_records(
-        self, 
+        self,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         patient_name: Optional[str] = None,
         limit: int = 50
     ) -> List[Dict]:
-        """查詢手術記錄"""
+        """查詢處置記錄"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
@@ -638,7 +639,7 @@ class DatabaseManager:
         start_date: Optional[str] = None,
         end_date: Optional[str] = None
     ) -> str:
-        """匯出手術記錄為 CSV"""
+        """匯出處置記錄為 CSV"""
         records = self.get_surgery_records(start_date, end_date, limit=10000)
         
         # 建立 CSV
@@ -1003,7 +1004,7 @@ class DatabaseManager:
 app = FastAPI(
     title="醫療站庫存管理系統 API",
     version=config.VERSION,
-    description="醫療站物資、血袋、設備、手術記錄管理系統"
+    description="醫療站物資、血袋、設備、處置記錄管理系統"
 )
 
 app.add_middleware(
@@ -1331,11 +1332,11 @@ async def delete_equipment(equipment_id: str):
         conn.close()
 
 
-# ========== 手術記錄 API (新增) ==========
+# ========== 處置記錄 API ==========
 
 @app.post("/api/surgery/record")
 async def create_surgery_record(request: SurgeryRecordRequest):
-    """建立手術記錄"""
+    """建立處置記錄 (手術、急診縫合、放置胸管等醫療處置)"""
     return db.create_surgery_record(request)
 
 
@@ -1346,12 +1347,12 @@ async def get_surgery_records(
     patient_name: Optional[str] = Query(None, description="病患姓名"),
     limit: int = Query(50, ge=1, le=1000, description="最大回傳筆數")
 ):
-    """查詢手術記錄"""
+    """查詢處置記錄"""
     try:
         records = db.get_surgery_records(start_date, end_date, patient_name, limit)
         return {"records": records, "count": len(records)}
     except Exception as e:
-        logger.error(f"查詢手術記錄失敗: {e}")
+        logger.error(f"查詢處置記錄失敗: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1360,12 +1361,12 @@ async def export_surgery_csv(
     start_date: Optional[str] = Query(None, description="開始日期 YYYY-MM-DD"),
     end_date: Optional[str] = Query(None, description="結束日期 YYYY-MM-DD")
 ):
-    """匯出手術記錄 CSV"""
+    """匯出處置記錄 CSV"""
     try:
         csv_content = db.export_surgery_records_csv(start_date, end_date)
-        
-        filename = f"surgery_records_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        
+
+        filename = f"procedure_records_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+
         return StreamingResponse(
             iter([csv_content]),
             media_type="text/csv",
@@ -1390,11 +1391,11 @@ if __name__ == "__main__":
     print(f"📖 API文件: http://localhost:8000/docs")
     print(f"📊 健康檢查: http://localhost:8000/api/health")
     print("=" * 70)
-    print("✨ 新功能: 手術記錄管理、CSV匯出")
+    print("✨ 新功能: UI/UX 專業版、處置記錄管理、暫存區功能")
     print("=" * 70)
     print("按 Ctrl+C 停止服務")
     print("=" * 70)
-    
+
     uvicorn.run(
         app,
         host="0.0.0.0",
