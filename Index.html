@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>醫療站庫存管理系統 v1.4.1</title>
+    <title>醫療站庫存管理系統 v1.4.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <style>
@@ -39,6 +39,176 @@
             background-color: #f0f9ff;
             transition: background-color 0.2s;
         }
+
+        /* v1.4.3 工具列樣式 */
+        .items-toolbar {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 1px solid #bae6fd;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.625rem 2.5rem 0.625rem 2.5rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-size: 0.9375rem;
+            transition: all 0.2s;
+            background-color: white;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 0.5rem;
+            padding: 0.25rem;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            border-radius: 0.25rem;
+            transition: all 0.2s;
+        }
+
+        .search-clear:hover {
+            background-color: #e2e8f0;
+            color: #475569;
+        }
+
+        .filter-box, .sort-box {
+            position: relative;
+            min-width: 150px;
+        }
+
+        .filter-icon, .sort-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1.25rem;
+            height: 1.25rem;
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        .filter-select, .sort-select {
+            width: 100%;
+            padding: 0.625rem 0.75rem 0.625rem 2.5rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-size: 0.9375rem;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-select:focus, .sort-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .export-box {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-export {
+            padding: 0.625rem 1rem;
+            background-color: white;
+            color: #374151;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-export:hover {
+            background-color: #f3f4f6;
+            border-color: #9ca3af;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-export svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .items-stats {
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.9375rem;
+            color: #1e40af;
+            font-weight: 500;
+        }
+
+        .items-stats strong {
+            color: #1e3a8a;
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+
+        /* 手機版響應式 */
+        @media (max-width: 767px) {
+            .items-toolbar {
+                flex-direction: column;
+            }
+
+            .search-box,
+            .filter-box,
+            .sort-box {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .export-box {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .btn-export {
+                flex: 1;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -48,12 +218,12 @@
         <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <svg class="w-10 h-10 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-16 h-16 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                     </svg>
                     <div>
-                        <h1 class="text-2xl font-bold text-gray-800">醫療站庫存系統</h1>
-                        <p class="text-sm text-gray-500">v1.4.1 - 手術記錄版</p>
+                        <h1 class="text-3xl font-bold text-gray-800">醫療站庫存系統</h1>
+                        <p class="text-base text-gray-500">v1.4.3 - 搜尋與匯出強化版</p>
                     </div>
                 </div>
                 <div class="text-right">
@@ -171,7 +341,90 @@
                     </button>
                 </div>
             </div>
-            
+
+            <!-- v1.4.3 工具列 -->
+            <div class="items-toolbar">
+                <!-- 搜尋框 -->
+                <div class="search-box">
+                    <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input
+                        type="text"
+                        x-model="itemSearch"
+                        @input="applyFilters()"
+                        class="search-input"
+                        placeholder="搜尋代碼或名稱..."
+                    >
+                    <button
+                        x-show="itemSearch.length > 0"
+                        @click="itemSearch = ''; applyFilters()"
+                        class="search-clear"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- 分類篩選 -->
+                <div class="filter-box">
+                    <svg class="filter-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <select x-model="categoryFilter" @change="applyFilters()" class="filter-select">
+                        <option value="">全部分類</option>
+                        <template x-for="cat in categories" :key="cat">
+                            <option :value="cat" x-text="cat"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <!-- 排序選擇 -->
+                <div class="sort-box">
+                    <svg class="sort-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+                    </svg>
+                    <select x-model="itemSort" @change="applyFilters()" class="sort-select">
+                        <option value="code-asc">代碼 ↑</option>
+                        <option value="code-desc">代碼 ↓</option>
+                        <option value="name-asc">名稱 A-Z</option>
+                        <option value="name-desc">名稱 Z-A</option>
+                        <option value="category-asc">分類 A-Z</option>
+                        <option value="category-desc">分類 Z-A</option>
+                        <option value="stock-asc">庫存 ↑</option>
+                        <option value="stock-desc">庫存 ↓</option>
+                    </select>
+                </div>
+
+                <!-- CSV 匯出快捷按鈕 -->
+                <div class="export-box">
+                    <button @click="exportItemsCSV('week')" class="btn-export">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        本週
+                    </button>
+                    <button @click="exportItemsCSV('month')" class="btn-export">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        本月
+                    </button>
+                    <button @click="exportItemsCSV('all')" class="btn-export">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        全部
+                    </button>
+                </div>
+            </div>
+
+            <!-- 結果統計 -->
+            <div class="items-stats">
+                <span>顯示 <strong x-text="filteredItems.length"></strong> / <strong x-text="items.length"></strong> 項物品</span>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 table-hover">
                     <thead class="bg-gray-50">
@@ -186,7 +439,18 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        <template x-for="item in items" :key="item.code">
+                        <template x-if="filteredItems.length === 0">
+                            <tr>
+                                <td colspan="7" class="px-6 py-8 text-center text-gray-500">
+                                    <svg class="w-12 h-12 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                    </svg>
+                                    <p class="text-lg font-medium">沒有找到符合條件的物品</p>
+                                    <p class="text-sm">請嘗試調整搜尋或篩選條件</p>
+                                </td>
+                            </tr>
+                        </template>
+                        <template x-for="item in filteredItems" :key="item.code">
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900" x-text="item.code"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="item.name"></td>
@@ -194,7 +458,7 @@
                                     <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800" x-text="item.category"></span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <span :class="item.current_stock < item.min_stock ? 'text-red-600 font-bold' : 'text-green-600 font-semibold'" 
+                                    <span :class="item.current_stock < item.min_stock ? 'text-red-600 font-bold' : 'text-green-600 font-semibold'"
                                           x-text="item.current_stock"></span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="item.min_stock"></td>
@@ -900,6 +1164,7 @@
                 
                 // 資料
                 items: [],
+                filteredItems: [],
                 bloodInventory: [],
                 equipment: [],
                 surgeryRecords: [],
@@ -909,6 +1174,12 @@
                     totalBlood: 0,
                     equipmentAlerts: 0
                 },
+
+                // v1.4.3 新增：搜尋與篩選
+                itemSearch: '',
+                categoryFilter: '',
+                itemSort: 'code-asc',
+                categories: [],
 
                 // Modal 狀態
                 showAddItemModal: false,
@@ -1054,11 +1325,130 @@
                         if (response.ok) {
                             const data = await response.json();
                             this.items = data.items;
+                            this.updateCategories();
+                            this.applyFilters();
                         }
                     } catch (error) {
                         console.error('載入物品失敗:', error);
                         this.toast('載入物品失敗', 'error');
                     }
+                },
+
+                // v1.4.3 新增：更新分類列表
+                updateCategories() {
+                    const uniqueCategories = [...new Set(this.items.map(item => item.category))];
+                    this.categories = uniqueCategories.sort();
+                },
+
+                // v1.4.3 新增：應用篩選與排序
+                applyFilters() {
+                    let filtered = [...this.items];
+
+                    // 1. 搜尋過濾
+                    if (this.itemSearch.trim()) {
+                        const searchTerm = this.itemSearch.toLowerCase().trim();
+                        filtered = filtered.filter(item =>
+                            item.code.toLowerCase().includes(searchTerm) ||
+                            item.name.toLowerCase().includes(searchTerm)
+                        );
+                    }
+
+                    // 2. 分類篩選
+                    if (this.categoryFilter) {
+                        filtered = filtered.filter(item => item.category === this.categoryFilter);
+                    }
+
+                    // 3. 排序
+                    const [field, order] = this.itemSort.split('-');
+                    filtered.sort((a, b) => {
+                        let compareA, compareB;
+
+                        switch(field) {
+                            case 'code':
+                                compareA = a.code;
+                                compareB = b.code;
+                                break;
+                            case 'name':
+                                compareA = a.name;
+                                compareB = b.name;
+                                break;
+                            case 'category':
+                                compareA = a.category;
+                                compareB = b.category;
+                                break;
+                            case 'stock':
+                                compareA = a.current_stock || 0;
+                                compareB = b.current_stock || 0;
+                                break;
+                        }
+
+                        // 字串比較（不區分大小寫）
+                        if (typeof compareA === 'string') {
+                            compareA = compareA.toLowerCase();
+                            compareB = compareB.toLowerCase();
+                        }
+
+                        if (order === 'asc') {
+                            return compareA > compareB ? 1 : -1;
+                        } else {
+                            return compareA < compareB ? 1 : -1;
+                        }
+                    });
+
+                    this.filteredItems = filtered;
+                },
+
+                // v1.4.3 新增：CSV 匯出
+                exportItemsCSV(range) {
+                    let itemsToExport = [...this.filteredItems];
+                    const now = new Date();
+                    let filename = '';
+
+                    if (range === 'week') {
+                        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        filename = `物品清單_本週_${this.formatDate(now)}.csv`;
+                    } else if (range === 'month') {
+                        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        filename = `物品清單_本月_${this.formatDate(now)}.csv`;
+                    } else {
+                        filename = `物品清單_全部_${this.formatDate(now)}.csv`;
+                    }
+
+                    // 生成 CSV
+                    const headers = ['代碼', '名稱', '分類', '當前庫存', '最小庫存', '單位'];
+                    const rows = itemsToExport.map(item => [
+                        item.code,
+                        item.name,
+                        item.category,
+                        item.current_stock || 0,
+                        item.min_stock || 0,
+                        item.unit || ''
+                    ]);
+
+                    const csv = [
+                        headers.join(','),
+                        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+                    ].join('\n');
+
+                    // 下載
+                    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    // 提示
+                    this.toast(`已匯出 ${itemsToExport.length} 項物品`, 'success');
+                },
+
+                // v1.4.3 新增：日期格式化
+                formatDate(date) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}${month}${day}`;
                 },
 
                 // 新增物品
@@ -1535,9 +1925,21 @@
                     };
                 },
 
-                viewSurgeryDetail(record) {
-                    this.selectedSurgery = record;
-                    this.showSurgeryDetailModal = true;
+                async viewSurgeryDetail(record) {
+                    try {
+                        // 從 API 獲取完整的手術記錄詳情（包含耗材清單）
+                        const response = await fetch(`${this.apiUrl}/surgery/record/${record.id}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.selectedSurgery = data.record;
+                            this.showSurgeryDetailModal = true;
+                        } else {
+                            this.toast('無法載入手術記錄詳情', 'error');
+                        }
+                    } catch (error) {
+                        console.error('載入手術記錄詳情失敗:', error);
+                        this.toast('載入手術記錄詳情失敗', 'error');
+                    }
                 },
 
                 async exportSurgeryCSV() {
