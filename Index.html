@@ -787,7 +787,10 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="surgery.surgeon"></td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="surgery.recorded_by"></td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        <button @click="viewSurgeryDetail(surgery)" style="background-color: #F5F3FF; color: #4E5488;" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all hover:opacity-80">
+                                        <button @click="viewSurgeryDetail(surgery)" style="background-color: #F5F3FF; color: #4E5488;" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all hover:opacity-80 inline-flex items-center gap-1.5">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
                                             詳情
                                         </button>
                                     </td>
@@ -1428,7 +1431,12 @@
 
                         <!-- 耗材清單 -->
                         <div class="border-2 border-gray-200 rounded-lg p-4">
-                            <h4 class="text-lg font-semibold text-gray-700 mb-3">📋 使用耗材</h4>
+                            <h4 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                <svg class="w-5 h-5" style="color: #4E5488;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                                </svg>
+                                使用耗材
+                            </h4>
                             <div class="overflow-x-auto">
                                 <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="bg-gray-50">
