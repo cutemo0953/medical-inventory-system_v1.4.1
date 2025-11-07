@@ -439,6 +439,204 @@
                 display: none;
             }
         }
+
+        /* 血庫記錄卡片樣式 */
+        .blood-bag-card {
+            background: white;
+            border: 2px solid #F1AAAB;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .blood-bag-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(217, 103, 84, 0.15);
+            border-color: #D96754;
+        }
+
+        .blood-bag-card .bag-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #F1AAAB;
+        }
+
+        .blood-bag-card .bag-id {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            color: #D96754;
+            font-size: 1rem;
+        }
+
+        .blood-bag-card .blood-type-badge {
+            background-color: #D96754;
+            color: white;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .blood-bag-card .bag-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #4B5563;
+        }
+
+        .blood-bag-card .bag-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .blood-bag-card .bag-info-label {
+            color: #6B7280;
+            font-weight: 500;
+        }
+
+        .blood-bag-card .bag-info-value {
+            color: #1F2937;
+            font-weight: 600;
+        }
+
+        /* 輸血記錄卡片樣式 */
+        .transfusion-card {
+            background: white;
+            border: 2px solid #F1AAAB;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .transfusion-card:hover {
+            box-shadow: 0 6px 20px rgba(217, 103, 84, 0.12);
+            border-color: #D96754;
+        }
+
+        .transfusion-card .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #F1AAAB;
+        }
+
+        .transfusion-card .record-id {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            color: #D96754;
+            font-size: 1rem;
+        }
+
+        .transfusion-card .record-date {
+            color: #6B7280;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .transfusion-card .record-body {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .transfusion-card .record-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .transfusion-card .field-label {
+            color: #6B7280;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .transfusion-card .field-value {
+            color: #1F2937;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        /* 狀態徽章 */
+        .status-badge {
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .status-available {
+            background-color: #DEF7EC;
+            color: #03543F;
+        }
+
+        .status-used {
+            background-color: #E5E7EB;
+            color: #4B5563;
+        }
+
+        .status-expired {
+            background-color: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .status-verified {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        .status-warning {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+
+        /* 血庫響應式設計 */
+        @media (max-width: 767px) {
+            /* 血庫切換按鈕全寬 */
+            .bg-white.rounded-xl.shadow-lg.p-6 > div > div[style*="background-color: #FCE4E4"] {
+                width: 100% !important;
+            }
+
+            .bg-white.rounded-xl.shadow-lg.p-6 > div > div[style*="background-color: #FCE4E4"] button {
+                flex: 1 !important;
+                justify-content: center !important;
+                padding: 0.75rem 0.5rem !important;
+                font-size: 0.875rem !important;
+            }
+
+            /* 血袋卡片單列 */
+            .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3 {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* 輸血記錄卡片內容單列 */
+            .transfusion-card .record-body {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* 血袋資訊行調整 */
+            .blood-bag-card .bag-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -945,7 +1143,7 @@
         </div>
 
         <!-- 血袋分頁 -->
-        <div x-show="currentTab === 'blood'" class="bg-white rounded-xl shadow-lg p-6">
+        <div x-show="currentTab === 'blood'" class="bg-white rounded-xl shadow-lg p-6" x-data="{ bloodMode: 'donations' }">
             <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                 <svg class="w-6 h-6" style="color: var(--blood-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
@@ -953,6 +1151,7 @@
                 血袋管理
             </h2>
 
+            <!-- 即時統計 -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <template x-for="blood in bloodInventory" :key="blood.blood_type">
                     <div style="border: 2px solid var(--gray-200);" class="rounded-xl p-6 hover:shadow-md transition-all duration-300 hover:-translate-y-1 hover:border-red-300">
@@ -967,77 +1166,64 @@
                 </template>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- 血袋入庫 -->
-                <div style="border: 2px solid var(--blood-light);" class="rounded-lg p-4">
-                    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2" style="color: var(--blood-primary);">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
-                        </svg>
-                        血袋入庫
-                    </h3>
-                    <form @submit.prevent="submitBloodReceive()" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">血型 *</label>
-                            <select x-model="bloodReceiveForm.bloodType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-                                <option value="">請選擇血型</option>
-                                <option value="A+">A+</option>
-                                <option value="A-">A-</option>
-                                <option value="B+">B+</option>
-                                <option value="B-">B-</option>
-                                <option value="O+">O+</option>
-                                <option value="O-">O-</option>
-                                <option value="AB+">AB+</option>
-                                <option value="AB-">AB-</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">數量 (U) *</label>
-                            <input type="number" x-model="bloodReceiveForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-                        </div>
-                        <button type="submit" style="background-color: #D96754;" class="w-full text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 font-semibold hover:opacity-90">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            <!-- 頭部：標題 + 切換按鈕 + 操作按鈕 -->
+            <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-200">
+                <div class="flex items-center gap-6">
+                    <h3 class="text-lg font-semibold text-gray-800">記錄管理</h3>
+                    <!-- 切換按鈕組 -->
+                    <div style="background-color: #FCE4E4;" class="flex gap-0 p-1 rounded-lg">
+                        <button @click="bloodMode = 'donations'; loadDonations()"
+                                :style="bloodMode === 'donations' ? 'background-color: #D96754; color: white;' : 'color: #6B7280;'"
+                                class="px-4 py-2 rounded-md font-medium transition-all duration-200 flex items-center gap-2 hover:opacity-80">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
                             </svg>
-                            確認入庫
+                            入庫記錄
                         </button>
-                    </form>
+                        <button @click="bloodMode = 'transfusions'; loadTransfusions()"
+                                :style="bloodMode === 'transfusions' ? 'background-color: #D96754; color: white;' : 'color: #6B7280;'"
+                                class="px-4 py-2 rounded-md font-medium transition-all duration-200 flex items-center gap-2 hover:opacity-80">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            輸血記錄
+                        </button>
+                    </div>
                 </div>
-
-                <!-- 血袋出庫 -->
-                <div style="border: 2px solid #FEE2E2;" class="rounded-lg p-4">
-                    <h3 class="text-lg font-semibold mb-4 flex items-center gap-2" style="color: var(--blood-primary);">
+                <!-- 操作按鈕 -->
+                <div class="flex gap-2">
+                    <button x-show="bloodMode === 'donations'" @click="showAddDonationModal = true" style="background-color: #D96754;" class="text-white px-4 py-2 rounded-lg transition-all duration-200 font-semibold flex items-center gap-2 hover:opacity-90">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
-                        血袋出庫
-                    </h3>
-                    <form @submit.prevent="submitBloodConsume()" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">血型 *</label>
-                            <select x-model="bloodConsumeForm.bloodType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-                                <option value="">請選擇血型</option>
-                                <option value="A+">A+</option>
-                                <option value="A-">A-</option>
-                                <option value="B+">B+</option>
-                                <option value="B-">B-</option>
-                                <option value="O+">O+</option>
-                                <option value="O-">O-</option>
-                                <option value="AB+">AB+</option>
-                                <option value="AB-">AB-</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">數量 (U) *</label>
-                            <input type="number" x-model="bloodConsumeForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-                        </div>
-                        <button type="submit" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2 font-semibold">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                            確認出庫
-                        </button>
-                    </form>
+                        新增入庫
+                    </button>
+                    <button x-show="bloodMode === 'transfusions'" @click="showAddTransfusionModal = true" style="background-color: #D96754;" class="text-white px-4 py-2 rounded-lg transition-all duration-200 font-semibold flex items-center gap-2 hover:opacity-90">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        新增輸血記錄
+                    </button>
+                    <button @click="bloodMode === 'donations' ? loadDonations() : loadTransfusions()" class="btn-items-gray">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        重新載入
+                    </button>
+                </div>
+            </div>
+
+            <!-- 入庫記錄內容 -->
+            <div x-show="bloodMode === 'donations'">
+                <div id="donationsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- 動態載入入庫記錄卡片 -->
+                </div>
+            </div>
+
+            <!-- 輸血記錄內容 -->
+            <div x-show="bloodMode === 'transfusions'">
+                <div id="transfusionsList" class="space-y-4">
+                    <!-- 動態載入輸血記錄卡片 -->
                 </div>
             </div>
         </div>
@@ -1238,6 +1424,201 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- 新增血袋入庫 Modal -->
+        <div x-show="showAddDonationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+            <div @click.away="showAddDonationModal = false" class="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div style="background-color: #D96754;" class="rounded-t-xl px-6 py-4 mb-4">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+                        </svg>
+                        新增血袋入庫
+                    </h3>
+                </div>
+                <div class="px-6 pb-6">
+                    <form @submit.prevent="submitDonation()" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">血袋編號 *</label>
+                                <div class="flex gap-2">
+                                    <input type="text" x-model="donationForm.bag_id" required class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="BAG-20250101-001">
+                                    <button type="button" @click="generateBagId()" style="background-color: #F1AAAB; color: #D96754;" class="px-4 py-2 rounded-lg font-medium hover:opacity-80">
+                                        自動生成
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">血型 *</label>
+                                <select x-model="donationForm.blood_type" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                                    <option value="">請選擇血型</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">採集日期 *</label>
+                                <input type="date" x-model="donationForm.donation_date" @change="calculateExpiryDate()" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">有效期限 (自動計算)</label>
+                                <input type="date" x-model="donationForm.expiry_date" readonly class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">捐血者代碼 (選填)</label>
+                                <input type="text" x-model="donationForm.donor_code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="D20250101001">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">來源 *</label>
+                                <select x-model="donationForm.source" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                                    <option value="">請選擇來源</option>
+                                    <option value="捐血中心">捐血中心</option>
+                                    <option value="醫院採集">醫院採集</option>
+                                    <option value="緊急採購">緊急採購</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">備註</label>
+                            <textarea x-model="donationForm.notes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="如有特殊備註請輸入..."></textarea>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button type="submit" style="background-color: #D96754;" class="flex-1 text-white px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-2 hover:opacity-90">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                確認入庫
+                            </button>
+                            <button type="button" @click="showAddDonationModal = false" class="flex-1 btn-items-gray justify-center">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                取消
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 新增輸血記錄 Modal -->
+        <div x-show="showAddTransfusionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+            <div @click.away="showAddTransfusionModal = false" class="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div style="background-color: #D96754;" class="rounded-t-xl px-6 py-4 mb-4">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        新增輸血記錄
+                    </h3>
+                </div>
+                <div class="px-6 pb-6">
+                    <form @submit.prevent="submitTransfusion()" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">病患編號 *</label>
+                                <input type="text" x-model="transfusionForm.patient_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="P20250101001">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">病患血型 *</label>
+                                <select x-model="transfusionForm.patient_blood_type" @change="loadCompatibleBags()" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                                    <option value="">請選擇血型</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">可用血袋 *</label>
+                            <select x-model="transfusionForm.bag_id" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                                <option value="">請先選擇病患血型</option>
+                                <!-- 動態載入相容血袋 -->
+                            </select>
+                            <div id="compatibilityWarning" class="mt-2" style="display: none;">
+                                <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 0.75rem; border-radius: 0.5rem;">
+                                    <p style="color: #92400E; font-size: 0.875rem; font-weight: 600;">⚠️ 血型不完全相容，請確認交叉配血</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">輸血時間 *</label>
+                                <input type="datetime-local" x-model="transfusionForm.transfusion_date" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">使用數量 (U) *</label>
+                                <input type="number" x-model="transfusionForm.units_used" required min="1" max="10" value="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" x-model="transfusionForm.cross_match_verified" class="w-5 h-5 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                                <span class="text-sm font-medium text-gray-700">已完成交叉配血驗證</span>
+                            </label>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">不良反應</label>
+                            <select x-model="transfusionForm.adverse_reaction" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                                <option value="">無</option>
+                                <option value="發燒">發燒</option>
+                                <option value="過敏反應">過敏反應</option>
+                                <option value="溶血反應">溶血反應</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">備註</label>
+                            <textarea x-model="transfusionForm.notes" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="如有特殊備註請輸入..."></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">操作者 PIN *</label>
+                            <input type="password" x-model="transfusionForm.operator_pin" required minlength="4" maxlength="6" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="請輸入操作者PIN碼">
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button type="submit" style="background-color: #D96754;" class="flex-1 text-white px-4 py-2 rounded-lg font-semibold flex items-center justify-center gap-2 hover:opacity-90">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                確認記錄
+                            </button>
+                            <button type="button" @click="showAddTransfusionModal = false" class="flex-1 btn-items-gray justify-center">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                取消
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
@@ -1660,6 +2041,8 @@
                 showCheckEquipmentModal: false,
                 showAddSurgeryModal: false,
                 showSurgeryDetailModal: false,
+                showAddDonationModal: false,
+                showAddTransfusionModal: false,
 
                 // 表單
                 receiveForm: {
@@ -1737,6 +2120,31 @@
                     patientName: ''
                 },
                 selectedSurgery: null,
+
+                // v1.4.4 血庫追溯
+                donations: [],
+                transfusions: [],
+                donationForm: {
+                    bag_id: '',
+                    blood_type: '',
+                    donation_date: '',
+                    expiry_date: '',
+                    donor_code: '',
+                    source: '',
+                    notes: ''
+                },
+                transfusionForm: {
+                    bag_id: '',
+                    patient_id: '',
+                    patient_blood_type: '',
+                    transfusion_date: '',
+                    units_used: 1,
+                    cross_match_verified: false,
+                    adverse_reaction: '',
+                    notes: '',
+                    operator_pin: ''
+                },
+                compatibleBags: [],
 
                 // Toast
                 showToast: false,
@@ -2145,9 +2553,9 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(this.bloodConsumeForm)
                         });
-                        
+
                         const data = await response.json();
-                        
+
                         if (response.ok) {
                             this.toast(data.message || '血袋出庫成功', 'success');
                             this.bloodConsumeForm = { bloodType: '', quantity: 1, stationId: this.stationId };
@@ -2160,6 +2568,313 @@
                         console.error('血袋出庫失敗:', error);
                         this.toast('血袋出庫失敗', 'error');
                     }
+                },
+
+                // v1.4.4 血庫追溯系統
+                async loadDonations() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/blood/bags`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.donations = data.bags || [];
+                            this.displayDonations();
+                        }
+                    } catch (error) {
+                        console.error('載入入庫記錄失敗:', error);
+                        this.toast('載入入庫記錄失敗', 'error');
+                    }
+                },
+
+                displayDonations() {
+                    const container = document.getElementById('donationsList');
+                    if (!container) return;
+
+                    if (this.donations.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-12 text-gray-500">
+                                <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                </svg>
+                                <p class="text-lg font-medium">尚無入庫記錄</p>
+                                <p class="text-sm mt-2">點擊「新增入庫」開始記錄血袋入庫</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    container.innerHTML = this.donations.map(bag => `
+                        <div class="blood-bag-card">
+                            <div class="bag-header">
+                                <span class="bag-id">${bag.bag_id}</span>
+                                <span class="blood-type-badge">${bag.blood_type}</span>
+                            </div>
+                            <div class="bag-info">
+                                <div class="bag-info-row">
+                                    <span class="bag-info-label">採集日期</span>
+                                    <span class="bag-info-value">${bag.donation_date}</span>
+                                </div>
+                                <div class="bag-info-row">
+                                    <span class="bag-info-label">有效期限</span>
+                                    <span class="bag-info-value">${bag.expiry_date}</span>
+                                </div>
+                                <div class="bag-info-row">
+                                    <span class="bag-info-label">來源</span>
+                                    <span class="bag-info-value">${bag.source}</span>
+                                </div>
+                                ${bag.donor_code ? `
+                                <div class="bag-info-row">
+                                    <span class="bag-info-label">捐血者代碼</span>
+                                    <span class="bag-info-value">${bag.donor_code}</span>
+                                </div>
+                                ` : ''}
+                                <div class="bag-info-row">
+                                    <span class="bag-info-label">狀態</span>
+                                    <span class="status-badge ${this.getStatusClass(bag.status)}">${this.getStatusText(bag.status)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                },
+
+                async loadTransfusions() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/blood/transfusions`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.transfusions = data.records || [];
+                            this.displayTransfusions();
+                        }
+                    } catch (error) {
+                        console.error('載入輸血記錄失敗:', error);
+                        this.toast('載入輸血記錄失敗', 'error');
+                    }
+                },
+
+                displayTransfusions() {
+                    const container = document.getElementById('transfusionsList');
+                    if (!container) return;
+
+                    if (this.transfusions.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-12 text-gray-500">
+                                <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <p class="text-lg font-medium">尚無輸血記錄</p>
+                                <p class="text-sm mt-2">點擊「新增輸血記錄」開始記錄輸血作業</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    container.innerHTML = this.transfusions.map(record => `
+                        <div class="transfusion-card">
+                            <div class="record-header">
+                                <span class="record-id">${record.record_id}</span>
+                                <span class="record-date">${new Date(record.transfusion_date).toLocaleString('zh-TW')}</span>
+                            </div>
+                            <div class="record-body">
+                                <div class="record-field">
+                                    <span class="field-label">病患編號</span>
+                                    <span class="field-value">${record.patient_id}</span>
+                                </div>
+                                <div class="record-field">
+                                    <span class="field-label">病患血型</span>
+                                    <span class="field-value">${record.patient_blood_type}</span>
+                                </div>
+                                <div class="record-field">
+                                    <span class="field-label">血袋編號</span>
+                                    <span class="field-value">${record.bag_id}</span>
+                                </div>
+                                <div class="record-field">
+                                    <span class="field-label">血袋血型</span>
+                                    <span class="field-value">${record.bag_blood_type || '-'}</span>
+                                </div>
+                                <div class="record-field">
+                                    <span class="field-label">使用數量</span>
+                                    <span class="field-value">${record.units_used} U</span>
+                                </div>
+                                <div class="record-field">
+                                    <span class="field-label">交叉配血</span>
+                                    <span class="status-badge ${record.cross_match_verified ? 'status-verified' : 'status-warning'}">
+                                        ${record.cross_match_verified ? '已驗證' : '未驗證'}
+                                    </span>
+                                </div>
+                                ${record.adverse_reaction ? `
+                                <div class="record-field" style="grid-column: 1 / -1;">
+                                    <span class="field-label">不良反應</span>
+                                    <span class="field-value" style="color: #DC2626;">${record.adverse_reaction}</span>
+                                </div>
+                                ` : ''}
+                                ${record.notes ? `
+                                <div class="record-field" style="grid-column: 1 / -1;">
+                                    <span class="field-label">備註</span>
+                                    <span class="field-value">${record.notes}</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                },
+
+                calculateExpiryDate() {
+                    if (!this.donationForm.donation_date) return;
+
+                    const donationDate = new Date(this.donationForm.donation_date);
+                    const expiryDate = new Date(donationDate);
+                    expiryDate.setDate(expiryDate.getDate() + 35);
+
+                    this.donationForm.expiry_date = expiryDate.toISOString().split('T')[0];
+                },
+
+                async loadCompatibleBags() {
+                    const patientBloodType = this.transfusionForm.patient_blood_type;
+                    if (!patientBloodType) {
+                        this.compatibleBags = [];
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(
+                            `${this.apiUrl}/blood/bags/available?patient_blood_type=${encodeURIComponent(patientBloodType)}`
+                        );
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.compatibleBags = data.bags || [];
+
+                            // 更新下拉選單
+                            const select = document.querySelector('select[x-model="transfusionForm.bag_id"]');
+                            if (select) {
+                                select.innerHTML = '<option value="">請選擇血袋</option>' +
+                                    this.compatibleBags.map(bag =>
+                                        `<option value="${bag.bag_id}">${bag.bag_id} - ${bag.blood_type} (${bag.expiry_date})</option>`
+                                    ).join('');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('載入相容血袋失敗:', error);
+                        this.toast('載入相容血袋失敗', 'error');
+                    }
+                },
+
+                async submitDonation() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/blood/bags`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.donationForm)
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            this.toast('血袋入庫成功', 'success');
+                            this.showAddDonationModal = false;
+                            this.donationForm = {
+                                bag_id: '',
+                                blood_type: '',
+                                donation_date: '',
+                                expiry_date: '',
+                                donor_code: '',
+                                source: '',
+                                notes: ''
+                            };
+                            await this.loadDonations();
+                            await this.loadBloodInventory();
+                            await this.loadStats();
+                        } else {
+                            this.toast(data.detail || '入庫失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('血袋入庫失敗:', error);
+                        this.toast('血袋入庫失敗', 'error');
+                    }
+                },
+
+                async submitTransfusion() {
+                    try {
+                        const response = await fetch(`${this.apiUrl}/blood/transfusions`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.transfusionForm)
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            this.toast('輸血記錄新增成功', 'success');
+                            this.showAddTransfusionModal = false;
+                            this.transfusionForm = {
+                                bag_id: '',
+                                patient_id: '',
+                                patient_blood_type: '',
+                                transfusion_date: '',
+                                units_used: 1,
+                                cross_match_verified: false,
+                                adverse_reaction: '',
+                                notes: '',
+                                operator_pin: ''
+                            };
+                            await this.loadTransfusions();
+                            await this.loadDonations();
+                            await this.loadBloodInventory();
+                            await this.loadStats();
+                        } else {
+                            this.toast(data.detail || '記錄失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('輸血記錄失敗:', error);
+                        this.toast('輸血記錄失敗', 'error');
+                    }
+                },
+
+                async generateBagId() {
+                    const today = new Date();
+                    const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+
+                    try {
+                        // 從現有記錄中查找今天的最大序號
+                        const response = await fetch(`${this.apiUrl}/blood/bags`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            const todayBags = (data.bags || []).filter(bag =>
+                                bag.bag_id.startsWith(`BAG-${dateStr}`)
+                            );
+
+                            const maxSeq = todayBags.length > 0
+                                ? Math.max(...todayBags.map(bag => {
+                                    const parts = bag.bag_id.split('-');
+                                    return parseInt(parts[2]) || 0;
+                                }))
+                                : 0;
+
+                            const newSeq = String(maxSeq + 1).padStart(3, '0');
+                            this.donationForm.bag_id = `BAG-${dateStr}-${newSeq}`;
+                        }
+                    } catch (error) {
+                        console.error('生成血袋編號失敗:', error);
+                        // 如果失敗，使用簡單遞增
+                        this.donationForm.bag_id = `BAG-${dateStr}-001`;
+                    }
+                },
+
+                getStatusText(status) {
+                    const statusMap = {
+                        'available': '可用',
+                        'used': '已使用',
+                        'expired': '已過期'
+                    };
+                    return statusMap[status] || status;
+                },
+
+                getStatusClass(status) {
+                    const classMap = {
+                        'available': 'status-available',
+                        'used': 'status-used',
+                        'expired': 'status-expired'
+                    };
+                    return classMap[status] || '';
                 },
 
                 // 設備管理
