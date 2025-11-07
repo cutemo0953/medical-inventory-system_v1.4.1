@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 醫療站庫存管理系統 - 後端 API
-版本: v1.4.3
-新增: 物品搜尋/篩選/排序、CSV快捷匯出、設備每日重置
+版本: v1.4.4
+新增: 血庫追溯系統（血袋入庫、輸血記錄、血型相容性驗證）
 """
 
 import logging
@@ -50,7 +50,7 @@ logger = setup_logging()
 
 class Config:
     """系統配置"""
-    VERSION = "1.4.3"
+    VERSION = "1.4.4"
     DATABASE_PATH = "medical_inventory.db"
     STATION_ID = "TC-01"
     DEBUG = True
@@ -169,6 +169,42 @@ class SurgeryRecordRequest(BaseModel):
     remarks: Optional[str] = Field(None, description="手術備註", max_length=2000)
     consumptions: List[SurgeryConsumptionItem] = Field(..., description="使用耗材清單")
     stationId: str = Field(default="TC-01", description="站點ID")
+
+
+# ============================================================================
+# Blood Management Models (v1.4.4)
+# ============================================================================
+
+class BloodBagCreate(BaseModel):
+    """新增血袋"""
+    bag_id: str = Field(..., description="血袋編號")
+    blood_type: str = Field(..., description="血型")
+    donation_date: str = Field(..., description="採集日期 YYYY-MM-DD")
+    expiry_date: str = Field(..., description="有效期限 YYYY-MM-DD")
+    donor_code: Optional[str] = Field(None, description="捐血者代碼")
+    source: str = Field(..., description="來源")
+    notes: Optional[str] = None
+
+    @field_validator('blood_type')
+    @classmethod
+    def validate_blood_type(cls, v):
+        valid_types = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+        if v not in valid_types:
+            raise ValueError(f'血型必須是: {", ".join(valid_types)}')
+        return v
+
+
+class TransfusionRecordCreate(BaseModel):
+    """新增輸血記錄"""
+    bag_id: str = Field(..., description="血袋編號")
+    patient_id: str = Field(..., description="病患編號")
+    patient_blood_type: str = Field(..., description="病患血型")
+    transfusion_date: str = Field(..., description="輸血時間")
+    units_used: int = Field(1, ge=1, le=10, description="使用數量")
+    cross_match_verified: bool = Field(False, description="交叉配血")
+    adverse_reaction: Optional[str] = None
+    notes: Optional[str] = None
+    operator_pin: str = Field(..., description="操作者PIN")
 
 
 # ============================================================================
@@ -322,7 +358,44 @@ class DatabaseManager:
                     FOREIGN KEY (item_code) REFERENCES items(code)
                 )
             """)
-            
+
+            # v1.4.4: 血庫追溯系統資料表
+            # 血袋資料表
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS blood_bags (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    bag_id TEXT UNIQUE NOT NULL,
+                    blood_type TEXT NOT NULL,
+                    donation_date TEXT NOT NULL,
+                    expiry_date TEXT NOT NULL,
+                    donor_code TEXT,
+                    source TEXT NOT NULL,
+                    status TEXT DEFAULT 'available',
+                    notes TEXT,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # 輸血記錄表
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS transfusion_records (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    record_id TEXT UNIQUE NOT NULL,
+                    bag_id TEXT NOT NULL,
+                    patient_id TEXT NOT NULL,
+                    patient_blood_type TEXT NOT NULL,
+                    transfusion_date TEXT NOT NULL,
+                    units_used INTEGER DEFAULT 1,
+                    cross_match_verified INTEGER DEFAULT 0,
+                    adverse_reaction TEXT,
+                    notes TEXT,
+                    operator_pin TEXT NOT NULL,
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (bag_id) REFERENCES blood_bags(bag_id)
+                )
+            """)
+
             # 為手術記錄建立索引
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_surgery_records_date 
@@ -333,10 +406,32 @@ class DatabaseManager:
                 ON surgery_records(patient_name)
             """)
             cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_surgery_consumptions_surgery 
+                CREATE INDEX IF NOT EXISTS idx_surgery_consumptions_surgery
                 ON surgery_consumptions(surgery_id)
             """)
-            
+
+            # v1.4.4: 血庫追溯系統索引
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_blood_bags_type
+                ON blood_bags(blood_type)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_blood_bags_status
+                ON blood_bags(status)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_blood_bags_expiry
+                ON blood_bags(expiry_date)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_transfusion_patient
+                ON transfusion_records(patient_id)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_transfusion_date
+                ON transfusion_records(transfusion_date)
+            """)
+
             # 初始化預設設備
             self._init_default_equipment(cursor)
             
@@ -1000,6 +1095,66 @@ class DatabaseManager:
 
 
 # ============================================================================
+# Blood Management Helper Functions (v1.4.4)
+# ============================================================================
+
+def check_blood_compatibility(donor_type: str, recipient_type: str) -> bool:
+    """檢查血型相容性"""
+    compatibility = {
+        'A+': ['A+', 'A-', 'O+', 'O-'],
+        'A-': ['A-', 'O-'],
+        'B+': ['B+', 'B-', 'O+', 'O-'],
+        'B-': ['B-', 'O-'],
+        'AB+': ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+        'AB-': ['A-', 'B-', 'AB-', 'O-'],
+        'O+': ['O+', 'O-'],
+        'O-': ['O-']
+    }
+    return donor_type in compatibility.get(recipient_type, [])
+
+
+def is_bag_expired(expiry_date: str) -> bool:
+    """檢查血袋是否過期"""
+    try:
+        expiry = datetime.strptime(expiry_date, '%Y-%m-%d')
+        return expiry < datetime.now()
+    except:
+        return False
+
+
+def generate_bag_id() -> str:
+    """生成血袋編號 BAG-YYYYMMDD-001"""
+    today = datetime.now().strftime('%Y%m%d')
+
+    conn = sqlite3.connect(config.DATABASE_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.execute(
+        "SELECT COUNT(*) as count FROM blood_bags WHERE bag_id LIKE ?",
+        (f'BAG-{today}-%',)
+    )
+    count = cursor.fetchone()['count'] + 1
+    conn.close()
+
+    return f'BAG-{today}-{count:03d}'
+
+
+def generate_transfusion_id() -> str:
+    """生成輸血記錄編號 TRANS-YYYYMMDD-001"""
+    today = datetime.now().strftime('%Y%m%d')
+
+    conn = sqlite3.connect(config.DATABASE_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.execute(
+        "SELECT COUNT(*) as count FROM transfusion_records WHERE record_id LIKE ?",
+        (f'TRANS-{today}-%',)
+    )
+    count = cursor.fetchone()['count'] + 1
+    conn.close()
+
+    return f'TRANS-{today}-{count:03d}'
+
+
+# ============================================================================
 # FastAPI 應用
 # ============================================================================
 
@@ -1424,6 +1579,292 @@ async def export_surgery_csv(
     except Exception as e:
         logger.error(f"匯出 CSV 失敗: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# Blood Management APIs (v1.4.4)
+# ============================================================================
+
+@app.post("/api/blood/bags")
+async def add_blood_bag(bag: BloodBagCreate):
+    """新增血袋入庫"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        # 檢查血袋編號是否重複
+        existing = cursor.execute(
+            "SELECT id FROM blood_bags WHERE bag_id = ?",
+            (bag.bag_id,)
+        ).fetchone()
+
+        if existing:
+            conn.close()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="血袋編號已存在"
+            )
+
+        # 檢查是否過期
+        if is_bag_expired(bag.expiry_date):
+            conn.close()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="血袋已過期，無法入庫"
+            )
+
+        # 插入血袋
+        cursor.execute("""
+            INSERT INTO blood_bags
+            (bag_id, blood_type, donation_date, expiry_date, donor_code, source, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            bag.bag_id,
+            bag.blood_type,
+            bag.donation_date,
+            bag.expiry_date,
+            bag.donor_code,
+            bag.source,
+            bag.notes
+        ))
+
+        conn.commit()
+        bag_id = cursor.lastrowid
+        conn.close()
+
+        logger.info(f"血袋入庫成功: {bag.bag_id}")
+        return {"success": True, "bag_id": bag_id, "message": "血袋入庫成功"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"新增血袋失敗: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"新增血袋失敗: {str(e)}"
+        )
+
+
+@app.get("/api/blood/bags")
+async def get_blood_bags(
+    blood_type: Optional[str] = None,
+    status_filter: Optional[str] = Query(None, alias="status")
+):
+    """查詢血袋列表"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        query = "SELECT * FROM blood_bags WHERE 1=1"
+        params = []
+
+        if blood_type:
+            query += " AND blood_type = ?"
+            params.append(blood_type)
+
+        if status_filter:
+            query += " AND status = ?"
+            params.append(status_filter)
+
+        query += " ORDER BY donation_date DESC"
+
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        conn.close()
+
+        bags = []
+        for row in rows:
+            bag_dict = dict(row)
+            bag_dict['is_expired'] = is_bag_expired(bag_dict['expiry_date'])
+            bags.append(bag_dict)
+
+        return {"success": True, "bags": bags, "total": len(bags)}
+
+    except Exception as e:
+        logger.error(f"查詢血袋失敗: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"查詢血袋失敗: {str(e)}"
+        )
+
+
+@app.get("/api/blood/bags/available")
+async def get_available_bags(recipient_type: Optional[str] = None):
+    """取得可用血袋（用於輸血選擇）"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        # 查詢所有可用且未過期的血袋
+        cursor.execute("""
+            SELECT * FROM blood_bags
+            WHERE status = 'available'
+            AND date(expiry_date) >= date('now')
+            ORDER BY expiry_date ASC, donation_date ASC
+        """)
+        rows = cursor.fetchall()
+        conn.close()
+
+        bags = []
+        for row in rows:
+            bag_dict = dict(row)
+
+            # 如果指定了受血者血型，檢查相容性
+            if recipient_type:
+                bag_dict['is_compatible'] = check_blood_compatibility(
+                    bag_dict['blood_type'],
+                    recipient_type
+                )
+            else:
+                bag_dict['is_compatible'] = True
+
+            bags.append(bag_dict)
+
+        return {"success": True, "bags": bags, "total": len(bags)}
+
+    except Exception as e:
+        logger.error(f"查詢可用血袋失敗: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"查詢可用血袋失敗: {str(e)}"
+        )
+
+
+@app.post("/api/blood/transfusions")
+async def add_transfusion_record(record: TransfusionRecordCreate):
+    """新增輸血記錄"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        # 1. 檢查血袋是否存在且可用
+        bag = cursor.execute(
+            "SELECT * FROM blood_bags WHERE bag_id = ?",
+            (record.bag_id,)
+        ).fetchone()
+
+        if not bag:
+            conn.close()
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="血袋不存在"
+            )
+
+        if bag['status'] != 'available':
+            conn.close()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"血袋狀態為 {bag['status']}，無法使用"
+            )
+
+        # 2. 檢查血袋是否過期
+        if is_bag_expired(bag['expiry_date']):
+            conn.close()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="血袋已過期，禁止使用"
+            )
+
+        # 3. 檢查血型相容性
+        if not check_blood_compatibility(bag['blood_type'], record.patient_blood_type):
+            if not record.cross_match_verified:
+                conn.close()
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"血型不相容！血袋 {bag['blood_type']} 不適用於 {record.patient_blood_type} 病患"
+                )
+
+        # 4. 生成記錄編號
+        record_id = generate_transfusion_id()
+
+        # 5. 插入輸血記錄
+        cursor.execute("""
+            INSERT INTO transfusion_records
+            (record_id, bag_id, patient_id, patient_blood_type, transfusion_date,
+             units_used, cross_match_verified, adverse_reaction, notes, operator_pin)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            record_id,
+            record.bag_id,
+            record.patient_id,
+            record.patient_blood_type,
+            record.transfusion_date,
+            record.units_used,
+            1 if record.cross_match_verified else 0,
+            record.adverse_reaction,
+            record.notes,
+            record.operator_pin
+        ))
+
+        # 6. 更新血袋狀態
+        cursor.execute(
+            "UPDATE blood_bags SET status = 'used', updated_at = CURRENT_TIMESTAMP WHERE bag_id = ?",
+            (record.bag_id,)
+        )
+
+        conn.commit()
+        conn.close()
+
+        logger.info(f"輸血記錄新增成功: {record_id}")
+        return {"success": True, "record_id": record_id, "message": "輸血記錄新增成功"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"新增輸血記錄失敗: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"新增輸血記錄失敗: {str(e)}"
+        )
+
+
+@app.get("/api/blood/transfusions")
+async def get_transfusion_records(
+    patient_id: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None
+):
+    """查詢輸血記錄"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        query = """
+            SELECT t.*, b.blood_type as bag_blood_type, b.donor_code
+            FROM transfusion_records t
+            LEFT JOIN blood_bags b ON t.bag_id = b.bag_id
+            WHERE 1=1
+        """
+        params = []
+
+        if patient_id:
+            query += " AND t.patient_id = ?"
+            params.append(patient_id)
+
+        if date_from:
+            query += " AND date(t.transfusion_date) >= date(?)"
+            params.append(date_from)
+
+        if date_to:
+            query += " AND date(t.transfusion_date) <= date(?)"
+            params.append(date_to)
+
+        query += " ORDER BY t.transfusion_date DESC"
+
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        conn.close()
+
+        records = [dict(row) for row in rows]
+
+        return {"success": True, "records": records, "total": len(records)}
+
+    except Exception as e:
+        logger.error(f"查詢輸血記錄失敗: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"查詢輸血記錄失敗: {str(e)}"
+        )
 
 
 # ============================================================================
