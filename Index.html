@@ -479,7 +479,7 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
-                            手術記錄
+                            處置記錄
                         </button>
                         <button @click="dispositionMode = 'consume'"
                                 :style="dispositionMode === 'consume' ? 'background-color: #4E5488; color: white;' : 'color: #6B7280;'"
@@ -497,7 +497,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
-                        新增手術記錄
+                        新增處置記錄
                     </button>
                     <button x-show="dispositionMode === 'surgery'" @click="exportSurgeryCSV()" style="background-color: #4E5488;" class="text-white px-4 py-2 rounded-lg transition-all duration-200 font-semibold flex items-center gap-2 hover:opacity-90">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -774,9 +774,24 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="eq.last_check ? new Date(eq.last_check).toLocaleString('zh-TW') : '-'"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                    <button @click="checkEquipment(eq)" style="background-color: var(--equipment-light); color: var(--equipment-primary);" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all hover:opacity-80">檢查</button>
-                                    <button @click="editEquipment(eq)" class="btn-items-edit">編輯</button>
-                                    <button @click="deleteEquipment(eq.id, eq.name)" class="btn-items-delete">刪除</button>
+                                    <button @click="checkEquipment(eq)" style="background-color: var(--equipment-light); color: var(--equipment-primary);" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all inline-flex items-center gap-1.5 hover:bg-green-700 hover:text-white">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        檢查
+                                    </button>
+                                    <button @click="editEquipment(eq)" style="background-color: var(--equipment-light); color: var(--equipment-primary);" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all inline-flex items-center gap-1.5 hover:bg-green-700 hover:text-white">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                        編輯
+                                    </button>
+                                    <button @click="deleteEquipment(eq.id, eq.name)" style="background-color: #F3F4F6; color: #6B7280;" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all inline-flex items-center gap-1.5 hover:bg-red-100 hover:text-red-700">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        刪除
+                                    </button>
                                 </td>
                             </tr>
                         </template>
@@ -897,21 +912,24 @@
 
         <!-- 新增設備 Modal -->
         <div x-show="showAddEquipmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
-            <div @click.away="showAddEquipmentModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
-                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <svg class="w-6 h-6" style="color: var(--equipment-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    新增設備
-                </h3>
+            <div @click.away="showAddEquipmentModal = false" class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+                <div style="background-color: #6C7362;" class="rounded-t-xl px-6 py-4 mb-4">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        新增設備
+                    </h3>
+                </div>
+                <div class="px-6 pb-6">
                 <form @submit.prevent="submitAddEquipment()" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">設備名稱 *</label>
-                        <input type="text" x-model="addEquipmentForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="text" x-model="addEquipmentForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">分類 *</label>
-                        <select x-model="addEquipmentForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <select x-model="addEquipmentForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600">
                             <option value="電力設備">電力設備</option>
                             <option value="空氣淨化">空氣淨化</option>
                             <option value="水處理">水處理</option>
@@ -923,11 +941,11 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">數量</label>
-                        <input type="number" x-model="addEquipmentForm.quantity" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="number" x-model="addEquipmentForm.quantity" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">備註</label>
-                        <textarea x-model="addEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea>
+                        <textarea x-model="addEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600"></textarea>
                     </div>
                     <div class="flex gap-4">
                         <button type="submit" class="flex-1 btn-equipment-primary justify-center">
@@ -944,18 +962,22 @@
                         </button>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
 
         <!-- 編輯設備 Modal -->
         <div x-show="showEditEquipmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
-            <div @click.away="showEditEquipmentModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
-                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <svg class="w-6 h-6" style="color: var(--equipment-primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                    </svg>
-                    編輯設備
-                </h3>
+            <div @click.away="showEditEquipmentModal = false" class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+                <div style="background-color: #6C7362;" class="rounded-t-xl px-6 py-4 mb-4">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        編輯設備
+                    </h3>
+                </div>
+                <div class="px-6 pb-6">
                 <form @submit.prevent="submitEditEquipment()" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">設備ID</label>
@@ -963,11 +985,11 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">設備名稱 *</label>
-                        <input type="text" x-model="editEquipmentForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="text" x-model="editEquipmentForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">分類 *</label>
-                        <select x-model="editEquipmentForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <select x-model="editEquipmentForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600">
                             <option value="電力設備">電力設備</option>
                             <option value="空氣淨化">空氣淨化</option>
                             <option value="水處理">水處理</option>
@@ -979,28 +1001,43 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">數量</label>
-                        <input type="number" x-model="editEquipmentForm.quantity" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="number" x-model="editEquipmentForm.quantity" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">備註</label>
-                        <textarea x-model="editEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea>
+                        <textarea x-model="editEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600"></textarea>
                     </div>
                     <div class="flex gap-4">
-                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
-                            ✅ 確認更新
+                        <button type="submit" class="flex-1 btn-equipment-primary justify-center">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            確認更新
                         </button>
-                        <button type="button" @click="showEditEquipmentModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
-                            ❌ 取消
+                        <button type="button" @click="showEditEquipmentModal = false" class="flex-1 btn-items-gray justify-center">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            取消
                         </button>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
 
         <!-- 設備檢查 Modal -->
         <div x-show="showCheckEquipmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
-            <div @click.away="showCheckEquipmentModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">🔍 設備檢查</h3>
+            <div @click.away="showCheckEquipmentModal = false" class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4">
+                <div style="background-color: #6C7362;" class="rounded-t-xl px-6 py-4 mb-4">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        設備檢查
+                    </h3>
+                </div>
+                <div class="px-6 pb-6">
                 <form @submit.prevent="submitCheckEquipment()" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">設備名稱</label>
@@ -1008,7 +1045,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">狀態 *</label>
-                        <select x-model="checkEquipmentForm.status" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <select x-model="checkEquipmentForm.status" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600">
                             <option value="NORMAL">正常 (NORMAL)</option>
                             <option value="WARNING">警告 (WARNING)</option>
                             <option value="ERROR">異常 (ERROR)</option>
@@ -1016,65 +1053,88 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">電力等級 (0-100%)</label>
-                        <input type="number" x-model="checkEquipmentForm.powerLevel" min="0" max="100" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="number" x-model="checkEquipmentForm.powerLevel" min="0" max="100" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">備註</label>
-                        <textarea x-model="checkEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea>
+                        <textarea x-model="checkEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-600"></textarea>
                     </div>
                     <div class="flex gap-4">
-                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
-                            ✅ 確認檢查
+                        <button type="submit" class="flex-1 btn-equipment-primary justify-center">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            確認檢查
                         </button>
-                        <button type="button" @click="showCheckEquipmentModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
-                            ❌ 取消
+                        <button type="button" @click="showCheckEquipmentModal = false" class="flex-1 btn-items-gray justify-center">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            取消
                         </button>
                     </div>
                 </form>
+                </div>
             </div>
         </div>
 
         <!-- 新增手術記錄 Modal -->
         <div x-show="showAddSurgeryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
-            <div @click.away="showAddSurgeryModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 my-8">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">🏥 新增手術記錄</h3>
+            <div @click.away="showAddSurgeryModal = false" class="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 my-8">
+                <div style="background-color: #4E5488;" class="rounded-t-xl px-6 py-4 mb-4">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        新增處置記錄
+                    </h3>
+                </div>
+                <div class="px-6 pb-6">
                 <form @submit.prevent="submitAddSurgery()" class="space-y-4">
                     <!-- 基本資訊 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">病患姓名 *</label>
-                            <input type="text" x-model="addSurgeryForm.patientName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <input type="text" x-model="addSurgeryForm.patientName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">手術類型 *</label>
-                            <input type="text" x-model="addSurgeryForm.surgeryType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <input type="text" x-model="addSurgeryForm.surgeryType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">主刀醫師 *</label>
-                            <input type="text" x-model="addSurgeryForm.surgeonName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <input type="text" x-model="addSurgeryForm.surgeonName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">麻醉方式</label>
-                            <input type="text" x-model="addSurgeryForm.anesthesiaType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <input type="text" x-model="addSurgeryForm.anesthesiaType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">手術時長 (分鐘)</label>
-                            <input type="number" x-model="addSurgeryForm.durationMinutes" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <input type="number" x-model="addSurgeryForm.durationMinutes" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
                         </div>
                     </div>
 
                     <!-- 備註 -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">手術備註</label>
-                        <textarea x-model="addSurgeryForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea>
+                        <textarea x-model="addSurgeryForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"></textarea>
                     </div>
 
                     <!-- 耗材清單 -->
                     <div class="border-2 border-gray-200 rounded-lg p-4">
                         <div class="flex justify-between items-center mb-3">
-                            <h4 class="text-lg font-semibold text-gray-700">📋 使用耗材</h4>
-                            <button type="button" @click="addConsumptionItem()" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 text-sm">
-                                ➕ 新增耗材
+                            <h4 class="text-lg font-semibold text-gray-700 flex items-center gap-2">
+                                <svg class="w-5 h-5" style="color: #4E5488;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                                </svg>
+                                使用耗材
+                            </h4>
+                            <button type="button" @click="addConsumptionItem()" style="background-color: #F3F2F8; color: #4E5488;" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 hover:bg-purple-600 hover:text-white">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                新增耗材
                             </button>
                         </div>
 
@@ -1082,17 +1142,19 @@
                             <template x-for="(item, index) in addSurgeryForm.consumptions" :key="index">
                                 <div class="flex gap-2 items-start border border-gray-200 rounded-lg p-3">
                                     <div class="flex-1 grid grid-cols-3 gap-2">
-                                        <select x-model="item.itemCode" @change="updateConsumptionItemName(index)" required class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                        <select x-model="item.itemCode" @change="updateConsumptionItemName(index)" required class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
                                             <option value="">選擇物品</option>
                                             <template x-for="availableItem in items" :key="availableItem.code">
                                                 <option :value="availableItem.code" x-text="`${availableItem.code} - ${availableItem.name}`"></option>
                                             </template>
                                         </select>
-                                        <input type="number" x-model="item.quantity" required min="1" placeholder="數量" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                        <input type="number" x-model="item.quantity" required min="1" placeholder="數量" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
                                         <input type="text" x-model="item.unit" readonly placeholder="單位" class="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
                                     </div>
-                                    <button type="button" @click="removeConsumptionItem(index)" class="text-red-600 hover:text-red-800 p-2">
-                                        🗑️
+                                    <button type="button" @click="removeConsumptionItem(index)" class="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
                                     </button>
                                 </div>
                             </template>
@@ -1104,21 +1166,35 @@
                     </div>
 
                     <div class="flex gap-4 pt-4">
-                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
-                            ✅ 確認建立
+                        <button type="submit" style="background-color: #4E5488;" class="flex-1 text-white px-4 py-2 rounded-lg transition-colors font-semibold flex items-center justify-center gap-2 hover:opacity-90">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            確認建立
                         </button>
-                        <button type="button" @click="showAddSurgeryModal = false; resetAddSurgeryForm()" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
-                            ❌ 取消
+                        <button type="button" @click="showAddSurgeryModal = false; resetAddSurgeryForm()" style="background-color: #F3F4F6; color: #374151;" class="flex-1 px-4 py-2 rounded-lg transition-colors font-semibold flex items-center justify-center gap-2 hover:bg-gray-300 border border-gray-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            取消
                         </button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- 手術詳情 Modal -->
+        <!-- 處置記錄詳情 Modal -->
         <div x-show="showSurgeryDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
-            <div @click.away="showSurgeryDetailModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 my-8">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">🏥 手術記錄詳情</h3>
+            <div @click.away="showSurgeryDetailModal = false" class="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 my-8">
+                <div style="background-color: #4E5488;" class="rounded-t-xl px-6 py-4 mb-4">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        處置記錄詳情
+                    </h3>
+                </div>
+                <div class="px-6 pb-6">
                 
                 <template x-if="selectedSurgery">
                     <div class="space-y-4">
@@ -1192,12 +1268,16 @@
                         </div>
 
                         <div class="pt-4">
-                            <button type="button" @click="showSurgeryDetailModal = false" class="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            <button type="button" @click="showSurgeryDetailModal = false" style="background-color: #F3F4F6; color: #374151;" class="w-full px-4 py-2 rounded-lg transition-colors font-semibold flex items-center justify-center gap-2 hover:bg-gray-300 border border-gray-300">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
                                 關閉
                             </button>
                         </div>
                     </div>
                 </template>
+                </div>
             </div>
         </div>
 
