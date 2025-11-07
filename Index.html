@@ -186,8 +186,8 @@
         .tab-receive { background-color: #047857; color: white; }
         .tab-receive:hover { background-color: #065F46; }
 
-        .tab-disposition { background-color: #7C3AED; color: white; }
-        .tab-disposition:hover { background-color: #6D28D9; }
+        .tab-disposition { background-color: #4E5488; color: white; }
+        .tab-disposition:hover { background-color: #3D4470; }
 
         .tab-blood { background-color: #DC2626; color: white; }
         .tab-blood:hover { background-color: #B91C1C; }
@@ -466,7 +466,7 @@
             <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-200">
                 <div class="flex items-center gap-6">
                     <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        <svg class="w-6 h-6" style="color: #7C3AED;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-6 h-6" style="color: #4E5488;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
                         處置管理
@@ -474,16 +474,16 @@
                     <!-- 切換按鈕組 -->
                     <div style="background-color: #F5F3FF;" class="flex gap-0 p-1 rounded-lg">
                         <button @click="dispositionMode = 'surgery'"
-                                :class="dispositionMode === 'surgery' ? 'bg-purple-600 text-white' : 'text-gray-600 hover:bg-purple-50'"
-                                class="px-4 py-2 rounded-md font-medium transition-all duration-200 flex items-center gap-2">
+                                :style="dispositionMode === 'surgery' ? 'background-color: #4E5488; color: white;' : 'color: #6B7280;'"
+                                class="px-4 py-2 rounded-md font-medium transition-all duration-200 flex items-center gap-2 hover:opacity-80">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
                             手術記錄
                         </button>
                         <button @click="dispositionMode = 'consume'"
-                                :class="dispositionMode === 'consume' ? 'bg-purple-600 text-white' : 'text-gray-600 hover:bg-purple-50'"
-                                class="px-4 py-2 rounded-md font-medium transition-all duration-200 flex items-center gap-2">
+                                :style="dispositionMode === 'consume' ? 'background-color: #4E5488; color: white;' : 'color: #6B7280;'"
+                                class="px-4 py-2 rounded-md font-medium transition-all duration-200 flex items-center gap-2 hover:opacity-80">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
@@ -493,13 +493,13 @@
                 </div>
                 <!-- 操作按鈕 -->
                 <div class="flex gap-2">
-                    <button x-show="dispositionMode === 'surgery'" @click="showAddSurgeryModal = true" style="background-color: #7C3AED;" class="text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-all duration-200 font-semibold flex items-center gap-2">
+                    <button x-show="dispositionMode === 'surgery'" @click="showAddSurgeryModal = true" style="background-color: #4E5488;" class="text-white px-4 py-2 rounded-lg transition-all duration-200 font-semibold flex items-center gap-2 hover:opacity-90">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
                         新增手術記錄
                     </button>
-                    <button x-show="dispositionMode === 'surgery'" @click="exportSurgeryCSV()" style="background-color: #10B981;" class="text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all duration-200 font-semibold flex items-center gap-2">
+                    <button x-show="dispositionMode === 'surgery'" @click="exportSurgeryCSV()" style="background-color: #4E5488;" class="text-white px-4 py-2 rounded-lg transition-all duration-200 font-semibold flex items-center gap-2 hover:opacity-90">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -570,7 +570,7 @@
                         <input type="date" x-model="surgerySearchForm.endDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
                     </div>
                     <div>
-                        <button @click="searchSurgeryRecords()" style="background-color: #7C3AED;" class="w-full mt-6 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-semibold flex items-center justify-center gap-2">
+                        <button @click="searchSurgeryRecords()" style="background-color: #4E5488;" class="w-full mt-6 text-white px-4 py-2 rounded-lg transition-colors font-semibold flex items-center justify-center gap-2 hover:opacity-90">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
@@ -601,7 +601,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="surgery.surgeon"></td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="surgery.recorded_by"></td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        <button @click="viewSurgeryDetail(surgery)" style="background-color: #F5F3FF; color: #7C3AED;" class="px-3 py-1.5 rounded-md text-sm font-medium hover:bg-purple-600 hover:text-white transition-all">
+                                        <button @click="viewSurgeryDetail(surgery)" style="background-color: #F5F3FF; color: #4E5488;" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all hover:opacity-80">
                                             詳情
                                         </button>
                                     </td>
@@ -774,7 +774,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="eq.last_check ? new Date(eq.last_check).toLocaleString('zh-TW') : '-'"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                    <button @click="checkEquipment(eq)" style="background-color: var(--equipment-light); color: var(--equipment-primary);" class="px-3 py-1.5 rounded-md text-sm font-medium hover:bg-green-600 hover:text-white transition-all">檢查</button>
+                                    <button @click="checkEquipment(eq)" style="background-color: var(--equipment-light); color: var(--equipment-primary);" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all hover:opacity-80">檢查</button>
                                     <button @click="editEquipment(eq)" class="btn-items-edit">編輯</button>
                                     <button @click="deleteEquipment(eq.id, eq.name)" class="btn-items-delete">刪除</button>
                                 </td>
