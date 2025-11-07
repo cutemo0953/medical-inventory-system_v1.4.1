@@ -203,6 +203,192 @@
             background-color: #E5E7EB;
             color: #374151;
         }
+
+        /* ==================== 響應式設計 ==================== */
+
+        /* 手機版 (<768px) */
+        @media (max-width: 767px) {
+            /* 全局容器調整 */
+            body > div {
+                padding: 1rem !important;
+            }
+
+            /* Header 手機版 */
+            .bg-white.rounded-2xl.shadow-lg {
+                padding: 1rem;
+            }
+
+            .bg-white.rounded-2xl.shadow-lg .flex {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+
+            .bg-white.rounded-2xl.shadow-lg .text-right {
+                text-align: center;
+            }
+
+            /* 即時統計 - 2x2 緊湊網格 */
+            .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4 {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 0.75rem !important;
+                margin-bottom: 1.5rem !important;
+            }
+
+            .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4 > div {
+                flex-direction: column !important;
+                padding: 1rem !important;
+                text-align: center !important;
+                gap: 0.5rem !important;
+            }
+
+            /* 統計卡片 icon 縮小 */
+            .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4 > div svg {
+                width: 2rem !important;
+                height: 2rem !important;
+            }
+
+            /* 統計數字調整 */
+            .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4 > div p.text-4xl {
+                font-size: 1.875rem !important;
+                margin-bottom: 0.25rem !important;
+            }
+
+            /* 統計標籤調整 */
+            .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4 > div p.text-sm.font-semibold {
+                font-size: 0.8125rem !important;
+                margin-bottom: 0 !important;
+            }
+
+            /* 隱藏說明文字 */
+            .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4 > div p.text-xs {
+                display: none !important;
+            }
+
+            /* 標籤頁按鈕優化 */
+            .bg-white.rounded-xl.shadow .flex.space-x-2 {
+                gap: 0.5rem !important;
+                padding: 0.5rem !important;
+                background-color: var(--gray-50);
+                border-radius: 0.5rem;
+            }
+
+            .bg-white.rounded-xl.shadow .flex.space-x-2 button {
+                padding: 0.625rem 0.75rem !important;
+                font-size: 0.875rem !important;
+                flex: 1;
+                min-width: fit-content;
+            }
+
+            .bg-white.rounded-xl.shadow .flex.space-x-2 button svg {
+                width: 1.125rem !important;
+                height: 1.125rem !important;
+            }
+
+            .bg-white.rounded-xl.shadow .flex.space-x-2 button span {
+                font-size: 0.875rem !important;
+            }
+
+            /* 分頁內容內距調整 */
+            .bg-white.rounded-xl.shadow-lg.p-6 {
+                padding: 1rem !important;
+            }
+
+            /* 處置標籤頁 - 響應式按鈕佈局 */
+            .bg-white.rounded-xl.shadow-lg.p-6 > div.flex.justify-between.items-center {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 0.75rem !important;
+            }
+
+            /* 處置切換按鈕全寬 */
+            .bg-white.rounded-xl.shadow-lg.p-6 > div > div[style*="background-color: #F5F3FF"] {
+                width: 100% !important;
+            }
+
+            .bg-white.rounded-xl.shadow-lg.p-6 > div > div[style*="background-color: #F5F3FF"] button {
+                flex: 1 !important;
+                justify-content: center !important;
+                padding: 0.75rem 0.5rem !important;
+                font-size: 0.875rem !important;
+            }
+
+            /* 處置操作按鈕垂直堆疊 */
+            .bg-white.rounded-xl.shadow-lg.p-6 > div > div.flex.gap-2 {
+                flex-direction: column !important;
+                gap: 0.5rem !important;
+                width: 100% !important;
+            }
+
+            .bg-white.rounded-xl.shadow-lg.p-6 > div > div.flex.gap-2 button {
+                width: 100% !important;
+                justify-content: center !important;
+            }
+
+            /* 表格容器 - 水平滾動 */
+            .overflow-x-auto {
+                margin: 0 -1rem;
+                padding: 0 1rem;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                min-width: 600px;
+                font-size: 0.875rem;
+            }
+
+            th, td {
+                padding: 0.5rem 0.75rem !important;
+            }
+
+            /* 模態框手機版 */
+            .fixed.inset-0 > div {
+                margin: 1rem !important;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+
+            /* 表單網格 - 單列 */
+            .grid.grid-cols-1.md\\:grid-cols-2 {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* 血庫卡片 - 調整網格 */
+            .grid.grid-cols-2.md\\:grid-cols-4 {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 0.75rem !important;
+            }
+        }
+
+        /* 極小螢幕優化 (<375px) */
+        @media (max-width: 374px) {
+            /* 統計數字更小 */
+            .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4 > div p.text-4xl {
+                font-size: 1.5rem !important;
+            }
+
+            /* 統計標籤更小 */
+            .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4 > div p.text-sm.font-semibold {
+                font-size: 0.75rem !important;
+            }
+
+            /* 統計 icon 更小 */
+            .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4 > div svg {
+                width: 1.75rem !important;
+                height: 1.75rem !important;
+            }
+
+            /* 標籤頁按鈕文字更小 */
+            .bg-white.rounded-xl.shadow .flex.space-x-2 button {
+                padding: 0.5rem !important;
+                font-size: 0.75rem !important;
+            }
+
+            .bg-white.rounded-xl.shadow .flex.space-x-2 button svg {
+                width: 1rem !important;
+                height: 1rem !important;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen">
