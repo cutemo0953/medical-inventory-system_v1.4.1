@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 醫療站庫存管理系統 - 後端 API
-版本: v1.4.1
-新增: 手術記錄管理、匯出功能
+版本: v1.4.3
+新增: 物品搜尋/篩選/排序、CSV快捷匯出、設備每日重置
 """
 
 import logging
@@ -20,6 +20,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 import uvicorn
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
+import atexit
 
 
 # ============================================================================
@@ -47,7 +50,7 @@ logger = setup_logging()
 
 class Config:
     """系統配置"""
-    VERSION = "1.4.1"
+    VERSION = "1.4.3"
     DATABASE_PATH = "medical_inventory.db"
     STATION_ID = "TC-01"
     DEBUG = True
@@ -1015,6 +1018,53 @@ app.add_middleware(
 )
 
 db = DatabaseManager(config.DATABASE_PATH)
+
+
+# ============================================================================
+# v1.4.3: 排程任務 - 每日設備重置
+# ============================================================================
+
+def reset_equipment_daily():
+    """每日 07:00 重置所有設備狀態為 UNCHECKED"""
+    try:
+        conn = sqlite3.connect(config.DATABASE_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        # 重置所有設備狀態
+        cursor.execute("""
+            UPDATE equipment
+            SET status = 'UNCHECKED',
+                last_check = NULL,
+                power_level = NULL,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE status != 'UNCHECKED'
+        """)
+
+        affected = cursor.rowcount
+        conn.commit()
+        conn.close()
+
+        logger.info(f"✅ 每日設備重置完成: 重置了 {affected} 台設備")
+
+    except Exception as e:
+        logger.error(f"❌ 設備重置失敗: {e}")
+
+
+# 初始化排程器
+scheduler = BackgroundScheduler()
+scheduler.add_job(
+    func=reset_equipment_daily,
+    trigger=CronTrigger(hour=7, minute=0),  # 每天 07:00
+    id='reset_equipment_daily',
+    name='每日設備狀態重置',
+    replace_existing=True
+)
+scheduler.start()
+logger.info("📅 排程器已啟動: 每日 07:00 執行設備重置")
+
+# 應用程式關閉時停止排程器
+atexit.register(lambda: scheduler.shutdown())
 
 
 # ============================================================================

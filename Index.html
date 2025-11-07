@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>醫療站庫存管理系統 v1.4.1</title>
+    <title>醫療站庫存管理系統 v1.4.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <style>
@@ -400,7 +400,7 @@
             }
 
             .bg-white.rounded-2xl.shadow-lg .flex.items-center.gap-2 img {
-                height: 1rem !important;
+                height: 1.5rem !important;
             }
 
             .bg-white.rounded-2xl.shadow-lg .flex.items-center.gap-2 p {
@@ -409,7 +409,34 @@
 
             /* Footer logo 調整 */
             footer img {
-                height: 2.5rem !important;
+                height: 3.5rem !important;
+            }
+
+            /* v1.4.3 工具列手機版 */
+            .items-toolbar {
+                flex-direction: column !important;
+                gap: 0.75rem !important;
+            }
+
+            .items-toolbar .search-box,
+            .items-toolbar .filter-box,
+            .items-toolbar .sort-box {
+                width: 100% !important;
+                min-width: auto !important;
+            }
+
+            .items-toolbar .export-box {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .items-toolbar .btn-export {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .items-toolbar .btn-export span {
+                display: none;
             }
         }
     </style>
@@ -426,10 +453,10 @@
                     </svg>
                     <div>
                         <h1 class="text-2xl font-bold text-gray-800">醫療站庫存系統</h1>
-                        <p class="text-sm text-gray-500">v1.4.1 - 手術記錄版</p>
+                        <p class="text-sm text-gray-500">v1.4.3 - 搜尋篩選版</p>
                         <div class="flex items-center gap-2 mt-1">
                             <p class="text-xs text-gray-400">designed by De Novo Orthopedics Inc</p>
-                            <img src="guling_logo.png" alt="De Novo Orthopedics Logo" class="h-5 object-contain">
+                            <img src="guling_logo.png" alt="De Novo Orthopedics Logo" class="h-10 object-contain">
                         </div>
                     </div>
                 </div>
@@ -575,7 +602,95 @@
                     </button>
                 </div>
             </div>
-            
+
+            <!-- v1.4.3 搜尋與篩選工具列 -->
+            <div class="items-toolbar bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4 flex gap-3 flex-wrap items-center">
+                <!-- 搜尋框 -->
+                <div class="search-box flex-1 min-w-[250px] relative">
+                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input
+                        type="text"
+                        x-model="itemSearchTerm"
+                        @input="applyItemFilters()"
+                        class="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        placeholder="搜尋代碼或名稱..."
+                    >
+                    <button
+                        x-show="itemSearchTerm"
+                        @click="itemSearchTerm = ''; applyItemFilters()"
+                        class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-200 rounded transition-colors">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- 分類篩選 -->
+                <div class="filter-box min-w-[150px] relative">
+                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    <select
+                        x-model="itemCategoryFilter"
+                        @change="applyItemFilters()"
+                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white cursor-pointer">
+                        <option value="">全部分類</option>
+                        <template x-for="category in itemCategories" :key="category">
+                            <option :value="category" x-text="category"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <!-- 排序選擇 -->
+                <div class="sort-box min-w-[150px] relative">
+                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+                    </svg>
+                    <select
+                        x-model="itemSortBy"
+                        @change="applyItemFilters()"
+                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white cursor-pointer">
+                        <option value="code-asc">代碼 ↑</option>
+                        <option value="code-desc">代碼 ↓</option>
+                        <option value="name-asc">名稱 A-Z</option>
+                        <option value="name-desc">名稱 Z-A</option>
+                        <option value="category-asc">分類 A-Z</option>
+                        <option value="category-desc">分類 Z-A</option>
+                        <option value="stock-asc">庫存 ↑</option>
+                        <option value="stock-desc">庫存 ↓</option>
+                    </select>
+                </div>
+
+                <!-- CSV 匯出按鈕組 -->
+                <div class="export-box flex gap-2">
+                    <button @click="exportItemsCSV('week')" class="btn-export px-3 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg text-sm font-medium inline-flex items-center gap-2 hover:bg-gray-100 transition-colors whitespace-nowrap">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>本週</span>
+                    </button>
+                    <button @click="exportItemsCSV('month')" class="btn-export px-3 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg text-sm font-medium inline-flex items-center gap-2 hover:bg-gray-100 transition-colors whitespace-nowrap">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>本月</span>
+                    </button>
+                    <button @click="exportItemsCSV('all')" class="btn-export px-3 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg text-sm font-medium inline-flex items-center gap-2 hover:bg-gray-100 transition-colors whitespace-nowrap">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>全部</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 結果統計 -->
+            <div class="items-stats px-4 py-3 bg-blue-50 rounded-lg mb-4 text-sm text-gray-700">
+                <span>顯示 <strong class="text-blue-600 font-semibold" x-text="filteredItems.length"></strong> / <strong class="text-blue-600 font-semibold" x-text="allItems.length"></strong> 項物品</span>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 table-hover">
                     <thead class="bg-gray-50">
@@ -590,7 +705,7 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        <template x-for="item in items" :key="item.code">
+                        <template x-for="item in filteredItems" :key="item.code">
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900" x-text="item.code"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="item.name"></td>
@@ -1417,20 +1532,12 @@
                         <!-- 基本資訊 -->
                         <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                             <div>
-                                <p class="text-sm text-gray-600">記錄編號</p>
-                                <p class="font-semibold" x-text="selectedSurgery.record_number"></p>
+                                <p class="text-sm text-gray-600">記錄ID</p>
+                                <p class="font-semibold" x-text="selectedSurgery.id"></p>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-600">日期</p>
-                                <p class="font-semibold" x-text="selectedSurgery.record_date"></p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-600">病患姓名</p>
-                                <p class="font-semibold" x-text="selectedSurgery.patient_name"></p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-600">當日第 N 台</p>
-                                <p class="font-semibold" x-text="selectedSurgery.surgery_sequence"></p>
+                                <p class="text-sm text-gray-600">日期時間</p>
+                                <p class="font-semibold" x-text="new Date(selectedSurgery.surgery_datetime).toLocaleString('zh-TW')"></p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">手術類型</p>
@@ -1438,22 +1545,16 @@
                             </div>
                             <div>
                                 <p class="text-sm text-gray-600">主刀醫師</p>
-                                <p class="font-semibold" x-text="selectedSurgery.surgeon_name"></p>
+                                <p class="font-semibold" x-text="selectedSurgery.surgeon"></p>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-600">麻醉方式</p>
-                                <p class="font-semibold" x-text="selectedSurgery.anesthesia_type || '-'"></p>
+                                <p class="text-sm text-gray-600">記錄人</p>
+                                <p class="font-semibold" x-text="selectedSurgery.recorded_by"></p>
                             </div>
                             <div>
-                                <p class="text-sm text-gray-600">手術時長</p>
-                                <p class="font-semibold" x-text="selectedSurgery.duration_minutes ? selectedSurgery.duration_minutes + ' 分鐘' : '-'"></p>
+                                <p class="text-sm text-gray-600">備註</p>
+                                <p class="font-semibold" x-text="selectedSurgery.notes || '-'"></p>
                             </div>
-                        </div>
-
-                        <!-- 備註 -->
-                        <div x-show="selectedSurgery.remarks" class="bg-yellow-50 p-4 rounded-lg">
-                            <p class="text-sm text-gray-600 mb-1">備註</p>
-                            <p class="text-gray-800" x-text="selectedSurgery.remarks"></p>
                         </div>
 
                         <!-- 耗材清單 -->
@@ -1516,7 +1617,7 @@
         <!-- Footer -->
         <footer class="mt-8 py-6 border-t border-gray-200">
             <div class="flex justify-center items-center">
-                <img src="iRehab_logo.png" alt="iRehab Logo" class="h-12 object-contain opacity-70 hover:opacity-100 transition-opacity">
+                <img src="iRehab_logo.png" alt="iRehab Logo" class="h-20 object-contain opacity-70 hover:opacity-100 transition-opacity">
             </div>
         </footer>
 
@@ -1536,6 +1637,14 @@
                 bloodInventory: [],
                 equipment: [],
                 surgeryRecords: [],
+
+                // v1.4.3 物品查詢過濾
+                allItems: [],
+                filteredItems: [],
+                itemCategories: [],
+                itemSearchTerm: '',
+                itemCategoryFilter: '',
+                itemSortBy: 'code-asc',
                 stats: {
                     totalItems: 0,
                     lowStockItems: 0,
@@ -1687,6 +1796,16 @@
                         if (response.ok) {
                             const data = await response.json();
                             this.items = data.items;
+
+                            // v1.4.3: 初始化過濾資料
+                            this.allItems = [...data.items];
+
+                            // 提取所有分類
+                            const categories = new Set(data.items.map(item => item.category));
+                            this.itemCategories = Array.from(categories).sort();
+
+                            // 應用過濾
+                            this.applyItemFilters();
                         }
                     } catch (error) {
                         console.error('載入物品失敗:', error);
@@ -1792,6 +1911,124 @@
                         console.error('刪除物品失敗:', error);
                         this.toast('刪除物品失敗', 'error');
                     }
+                },
+
+                // v1.4.3: 應用物品過濾、排序
+                applyItemFilters() {
+                    let filtered = [...this.allItems];
+
+                    // 1. 搜尋過濾
+                    if (this.itemSearchTerm) {
+                        const searchLower = this.itemSearchTerm.toLowerCase();
+                        filtered = filtered.filter(item =>
+                            item.code.toLowerCase().includes(searchLower) ||
+                            item.name.toLowerCase().includes(searchLower)
+                        );
+                    }
+
+                    // 2. 分類過濾
+                    if (this.itemCategoryFilter) {
+                        filtered = filtered.filter(item =>
+                            item.category === this.itemCategoryFilter
+                        );
+                    }
+
+                    // 3. 排序
+                    const [field, order] = this.itemSortBy.split('-');
+                    filtered.sort((a, b) => {
+                        let compareA, compareB;
+
+                        switch(field) {
+                            case 'code':
+                                compareA = a.code;
+                                compareB = b.code;
+                                break;
+                            case 'name':
+                                compareA = a.name;
+                                compareB = b.name;
+                                break;
+                            case 'category':
+                                compareA = a.category;
+                                compareB = b.category;
+                                break;
+                            case 'stock':
+                                compareA = a.current_stock || 0;
+                                compareB = b.current_stock || 0;
+                                break;
+                        }
+
+                        if (typeof compareA === 'string') {
+                            compareA = compareA.toLowerCase();
+                            compareB = compareB.toLowerCase();
+                        }
+
+                        if (order === 'asc') {
+                            return compareA > compareB ? 1 : -1;
+                        } else {
+                            return compareA < compareB ? 1 : -1;
+                        }
+                    });
+
+                    this.filteredItems = filtered;
+                },
+
+                // v1.4.3: CSV 匯出
+                exportItemsCSV(range) {
+                    let itemsToExport = [...this.filteredItems];
+                    const now = new Date();
+                    let filename = '';
+
+                    if (range === 'week') {
+                        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        itemsToExport = itemsToExport.filter(item => {
+                            const itemDate = item.updated_at ? new Date(item.updated_at) : new Date(item.created_at || now);
+                            return itemDate >= weekAgo;
+                        });
+                        filename = `物品清單_本週_${this.formatDateForFilename(now)}.csv`;
+                    } else if (range === 'month') {
+                        const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+                        itemsToExport = itemsToExport.filter(item => {
+                            const itemDate = item.updated_at ? new Date(item.updated_at) : new Date(item.created_at || now);
+                            return itemDate >= monthAgo;
+                        });
+                        filename = `物品清單_本月_${this.formatDateForFilename(now)}.csv`;
+                    } else {
+                        filename = `物品清單_全部_${this.formatDateForFilename(now)}.csv`;
+                    }
+
+                    // 生成 CSV
+                    const headers = ['代碼', '名稱', '分類', '當前庫存', '最小庫存', '單位'];
+                    const rows = itemsToExport.map(item => [
+                        item.code,
+                        item.name,
+                        item.category,
+                        item.current_stock || 0,
+                        item.min_stock || 0,
+                        item.unit || ''
+                    ]);
+
+                    const csv = [
+                        headers.join(','),
+                        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+                    ].join('\n');
+
+                    // 下載 (加 BOM 支援中文)
+                    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename;
+                    link.click();
+
+                    // 提示
+                    this.toast(`已匯出 ${itemsToExport.length} 項物品`, 'success');
+                },
+
+                // v1.4.3: 日期格式化 for 檔名
+                formatDateForFilename(date) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    return `${year}${month}${day}`;
                 },
 
                 // 進貨
