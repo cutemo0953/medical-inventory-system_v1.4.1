@@ -438,14 +438,17 @@ class DatabaseManager:
 
             # 初始化預設設備
             self._init_default_equipment(cursor)
-            
+
+            # v1.4.4: 資料遷移 - 為舊血袋記錄添加容量欄位
+            self._migrate_blood_bags_volume(cursor)
+
             # 初始化血型庫存
             for blood_type in config.BLOOD_TYPES:
                 cursor.execute("""
                     INSERT OR IGNORE INTO blood_inventory (blood_type, quantity, station_id)
                     VALUES (?, 0, ?)
                 """, (blood_type, config.STATION_ID))
-            
+
             conn.commit()
             logger.info("資料庫初始化完成")
             
@@ -464,13 +467,51 @@ class DatabaseManager:
             ('water-1', '淨水器', '水處理'),
             ('fridge-1', '行動冰箱', '冷藏設備')
         ]
-        
+
         for eq_id, eq_name, eq_category in default_equipment:
             cursor.execute("""
                 INSERT OR IGNORE INTO equipment (id, name, category, quantity, status)
                 VALUES (?, ?, ?, 1, 'UNCHECKED')
             """, (eq_id, eq_name, eq_category))
-    
+
+    def _migrate_blood_bags_volume(self, cursor):
+        """資料遷移：為舊血袋記錄添加容量欄位"""
+        try:
+            # 檢查 blood_bags 表是否存在 volume 欄位
+            cursor.execute("PRAGMA table_info(blood_bags)")
+            columns = [column[1] for column in cursor.fetchall()]
+
+            # 如果 volume 欄位不存在，則添加
+            if 'volume' not in columns:
+                logger.info("檢測到舊血袋資料結構，開始遷移...")
+                cursor.execute("ALTER TABLE blood_bags ADD COLUMN volume INTEGER DEFAULT 250")
+                logger.info("✅ 已添加 volume 欄位")
+
+            # 如果 volume_unit 欄位不存在，則添加
+            if 'volume_unit' not in columns:
+                cursor.execute("ALTER TABLE blood_bags ADD COLUMN volume_unit TEXT DEFAULT 'ml'")
+                logger.info("✅ 已添加 volume_unit 欄位")
+
+            # 更新所有 NULL 值為預設值
+            cursor.execute("""
+                UPDATE blood_bags
+                SET volume = 250
+                WHERE volume IS NULL
+            """)
+
+            cursor.execute("""
+                UPDATE blood_bags
+                SET volume_unit = 'ml'
+                WHERE volume_unit IS NULL
+            """)
+
+            updated = cursor.rowcount
+            if updated > 0:
+                logger.info(f"✅ 已更新 {updated} 筆舊血袋記錄的容量資訊")
+
+        except Exception as e:
+            logger.warning(f"血袋資料遷移警告: {e}")
+
     def generate_item_code(self, category: str) -> str:
         """根據分類自動生成物品代碼"""
         CATEGORY_PREFIXES = {

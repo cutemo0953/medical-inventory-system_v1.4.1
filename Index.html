@@ -412,17 +412,13 @@
                 height: 3.5rem !important;
             }
 
-            /* v1.4.3 工具列手機版 */
-            .items-toolbar {
-                flex-direction: column !important;
-                gap: 0.75rem !important;
+            /* v1.4.3 工具列手機版 - 已優化為兩行佈局 */
+            .items-toolbar .export-box {
+                justify-content: flex-start;
             }
 
-            .items-toolbar .search-box,
-            .items-toolbar .filter-box,
-            .items-toolbar .sort-box {
-                width: 100% !important;
-                min-width: auto !important;
+            .items-toolbar .btn-export {
+                font-size: 0.8125rem;
             }
 
             .items-toolbar .export-box {
@@ -904,81 +900,81 @@
                 </div>
             </div>
 
-            <!-- v1.4.3 搜尋與篩選工具列 -->
-            <div class="items-toolbar bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4 flex gap-3 flex-wrap items-center">
-                <!-- 搜尋框 -->
-                <div class="search-box flex-1 min-w-[250px] relative">
-                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <input
-                        type="text"
-                        x-model="itemSearchTerm"
-                        @input="applyItemFilters()"
-                        class="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                        placeholder="搜尋代碼或名稱..."
-                    >
-                    <button
-                        x-show="itemSearchTerm"
-                        @click="itemSearchTerm = ''; applyItemFilters()"
-                        class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-200 rounded transition-colors">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
+            <!-- v1.4.3 搜尋與篩選工具列 - 兩行佈局 -->
+            <div class="items-toolbar bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4">
+                <!-- 第一行：搜尋、分類、排序 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <!-- 搜尋框 -->
+                    <div class="search-box">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">🔍 關鍵字搜尋</label>
+                        <div class="relative">
+                            <input
+                                type="text"
+                                x-model="itemSearchTerm"
+                                @input="applyItemFilters()"
+                                class="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                placeholder="搜尋代碼或名稱..."
+                            >
+                            <button
+                                x-show="itemSearchTerm"
+                                @click="itemSearchTerm = ''; applyItemFilters()"
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-200 rounded transition-colors">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 分類篩選 -->
+                    <div class="filter-box">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">📁 分類篩選</label>
+                        <select
+                            x-model="itemCategoryFilter"
+                            @change="applyItemFilters()"
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white cursor-pointer">
+                            <option value="">全部分類</option>
+                            <template x-for="category in itemCategories" :key="category">
+                                <option :value="category" x-text="category"></option>
+                            </template>
+                        </select>
+                    </div>
+
+                    <!-- 排序選擇 -->
+                    <div class="sort-box">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">⬆️ 排序方式</label>
+                        <select
+                            x-model="itemSortBy"
+                            @change="applyItemFilters()"
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white cursor-pointer">
+                            <option value="code-asc">代碼 ↑</option>
+                            <option value="code-desc">代碼 ↓</option>
+                            <option value="name-asc">名稱 A-Z</option>
+                            <option value="name-desc">名稱 Z-A</option>
+                            <option value="category-asc">分類 A-Z</option>
+                            <option value="category-desc">分類 Z-A</option>
+                            <option value="stock-asc">庫存 ↑</option>
+                            <option value="stock-desc">庫存 ↓</option>
+                        </select>
+                    </div>
                 </div>
 
-                <!-- 分類篩選 -->
-                <div class="filter-box min-w-[150px] relative">
-                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                    </svg>
-                    <select
-                        x-model="itemCategoryFilter"
-                        @change="applyItemFilters()"
-                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white cursor-pointer">
-                        <option value="">全部分類</option>
-                        <template x-for="category in itemCategories" :key="category">
-                            <option :value="category" x-text="category"></option>
-                        </template>
-                    </select>
-                </div>
-
-                <!-- 排序選擇 -->
-                <div class="sort-box min-w-[150px] relative">
-                    <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
-                    </svg>
-                    <select
-                        x-model="itemSortBy"
-                        @change="applyItemFilters()"
-                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white cursor-pointer">
-                        <option value="code-asc">代碼 ↑</option>
-                        <option value="code-desc">代碼 ↓</option>
-                        <option value="name-asc">名稱 A-Z</option>
-                        <option value="name-desc">名稱 Z-A</option>
-                        <option value="category-asc">分類 A-Z</option>
-                        <option value="category-desc">分類 Z-A</option>
-                        <option value="stock-asc">庫存 ↑</option>
-                        <option value="stock-desc">庫存 ↓</option>
-                    </select>
-                </div>
-
-                <!-- CSV 匯出按鈕組 -->
-                <div class="export-box flex gap-2">
-                    <button @click="exportItemsCSV('week')" class="btn-export px-3 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg text-sm font-medium inline-flex items-center gap-2 hover:bg-gray-100 transition-colors whitespace-nowrap">
+                <!-- 第二行：CSV 匯出按鈕組 -->
+                <div class="export-box flex flex-wrap gap-2 items-center">
+                    <span class="text-sm font-medium text-gray-700">📥 匯出資料：</span>
+                    <button @click="exportItemsCSV('week')" class="btn-export px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg text-sm font-medium inline-flex items-center gap-2 hover:bg-gray-100 transition-colors whitespace-nowrap">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                         <span>本週</span>
                     </button>
-                    <button @click="exportItemsCSV('month')" class="btn-export px-3 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg text-sm font-medium inline-flex items-center gap-2 hover:bg-gray-100 transition-colors whitespace-nowrap">
+                    <button @click="exportItemsCSV('month')" class="btn-export px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg text-sm font-medium inline-flex items-center gap-2 hover:bg-gray-100 transition-colors whitespace-nowrap">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                         <span>本月</span>
                     </button>
-                    <button @click="exportItemsCSV('all')" class="btn-export px-3 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg text-sm font-medium inline-flex items-center gap-2 hover:bg-gray-100 transition-colors whitespace-nowrap">
+                    <button @click="exportItemsCSV('all')" class="btn-export px-3 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg text-sm font-medium inline-flex items-center gap-2 hover:bg-gray-100 transition-colors whitespace-nowrap">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -1189,21 +1185,37 @@
             <!-- 手術記錄內容 -->
             <div x-show="dispositionMode === 'surgery'">
                 <!-- 搜尋篩選 -->
-                <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
-                        <input type="date" x-model="surgerySearchForm.startDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                <div class="mb-4 space-y-3">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">關鍵字搜尋</label>
+                            <input type="text"
+                                   x-model="surgerySearchForm.patientName"
+                                   @input="searchSurgeryRecords()"
+                                   placeholder="搜尋病患編號、處置類型、備註..."
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
+                            <input type="date" x-model="surgerySearchForm.startDate" @change="searchSurgeryRecords()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
+                            <input type="date" x-model="surgerySearchForm.endDate" @change="searchSurgeryRecords()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
-                        <input type="date" x-model="surgerySearchForm.endDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
-                    </div>
-                    <div>
-                        <button @click="searchSurgeryRecords()" style="background-color: #4E5488;" class="w-full mt-6 text-white px-4 py-2 rounded-lg transition-colors font-semibold flex items-center justify-center gap-2 hover:opacity-90">
+                    <div class="flex gap-2">
+                        <button @click="searchSurgeryRecords()" style="background-color: #4E5488;" class="text-white px-4 py-2 rounded-lg transition-colors font-semibold flex items-center gap-2 hover:opacity-90">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
                             搜尋
+                        </button>
+                        <button @click="surgerySearchForm = {startDate: '', endDate: '', patientName: ''}; searchSurgeryRecords()" class="btn-items-gray">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            清除篩選
                         </button>
                     </div>
                 </div>
@@ -1230,7 +1242,7 @@
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="surgery.surgeon"></td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="surgery.recorded_by"></td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        <button @click="showAddSurgeryModal = false; viewSurgeryDetail(surgery)" style="background-color: #F5F3FF; color: #4E5488;" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all hover:opacity-80 inline-flex items-center gap-1.5">
+                                        <button @click="viewSurgeryDetail(surgery)" style="background-color: #F5F3FF; color: #4E5488;" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all hover:opacity-80 inline-flex items-center gap-1.5">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
@@ -1752,7 +1764,16 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">操作者 PIN *</label>
-                            <input type="password" x-model="transfusionForm.operator_pin" required minlength="4" maxlength="6" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="請輸入操作者PIN碼">
+                            <input type="password"
+                                   x-model="transfusionForm.operator_pin"
+                                   required
+                                   pattern="\d{4}"
+                                   minlength="4"
+                                   maxlength="4"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                                   placeholder="請輸入 4 位數字 PIN 碼"
+                                   title="請輸入 4 位數字">
+                            <small class="text-gray-500 text-xs mt-1 block">請輸入 4 位數字組成的 PIN 碼</small>
                         </div>
 
                         <div class="flex gap-4">
@@ -2855,8 +2876,15 @@
 
                 async loadCompatibleBags() {
                     const patientBloodType = this.transfusionForm.patient_blood_type;
+
+                    console.log('📋 載入相容血袋，病患血型:', patientBloodType);
+
                     if (!patientBloodType) {
                         this.compatibleBags = [];
+                        const select = document.querySelector('select[x-model="transfusionForm.bag_id"]');
+                        if (select) {
+                            select.innerHTML = '<option value="">請先選擇病患血型</option>';
+                        }
                         return;
                     }
 
@@ -2869,19 +2897,41 @@
                             const data = await response.json();
                             this.compatibleBags = data.bags || [];
 
+                            console.log(`✅ 找到 ${this.compatibleBags.length} 個相容血袋:`, this.compatibleBags);
+
                             // 更新下拉選單
                             const select = document.querySelector('select[x-model="transfusionForm.bag_id"]');
                             if (select) {
-                                select.innerHTML = '<option value="">請選擇血袋</option>' +
-                                    this.compatibleBags.map(bag =>
-                                        `<option value="${bag.bag_id}">${bag.bag_id} - ${bag.blood_type} (${bag.expiry_date})</option>`
-                                    ).join('');
+                                if (this.compatibleBags.length === 0) {
+                                    select.innerHTML = '<option value="">⚠️ 目前沒有相容的可用血袋</option>';
+                                    this.toast('目前沒有相容的可用血袋', 'warning');
+                                } else {
+                                    select.innerHTML = '<option value="">請選擇血袋</option>' +
+                                        this.compatibleBags.map(bag => {
+                                            const volume = bag.volume || 250;
+                                            const volumeUnit = bag.volume_unit || 'ml';
+                                            const isExpiringSoon = this.checkExpiringSoon(bag.expiry_date);
+                                            const expiryWarning = isExpiringSoon ? ' ⚠️ 即將過期' : '';
+
+                                            return `<option value="${bag.bag_id}">${bag.bag_id} - ${bag.blood_type} (${volume}${volumeUnit}) - 效期: ${bag.expiry_date}${expiryWarning}</option>`;
+                                        }).join('');
+                                }
                             }
+                        } else {
+                            console.error('❌ API 回應錯誤:', response.status);
+                            this.toast('載入血袋資料失敗', 'error');
                         }
                     } catch (error) {
-                        console.error('載入相容血袋失敗:', error);
+                        console.error('❌ 載入相容血袋失敗:', error);
                         this.toast('載入相容血袋失敗', 'error');
                     }
+                },
+
+                checkExpiringSoon(expiryDate) {
+                    const today = new Date();
+                    const expiry = new Date(expiryDate);
+                    const daysUntilExpiry = Math.floor((expiry - today) / (1000 * 60 * 60 * 24));
+                    return daysUntilExpiry <= 7 && daysUntilExpiry >= 0;
                 },
 
                 async submitDonation() {
@@ -2921,6 +2971,20 @@
                 },
 
                 async submitTransfusion() {
+                    // PIN 格式驗證
+                    const pin = this.transfusionForm.operator_pin;
+
+                    if (!pin) {
+                        this.toast('請輸入操作者 PIN 碼', 'error');
+                        return;
+                    }
+
+                    // 驗證 PIN 格式 (4位數字)
+                    if (!/^\d{4}$/.test(pin)) {
+                        this.toast('PIN 碼格式錯誤！請輸入 4 位數字', 'error');
+                        return;
+                    }
+
                     try {
                         const response = await fetch(`${this.apiUrl}/blood/transfusions`, {
                             method: 'POST',
@@ -2949,7 +3013,12 @@
                             await this.loadBloodInventory();
                             await this.loadStats();
                         } else {
-                            this.toast(data.detail || '記錄失敗', 'error');
+                            // 檢查是否為 PIN 驗證錯誤
+                            if (data.detail && data.detail.includes('PIN')) {
+                                this.toast('PIN 碼驗證失敗！請檢查 PIN 碼是否正確', 'error');
+                            } else {
+                                this.toast(data.detail || '記錄失敗', 'error');
+                            }
                         }
                     } catch (error) {
                         console.error('輸血記錄失敗:', error);
@@ -3249,8 +3318,15 @@
                 },
 
                 viewSurgeryDetail(record) {
+                    console.log('📋 查看處置記錄詳情:', record);
+                    if (!record) {
+                        console.error('❌ 處置記錄資料為空');
+                        this.toast('無法載入記錄詳情', 'error');
+                        return;
+                    }
                     this.selectedSurgery = record;
                     this.showSurgeryDetailModal = true;
+                    console.log('✅ 已開啟詳情視窗');
                 },
 
                 async exportSurgeryCSV() {
