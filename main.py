@@ -181,6 +181,8 @@ class BloodBagCreate(BaseModel):
     blood_type: str = Field(..., description="血型")
     donation_date: str = Field(..., description="採集日期 YYYY-MM-DD")
     expiry_date: str = Field(..., description="有效期限 YYYY-MM-DD")
+    volume: int = Field(250, ge=1, le=1000, description="容量")
+    volume_unit: str = Field("ml", description="單位 (ml/U)")
     donor_code: Optional[str] = Field(None, description="捐血者代碼")
     source: str = Field(..., description="來源")
     notes: Optional[str] = None
@@ -368,6 +370,8 @@ class DatabaseManager:
                     blood_type TEXT NOT NULL,
                     donation_date TEXT NOT NULL,
                     expiry_date TEXT NOT NULL,
+                    volume INTEGER DEFAULT 250,
+                    volume_unit TEXT DEFAULT 'ml',
                     donor_code TEXT,
                     source TEXT NOT NULL,
                     status TEXT DEFAULT 'available',
@@ -1616,13 +1620,15 @@ async def add_blood_bag(bag: BloodBagCreate):
         # 插入血袋
         cursor.execute("""
             INSERT INTO blood_bags
-            (bag_id, blood_type, donation_date, expiry_date, donor_code, source, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            (bag_id, blood_type, donation_date, expiry_date, volume, volume_unit, donor_code, source, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             bag.bag_id,
             bag.blood_type,
             bag.donation_date,
             bag.expiry_date,
+            bag.volume,
+            bag.volume_unit,
             bag.donor_code,
             bag.source,
             bag.notes
@@ -1864,6 +1870,50 @@ async def get_transfusion_records(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"查詢輸血記錄失敗: {str(e)}"
+        )
+
+
+# ============================================================================
+# Scheduler Management APIs
+# ============================================================================
+
+@app.post("/api/equipment/reset-daily")
+async def manual_reset_equipment():
+    """手動觸發設備每日重置（測試用）"""
+    try:
+        reset_equipment_daily()
+        return {"success": True, "message": "設備已重置"}
+    except Exception as e:
+        logger.error(f"手動重置設備失敗: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"重置失敗: {str(e)}"
+        )
+
+
+@app.get("/api/scheduler/status")
+async def get_scheduler_status():
+    """查詢排程器狀態"""
+    try:
+        jobs = []
+        for job in scheduler.get_jobs():
+            jobs.append({
+                'id': job.id,
+                'name': job.name,
+                'next_run_time': str(job.next_run_time) if job.next_run_time else None,
+                'trigger': str(job.trigger)
+            })
+
+        return {
+            "success": True,
+            "running": scheduler.running,
+            "jobs": jobs
+        }
+    except Exception as e:
+        logger.error(f"查詢排程器狀態失敗: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"查詢失敗: {str(e)}"
         )
 
 
