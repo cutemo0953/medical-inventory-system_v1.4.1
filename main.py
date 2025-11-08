@@ -47,11 +47,11 @@ logger = setup_logging()
 
 class Config:
     """系統配置"""
-    VERSION = "1.4.1"
+    VERSION = "1.4.4"
     DATABASE_PATH = "medical_inventory.db"
     STATION_ID = "TC-01"
     DEBUG = True
-    
+
     # 血型列表
     BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']
 
@@ -974,10 +974,10 @@ class DatabaseManager:
         """取得所有物品及庫存"""
         conn = self.get_connection()
         cursor = conn.cursor()
-        
+
         try:
             cursor.execute("""
-                SELECT 
+                SELECT
                     i.code, i.name, i.unit, i.min_stock, i.category,
                     COALESCE(stock.current_stock, 0) as current_stock
                 FROM items i
@@ -994,6 +994,119 @@ class DatabaseManager:
             return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
+
+    def get_inventory_events(
+        self,
+        event_type: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
+        item_code: Optional[str] = None,
+        limit: int = 100
+    ) -> List[Dict]:
+        """查詢庫存事件記錄"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            where_clauses = []
+            params = []
+
+            if event_type:
+                where_clauses.append("e.event_type = ?")
+                params.append(event_type)
+
+            if start_date:
+                where_clauses.append("DATE(e.timestamp) >= ?")
+                params.append(start_date)
+
+            if end_date:
+                where_clauses.append("DATE(e.timestamp) <= ?")
+                params.append(end_date)
+
+            if item_code:
+                where_clauses.append("e.item_code LIKE ?")
+                params.append(f"%{item_code}%")
+
+            where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
+            params.append(limit)
+
+            cursor.execute(f"""
+                SELECT
+                    e.id, e.event_type, e.item_code, i.name as item_name,
+                    e.quantity, i.unit, e.batch_number, e.expiry_date,
+                    e.remarks, e.station_id, e.operator, e.timestamp
+                FROM inventory_events e
+                LEFT JOIN items i ON e.item_code = i.code
+                WHERE {where_sql}
+                ORDER BY e.timestamp DESC
+                LIMIT ?
+            """, params)
+
+            return [dict(row) for row in cursor.fetchall()]
+        finally:
+            conn.close()
+
+    def export_inventory_csv(self) -> str:
+        """匯出庫存資料為 CSV"""
+        items = self.get_inventory_items()
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow([
+            '物品代碼', '物品名稱', '分類', '單位',
+            '當前庫存', '最小庫存', '庫存狀態'
+        ])
+
+        for item in items:
+            status = '正常' if item['current_stock'] >= item['min_stock'] else '警戒'
+            writer.writerow([
+                item['code'],
+                item['name'],
+                item['category'],
+                item['unit'],
+                item['current_stock'],
+                item['min_stock'],
+                status
+            ])
+
+        return output.getvalue()
+
+    def export_inventory_events_csv(
+        self,
+        event_type: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None
+    ) -> str:
+        """匯出庫存事件記錄為 CSV"""
+        events = self.get_inventory_events(event_type, start_date, end_date, limit=10000)
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        writer.writerow([
+            '事件ID', '事件類型', '物品代碼', '物品名稱', '數量', '單位',
+            '批號', '效期', '備註', '站點', '操作員', '時間'
+        ])
+
+        for event in events:
+            event_type_text = '進貨' if event['event_type'] == 'RECEIVE' else '消耗'
+            writer.writerow([
+                event['id'],
+                event_type_text,
+                event['item_code'],
+                event['item_name'],
+                event['quantity'],
+                event['unit'],
+                event.get('batch_number', ''),
+                event.get('expiry_date', ''),
+                event.get('remarks', ''),
+                event['station_id'],
+                event['operator'],
+                event['timestamp']
+            ])
+
+        return output.getvalue()
 
 
 # ============================================================================
@@ -1363,9 +1476,9 @@ async def export_surgery_csv(
     """匯出手術記錄 CSV"""
     try:
         csv_content = db.export_surgery_records_csv(start_date, end_date)
-        
+
         filename = f"surgery_records_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-        
+
         return StreamingResponse(
             iter([csv_content]),
             media_type="text/csv",
@@ -1373,6 +1486,83 @@ async def export_surgery_csv(
         )
     except Exception as e:
         logger.error(f"匯出 CSV 失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ========== 庫存事件查詢與匯出 API (新增) ==========
+
+@app.get("/api/inventory/events")
+async def get_inventory_events(
+    event_type: Optional[str] = Query(None, description="事件類型 RECEIVE/CONSUME"),
+    start_date: Optional[str] = Query(None, description="開始日期 YYYY-MM-DD"),
+    end_date: Optional[str] = Query(None, description="結束日期 YYYY-MM-DD"),
+    item_code: Optional[str] = Query(None, description="物品代碼(模糊搜尋)"),
+    limit: int = Query(100, ge=1, le=1000, description="最大回傳筆數")
+):
+    """查詢庫存事件記錄（進貨/消耗）"""
+    try:
+        events = db.get_inventory_events(event_type, start_date, end_date, item_code, limit)
+        return {"events": events, "count": len(events)}
+    except Exception as e:
+        logger.error(f"查詢庫存事件失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/inventory/export/csv")
+async def export_inventory_csv():
+    """匯出庫存清單 CSV"""
+    try:
+        csv_content = db.export_inventory_csv()
+
+        filename = f"inventory_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+
+        return StreamingResponse(
+            iter([csv_content]),
+            media_type="text/csv;charset=utf-8",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        logger.error(f"匯出庫存 CSV 失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/inventory/export/json")
+async def export_inventory_json():
+    """匯出庫存清單 JSON"""
+    try:
+        items = db.get_inventory_items()
+
+        filename = f"inventory_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+        return StreamingResponse(
+            iter([json.dumps(items, ensure_ascii=False, indent=2)]),
+            media_type="application/json;charset=utf-8",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        logger.error(f"匯出庫存 JSON 失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/inventory/events/export/csv")
+async def export_inventory_events_csv(
+    event_type: Optional[str] = Query(None, description="事件類型 RECEIVE/CONSUME"),
+    start_date: Optional[str] = Query(None, description="開始日期 YYYY-MM-DD"),
+    end_date: Optional[str] = Query(None, description="結束日期 YYYY-MM-DD")
+):
+    """匯出庫存事件記錄 CSV"""
+    try:
+        csv_content = db.export_inventory_events_csv(event_type, start_date, end_date)
+
+        filename = f"inventory_events_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+
+        return StreamingResponse(
+            iter([csv_content]),
+            media_type="text/csv;charset=utf-8",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        logger.error(f"匯出事件記錄 CSV 失敗: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1390,11 +1580,15 @@ if __name__ == "__main__":
     print(f"📖 API文件: http://localhost:8000/docs")
     print(f"📊 健康檢查: http://localhost:8000/api/health")
     print("=" * 70)
-    print("✨ 新功能: 手術記錄管理、CSV匯出")
+    print("✨ v1.4.4 新功能:")
+    print("   - 手術記錄管理與匯出")
+    print("   - 庫存事件查詢（進貨/消耗記錄）")
+    print("   - 多格式匯出（CSV、JSON）")
+    print("   - 改進搜尋與篩選功能")
     print("=" * 70)
     print("按 Ctrl+C 停止服務")
     print("=" * 70)
-    
+
     uvicorn.run(
         app,
         host="0.0.0.0",

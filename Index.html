@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>醫療站庫存管理系統 v1.4.1</title>
+    <title>醫療站庫存管理系統 v1.4.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <style>
@@ -53,7 +53,7 @@
                     </svg>
                     <div>
                         <h1 class="text-2xl font-bold text-gray-800">醫療站庫存系統</h1>
-                        <p class="text-sm text-gray-500">v1.4.1 - 手術記錄版</p>
+                        <p class="text-sm text-gray-500">v1.4.4 - UI優化版</p>
                     </div>
                 </div>
                 <div class="text-right">
@@ -171,7 +171,23 @@
                     </button>
                 </div>
             </div>
-            
+
+            <!-- 搜尋框和匯出按鈕 -->
+            <div class="mb-4 flex gap-4 items-end">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">🔍 搜尋物品</label>
+                    <input type="text" x-model="itemSearchText" @input="filterItems()" placeholder="輸入代碼或名稱搜尋..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                </div>
+                <div class="flex gap-2">
+                    <button @click="exportInventoryCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                        <span>📊</span> <span>CSV</span>
+                    </button>
+                    <button @click="exportInventoryJSON()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2">
+                        <span>📄</span> <span>JSON</span>
+                    </button>
+                </div>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 table-hover">
                     <thead class="bg-gray-50">
@@ -186,7 +202,7 @@
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        <template x-for="item in items" :key="item.code">
+                        <template x-for="item in filteredItems" :key="item.code">
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900" x-text="item.code"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="item.name"></td>
@@ -212,18 +228,35 @@
 
         <!-- 進貨分頁 -->
         <div x-show="currentTab === 'receive'" class="bg-white rounded-xl shadow-lg p-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">📥 進貨登記</h2>
-            
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">📥 進貨登記</h2>
+                <button @click="showReceiveHistoryModal = true; loadReceiveHistory()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    📋 查看進貨記錄
+                </button>
+            </div>
+
             <form @submit.prevent="submitReceive()" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼 *</label>
-                        <select x-model="receiveForm.itemCode" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                            <option value="">請選擇物品</option>
-                            <template x-for="item in items" :key="item.code">
-                                <option :value="item.code" x-text="`${item.code} - ${item.name}`"></option>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼 * (可搜尋)</label>
+                        <input
+                            type="text"
+                            x-model="receiveItemSearch"
+                            @input="filterReceiveItems()"
+                            @focus="showReceiveDropdown = true"
+                            @blur="setTimeout(() => showReceiveDropdown = false, 200)"
+                            placeholder="輸入代碼或名稱搜尋..."
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        >
+                        <div x-show="showReceiveDropdown && filteredReceiveItems.length > 0" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                            <template x-for="item in filteredReceiveItems.slice(0, 10)" :key="item.code">
+                                <div @click="selectReceiveItem(item)" class="px-4 py-2 hover:bg-teal-50 cursor-pointer">
+                                    <span class="font-mono text-sm" x-text="item.code"></span> -
+                                    <span x-text="item.name"></span>
+                                    <span class="text-xs text-gray-500" x-text="`(庫存: ${item.current_stock})`"></span>
+                                </div>
                             </template>
-                        </select>
+                        </div>
                     </div>
 
                     <div>
@@ -260,8 +293,13 @@
 
         <!-- 消耗分頁 -->
         <div x-show="currentTab === 'consume'" class="bg-white rounded-xl shadow-lg p-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">📤 消耗登記</h2>
-            
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">📤 消耗登記</h2>
+                <button @click="showConsumeHistoryModal = true; loadConsumeHistory()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    📋 查看消耗記錄
+                </button>
+            </div>
+
             <form @submit.prevent="submitConsume()" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -876,6 +914,180 @@
             </div>
         </div>
 
+        <!-- 進貨記錄 Modal -->
+        <div x-show="showReceiveHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
+            <div @click.away="showReceiveHistoryModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-6xl w-full mx-4 my-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">📥 進貨記錄</h3>
+                    <button @click="exportReceiveHistoryCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                        📊 匯出CSV
+                    </button>
+                </div>
+
+                <!-- 篩選條件 -->
+                <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
+                        <input type="date" x-model="receiveHistorySearch.startDate" @change="loadReceiveHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
+                        <input type="date" x-model="receiveHistorySearch.endDate" @change="loadReceiveHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼</label>
+                        <input type="text" x-model="receiveHistorySearch.itemCode" @input="loadReceiveHistory()" placeholder="搜尋物品..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto max-h-96">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">時間</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">物品代碼</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">物品名稱</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">數量</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">批號</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">效期</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">備註</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="event in receiveHistory" :key="event.id">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-2 text-sm" x-text="new Date(event.timestamp).toLocaleString('zh-TW')"></td>
+                                    <td class="px-4 py-2 text-sm font-mono" x-text="event.item_code"></td>
+                                    <td class="px-4 py-2 text-sm" x-text="event.item_name"></td>
+                                    <td class="px-4 py-2 text-sm font-semibold text-green-600" x-text="'+' + event.quantity + ' ' + event.unit"></td>
+                                    <td class="px-4 py-2 text-sm" x-text="event.batch_number || '-'"></td>
+                                    <td class="px-4 py-2 text-sm" x-text="event.expiry_date || '-'"></td>
+                                    <td class="px-4 py-2 text-sm text-gray-600" x-text="event.remarks || '-'"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pt-4">
+                    <button type="button" @click="showReceiveHistoryModal = false" class="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                        關閉
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 消耗記錄 Modal -->
+        <div x-show="showConsumeHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
+            <div @click.away="showConsumeHistoryModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-6xl w-full mx-4 my-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">📤 消耗記錄</h3>
+                    <button @click="exportConsumeHistoryCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
+                        📊 匯出CSV
+                    </button>
+                </div>
+
+                <!-- 篩選條件 -->
+                <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
+                        <input type="date" x-model="consumeHistorySearch.startDate" @change="loadConsumeHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
+                        <input type="date" x-model="consumeHistorySearch.endDate" @change="loadConsumeHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼</label>
+                        <input type="text" x-model="consumeHistorySearch.itemCode" @input="loadConsumeHistory()" placeholder="搜尋物品..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto max-h-96">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">時間</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">物品代碼</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">物品名稱</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">數量</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">用途</th>
+                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="event in consumeHistory" :key="event.id">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-2 text-sm" x-text="new Date(event.timestamp).toLocaleString('zh-TW')"></td>
+                                    <td class="px-4 py-2 text-sm font-mono" x-text="event.item_code"></td>
+                                    <td class="px-4 py-2 text-sm" x-text="event.item_name"></td>
+                                    <td class="px-4 py-2 text-sm font-semibold text-red-600" x-text="'-' + event.quantity + ' ' + event.unit"></td>
+                                    <td class="px-4 py-2 text-sm text-gray-600" x-text="event.remarks || '-'"></td>
+                                    <td class="px-4 py-2 text-sm">
+                                        <button @click="viewConsumeDetail(event)" class="text-blue-600 hover:text-blue-800">詳情</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pt-4">
+                    <button type="button" @click="showConsumeHistoryModal = false" class="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                        關閉
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 消耗詳情 Modal -->
+        <div x-show="showConsumeDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+            <div @click.away="showConsumeDetailModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">📤 消耗詳情</h3>
+
+                <template x-if="selectedConsumeEvent">
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+                            <div>
+                                <p class="text-sm text-gray-600">時間</p>
+                                <p class="font-semibold" x-text="new Date(selectedConsumeEvent.timestamp).toLocaleString('zh-TW')"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">物品代碼</p>
+                                <p class="font-semibold font-mono" x-text="selectedConsumeEvent.item_code"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">物品名稱</p>
+                                <p class="font-semibold" x-text="selectedConsumeEvent.item_name"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">消耗數量</p>
+                                <p class="font-semibold text-red-600" x-text="selectedConsumeEvent.quantity + ' ' + selectedConsumeEvent.unit"></p>
+                            </div>
+                            <div class="col-span-2">
+                                <p class="text-sm text-gray-600">用途說明</p>
+                                <p class="font-semibold" x-text="selectedConsumeEvent.remarks || '-'"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">操作員</p>
+                                <p class="font-semibold" x-text="selectedConsumeEvent.operator"></p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600">站點</p>
+                                <p class="font-semibold" x-text="selectedConsumeEvent.station_id"></p>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <div class="pt-4">
+                    <button type="button" @click="showConsumeDetailModal = false" class="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                        關閉
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Toast 通知 -->
         <div x-show="showToast" x-transition class="fixed bottom-4 right-4 z-50" style="display: none;">
             <div :class="{
@@ -900,15 +1112,24 @@
                 
                 // 資料
                 items: [],
+                filteredItems: [],
                 bloodInventory: [],
                 equipment: [],
                 surgeryRecords: [],
+                receiveHistory: [],
+                consumeHistory: [],
                 stats: {
                     totalItems: 0,
                     lowStockItems: 0,
                     totalBlood: 0,
                     equipmentAlerts: 0
                 },
+
+                // 搜尋與篩選
+                itemSearchText: '',
+                receiveItemSearch: '',
+                filteredReceiveItems: [],
+                showReceiveDropdown: false,
 
                 // Modal 狀態
                 showAddItemModal: false,
@@ -918,6 +1139,9 @@
                 showCheckEquipmentModal: false,
                 showAddSurgeryModal: false,
                 showSurgeryDetailModal: false,
+                showReceiveHistoryModal: false,
+                showConsumeHistoryModal: false,
+                showConsumeDetailModal: false,
 
                 // 表單
                 receiveForm: {
@@ -994,7 +1218,18 @@
                     endDate: '',
                     patientName: ''
                 },
+                receiveHistorySearch: {
+                    startDate: '',
+                    endDate: '',
+                    itemCode: ''
+                },
+                consumeHistorySearch: {
+                    startDate: '',
+                    endDate: '',
+                    itemCode: ''
+                },
                 selectedSurgery: null,
+                selectedConsumeEvent: null,
 
                 // Toast
                 showToast: false,
@@ -1054,11 +1289,40 @@
                         if (response.ok) {
                             const data = await response.json();
                             this.items = data.items;
+                            this.filteredItems = data.items;
                         }
                     } catch (error) {
                         console.error('載入物品失敗:', error);
                         this.toast('載入物品失敗', 'error');
                     }
+                },
+
+                // 篩選物品
+                filterItems() {
+                    const searchText = this.itemSearchText.toLowerCase();
+                    if (!searchText) {
+                        this.filteredItems = this.items;
+                    } else {
+                        this.filteredItems = this.items.filter(item =>
+                            item.code.toLowerCase().includes(searchText) ||
+                            item.name.toLowerCase().includes(searchText) ||
+                            item.category.toLowerCase().includes(searchText)
+                        );
+                    }
+                },
+
+                // 匯出庫存CSV
+                exportInventoryCSV() {
+                    const url = `${this.apiUrl}/inventory/export/csv`;
+                    window.open(url, '_blank');
+                    this.toast('CSV 匯出成功', 'success');
+                },
+
+                // 匯出庫存JSON
+                exportInventoryJSON() {
+                    const url = `${this.apiUrl}/inventory/export/json`;
+                    window.open(url, '_blank');
+                    this.toast('JSON 匯出成功', 'success');
                 },
 
                 // 新增物品
@@ -1195,6 +1459,68 @@
                         remarks: '',
                         stationId: this.stationId
                     };
+                    this.receiveItemSearch = '';
+                },
+
+                // 進貨頁面 - 物品搜尋
+                filterReceiveItems() {
+                    const searchText = this.receiveItemSearch.toLowerCase();
+                    if (!searchText) {
+                        this.filteredReceiveItems = this.items;
+                    } else {
+                        this.filteredReceiveItems = this.items.filter(item =>
+                            item.code.toLowerCase().includes(searchText) ||
+                            item.name.toLowerCase().includes(searchText)
+                        );
+                    }
+                },
+
+                // 進貨頁面 - 選擇物品
+                selectReceiveItem(item) {
+                    this.receiveForm.itemCode = item.code;
+                    this.receiveItemSearch = `${item.code} - ${item.name}`;
+                    this.showReceiveDropdown = false;
+                },
+
+                // 載入進貨記錄
+                async loadReceiveHistory() {
+                    try {
+                        let url = `${this.apiUrl}/inventory/events?event_type=RECEIVE&limit=100`;
+
+                        if (this.receiveHistorySearch.startDate) {
+                            url += `&start_date=${this.receiveHistorySearch.startDate}`;
+                        }
+                        if (this.receiveHistorySearch.endDate) {
+                            url += `&end_date=${this.receiveHistorySearch.endDate}`;
+                        }
+                        if (this.receiveHistorySearch.itemCode) {
+                            url += `&item_code=${encodeURIComponent(this.receiveHistorySearch.itemCode)}`;
+                        }
+
+                        const response = await fetch(url);
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.receiveHistory = data.events;
+                        }
+                    } catch (error) {
+                        console.error('載入進貨記錄失敗:', error);
+                        this.toast('載入進貨記錄失敗', 'error');
+                    }
+                },
+
+                // 匯出進貨記錄
+                exportReceiveHistoryCSV() {
+                    let url = `${this.apiUrl}/inventory/events/export/csv?event_type=RECEIVE`;
+
+                    if (this.receiveHistorySearch.startDate) {
+                        url += `&start_date=${this.receiveHistorySearch.startDate}`;
+                    }
+                    if (this.receiveHistorySearch.endDate) {
+                        url += `&end_date=${this.receiveHistorySearch.endDate}`;
+                    }
+
+                    window.open(url, '_blank');
+                    this.toast('進貨記錄匯出成功', 'success');
                 },
 
                 // 消耗
@@ -1229,6 +1555,53 @@
                         purpose: '',
                         stationId: this.stationId
                     };
+                },
+
+                // 載入消耗記錄
+                async loadConsumeHistory() {
+                    try {
+                        let url = `${this.apiUrl}/inventory/events?event_type=CONSUME&limit=100`;
+
+                        if (this.consumeHistorySearch.startDate) {
+                            url += `&start_date=${this.consumeHistorySearch.startDate}`;
+                        }
+                        if (this.consumeHistorySearch.endDate) {
+                            url += `&end_date=${this.consumeHistorySearch.endDate}`;
+                        }
+                        if (this.consumeHistorySearch.itemCode) {
+                            url += `&item_code=${encodeURIComponent(this.consumeHistorySearch.itemCode)}`;
+                        }
+
+                        const response = await fetch(url);
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.consumeHistory = data.events;
+                        }
+                    } catch (error) {
+                        console.error('載入消耗記錄失敗:', error);
+                        this.toast('載入消耗記錄失敗', 'error');
+                    }
+                },
+
+                // 查看消耗詳情
+                viewConsumeDetail(event) {
+                    this.selectedConsumeEvent = event;
+                    this.showConsumeDetailModal = true;
+                },
+
+                // 匯出消耗記錄
+                exportConsumeHistoryCSV() {
+                    let url = `${this.apiUrl}/inventory/events/export/csv?event_type=CONSUME`;
+
+                    if (this.consumeHistorySearch.startDate) {
+                        url += `&start_date=${this.consumeHistorySearch.startDate}`;
+                    }
+                    if (this.consumeHistorySearch.endDate) {
+                        url += `&end_date=${this.consumeHistorySearch.endDate}`;
+                    }
+
+                    window.open(url, '_blank');
+                    this.toast('消耗記錄匯出成功', 'success');
                 },
 
                 // 血袋
