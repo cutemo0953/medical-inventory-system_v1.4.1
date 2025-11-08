@@ -347,6 +347,79 @@
                 max-height: 90vh;
                 overflow-y: auto;
             }
+        }
+
+        /* === 模態框滾動優化（通用） === */
+        /* 模態框 overlay - 可滾動 */
+        .fixed.inset-0.bg-black.bg-opacity-50 {
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* 模態框內容容器 - flexbox 結構 */
+        .fixed.inset-0 > div[class*="bg-white"] {
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 模態框標題 - 固定不滾動 */
+        .fixed.inset-0 > div > div:first-child {
+            flex-shrink: 0;
+        }
+
+        /* 模態框主體 - 可滾動 */
+        .fixed.inset-0 > div > div.px-6.pb-6,
+        .fixed.inset-0 > div > div[class*="overflow-y-auto"] {
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* 模態框底部按鈕區 - 固定不滾動 */
+        .fixed.inset-0 > div > div:last-child {
+            flex-shrink: 0;
+        }
+
+        /* 長列表容器滾動優化 */
+        .temp-items-list,
+        [class*="max-h-"][class*="overflow-y-auto"] {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+        }
+
+        /* 嵌套模態框層級管理 */
+        .fixed.inset-0.z-50 {
+            z-index: 50;
+        }
+
+        .fixed.inset-0.z-\\[60\\] {
+            z-index: 60;
+        }
+
+        .fixed.inset-0.z-\\[70\\] {
+            z-index: 70;
+        }
+
+        /* 確保滾動條在深色背景上可見 */
+        .fixed.inset-0 > div::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .fixed.inset-0 > div::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .fixed.inset-0 > div::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .fixed.inset-0 > div::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
 
             /* 表單網格 - 單列 */
             .grid.grid-cols-1.md\\:grid-cols-2 {
@@ -407,9 +480,84 @@
                 font-size: 0.625rem !important;
             }
 
-            /* Footer logo 調整 */
-            footer img {
-                height: 3.5rem !important;
+            /* Footer logo 手機版調整 */
+            .footer-logo {
+                height: 2.5rem !important;
+            }
+
+            .footer-text {
+                font-size: 0.75rem !important;
+            }
+
+            .footer-version {
+                font-size: 0.65rem !important;
+            }
+        }
+
+        /* === Footer 固定底部（通用） === */
+        .app-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(255, 255, 255, 0.98);
+            border-top: 1px solid var(--gray-200);
+            padding: 0.875rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 40;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .footer-logo {
+            height: 3rem;
+            width: auto;
+            object-fit: contain;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer-logo:hover {
+            opacity: 1;
+        }
+
+        .footer-text-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .footer-text {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .footer-version {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        /* 為主內容加下方間距，避免被 footer 遮擋 */
+        .container.mx-auto.px-4.py-8 {
+            padding-bottom: 6rem !important;
+        }
+
+        /* 模態框打開時隱藏 footer */
+        .fixed.inset-0:not([style*="display: none"]) ~ .app-footer {
+            display: none;
+        }
+
+        /* 確保有任何模態框打開時隱藏 footer */
+        @media screen {
+            body:has(.fixed.inset-0:not([style*="display: none"])) .app-footer {
+                display: none;
             }
 
             /* v1.4.3 工具列手機版 - 已優化為兩行佈局 */
@@ -2189,6 +2337,103 @@
             </div>
         </div>
 
+        <!-- 通用品項選擇器模態框 -->
+        <div x-show="showItemSelectorModal" @click.self="showItemSelectorModal = false" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]" style="display: none;">
+            <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4" style="max-height: 90vh; display: flex; flex-direction: column;">
+                <!-- 模態框標題 -->
+                <div style="background-color: #2E4F7C;" class="rounded-t-xl px-6 py-4 flex justify-between items-center flex-shrink-0">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                        選擇物品
+                    </h3>
+                    <button @click="showItemSelectorModal = false" class="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- 模態框內容（可滾動） -->
+                <div class="px-6 py-4 overflow-y-auto flex-1">
+                    <!-- 搜尋框 -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            搜尋物品
+                        </label>
+                        <input type="text"
+                               x-model="itemSelectorSearch"
+                               @input="filterItemsForSelector()"
+                               placeholder="搜尋代碼或名稱..."
+                               class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+
+                    <!-- 物品列表 -->
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">代碼</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名稱</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分類</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">庫存</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <template x-if="filteredItemsForSelector.length === 0">
+                                    <tr>
+                                        <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                                            <svg class="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                                            </svg>
+                                            <p class="text-sm">找不到符合的物品</p>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <template x-for="item in filteredItemsForSelector" :key="item.code">
+                                    <tr class="hover:bg-blue-50 transition-colors">
+                                        <td class="px-4 py-3 text-sm font-mono text-gray-900" x-text="item.code"></td>
+                                        <td class="px-4 py-3 text-sm text-gray-900" x-text="item.name"></td>
+                                        <td class="px-4 py-3 text-sm text-gray-600" x-text="item.category"></td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <span :class="item.current_stock <= item.min_stock ? 'text-red-600 font-semibold' : 'text-gray-900'" x-text="item.current_stock + ' ' + item.unit"></span>
+                                        </td>
+                                        <td class="px-4 py-3 text-sm">
+                                            <button @click="selectItemFromSelector(item)" class="btn-items-primary text-sm px-3 py-1.5">
+                                                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                                </svg>
+                                                選擇
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 text-sm text-gray-600">
+                        顯示 <strong class="text-blue-600" x-text="filteredItemsForSelector.length"></strong> / <strong class="text-blue-600" x-text="allItems.length"></strong> 項物品
+                    </div>
+                </div>
+
+                <!-- 模態框底部 -->
+                <div class="px-6 py-4 bg-gray-50 rounded-b-xl flex justify-end gap-3 flex-shrink-0">
+                    <button @click="showItemSelectorModal = false" class="btn-items-gray">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        取消
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Toast 通知 -->
         <div x-show="showToast" x-transition class="fixed bottom-4 right-4 z-50" style="display: none;">
             <div :class="{
@@ -2200,10 +2445,14 @@
             </div>
         </div>
 
-        <!-- Footer -->
-        <footer class="mt-8 py-6 border-t border-gray-200">
-            <div class="flex justify-center items-center">
-                <img src="iRehab_logo.png" alt="iRehab Logo" class="h-20 object-contain opacity-70 hover:opacity-100 transition-opacity">
+        <!-- Footer - 固定底部 -->
+        <footer class="app-footer">
+            <div class="flex justify-center items-center gap-3">
+                <img src="iRehab_logo.png" alt="iRehab Logo" class="footer-logo">
+                <div class="footer-text-container">
+                    <p class="footer-text">醫療站庫存管理系統</p>
+                    <p class="footer-version">v1.4.4</p>
+                </div>
             </div>
         </footer>
 
@@ -2248,6 +2497,12 @@
                 showSurgeryDetailModal: false,
                 showAddDonationModal: false,
                 showAddTransfusionModal: false,
+                showItemSelectorModal: false,
+
+                // 品項選擇器
+                itemSelectorSearch: '',
+                filteredItemsForSelector: [],
+                itemSelectorCallback: null,
 
                 // 表單
                 receiveForm: {
@@ -3421,24 +3676,62 @@
                     try {
                         let url = `${this.apiUrl}/surgery/export/csv`;
                         const params = [];
-                        
+
                         if (this.surgerySearchForm.startDate) {
                             params.push(`start_date=${this.surgerySearchForm.startDate}`);
                         }
                         if (this.surgerySearchForm.endDate) {
                             params.push(`end_date=${this.surgerySearchForm.endDate}`);
                         }
-                        
+
                         if (params.length > 0) {
                             url += '?' + params.join('&');
                         }
-                        
+
                         window.open(url, '_blank');
                         this.toast('CSV 匯出成功', 'success');
                     } catch (error) {
                         console.error('匯出 CSV 失敗:', error);
                         this.toast('匯出 CSV 失敗', 'error');
                     }
+                },
+
+                // 品項選擇器功能
+                openItemSelector(callback) {
+                    console.log('🔍 開啟品項選擇器');
+                    this.itemSelectorCallback = callback;
+                    this.itemSelectorSearch = '';
+                    this.filteredItemsForSelector = [...this.allItems];
+                    this.showItemSelectorModal = true;
+                },
+
+                filterItemsForSelector() {
+                    const searchTerm = this.itemSelectorSearch.toLowerCase();
+
+                    if (!searchTerm) {
+                        this.filteredItemsForSelector = [...this.allItems];
+                        return;
+                    }
+
+                    this.filteredItemsForSelector = this.allItems.filter(item => {
+                        return item.code.toLowerCase().includes(searchTerm) ||
+                               item.name.toLowerCase().includes(searchTerm) ||
+                               item.category.toLowerCase().includes(searchTerm);
+                    });
+
+                    console.log(`🔍 過濾結果: ${this.filteredItemsForSelector.length} / ${this.allItems.length} 項`);
+                },
+
+                selectItemFromSelector(item) {
+                    console.log('✅ 選擇物品:', item);
+
+                    if (this.itemSelectorCallback) {
+                        this.itemSelectorCallback(item);
+                    }
+
+                    this.showItemSelectorModal = false;
+                    this.itemSelectorCallback = null;
+                    this.itemSelectorSearch = '';
                 },
 
                 // Toast 通知
