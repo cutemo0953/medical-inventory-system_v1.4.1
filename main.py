@@ -47,7 +47,7 @@ logger = setup_logging()
 
 class Config:
     """系統配置"""
-    VERSION = "1.4.4"
+    VERSION = "1.4.5"
     DATABASE_PATH = "medical_inventory.db"
     STATION_ID = "TC-01"
     DEBUG = True
@@ -1580,11 +1580,12 @@ if __name__ == "__main__":
     print(f"📖 API文件: http://localhost:8000/docs")
     print(f"📊 健康檢查: http://localhost:8000/api/health")
     print("=" * 70)
-    print("✨ v1.4.4 新功能:")
-    print("   - 手術記錄管理與匯出")
-    print("   - 庫存事件查詢（進貨/消耗記錄）")
-    print("   - 多格式匯出（CSV、JSON）")
-    print("   - 改進搜尋與篩選功能")
+    print("✨ v1.4.5 新功能:")
+    print("   - UI 全面重構（Heroicons + 新色系）")
+    print("   - 處置標籤頁整合（手術記錄 + 一般消耗）")
+    print("   - 血庫管理增強（病患資訊 + 歷史記錄）")
+    print("   - 設備自動刷新機制（每日 07:00am）")
+    print("   - 響應式設計優化")
     print("=" * 70)
     print("按 Ctrl+C 停止服務")
     print("=" * 70)

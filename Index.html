@@ -3,8 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>醫療站庫存管理系統 v1.4.4</title>
+    <title>醫療站庫存管理系統 v1.4.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwind 自定義色系配置
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'treatment': {
+                            500: '#4E5488',
+                            50: '#F3F2F8',
+                        },
+                        'blood': {
+                            500: '#D96754',
+                            200: '#F1AAAB',
+                        },
+                        'equipment': {
+                            500: '#6C7362',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <style>
         [x-cloak] { display: none !important; }
@@ -39,6 +61,17 @@
             background-color: #f0f9ff;
             transition: background-color 0.2s;
         }
+
+        /* 響應式統計卡片優化 */
+        @media (max-width: 640px) {
+            .stat-card {
+                height: 6rem;
+                padding: 0.75rem;
+            }
+            .stat-card .text-2xl {
+                font-size: 1.5rem;
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -53,7 +86,7 @@
                     </svg>
                     <div>
                         <h1 class="text-2xl font-bold text-gray-800">醫療站庫存系統</h1>
-                        <p class="text-sm text-gray-500">v1.4.4 - UI優化版</p>
+                        <p class="text-sm text-gray-500">v1.4.5 - Heroicons 重構版</p>
                     </div>
                 </div>
                 <div class="text-right">
@@ -64,22 +97,24 @@
         </div>
 
         <!-- 統計卡片 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div class="bg-white rounded-xl shadow p-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- 總物品數 - 天藍色 -->
+            <div class="stat-card bg-white rounded-xl shadow p-4">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-600">總物品數</p>
-                        <p class="text-2xl font-bold text-gray-800" x-text="stats.totalItems"></p>
+                        <p class="text-2xl font-bold text-sky-600" x-text="stats.totalItems"></p>
                     </div>
-                    <div class="p-3 bg-blue-100 rounded-lg">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-3 bg-sky-100 rounded-lg">
+                        <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow p-4">
+            <!-- 庫存警戒 - 橙色 -->
+            <div class="stat-card bg-white rounded-xl shadow p-4">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-600">庫存警戒</p>
@@ -93,28 +128,30 @@
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow p-4">
+            <!-- 血袋庫存 - 血庫色系 -->
+            <div class="stat-card bg-white rounded-xl shadow p-4">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-600">血袋庫存</p>
-                        <p class="text-2xl font-bold text-red-600"><span x-text="stats.totalBlood"></span> U</p>
+                        <p class="text-2xl font-bold text-blood-500"><span x-text="stats.totalBlood"></span> U</p>
                     </div>
-                    <div class="p-3 bg-red-100 rounded-lg">
-                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-3 bg-rose-100 rounded-lg">
+                        <svg class="w-6 h-6 text-blood-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                         </svg>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow p-4">
+            <!-- 設備警報 - 設備色系 -->
+            <div class="stat-card bg-white rounded-xl shadow p-4">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm text-gray-600">設備警報</p>
-                        <p class="text-2xl font-bold text-purple-600" x-text="stats.equipmentAlerts"></p>
+                        <p class="text-sm text-gray-600">待確認設備</p>
+                        <p class="text-2xl font-bold text-equipment-500" x-text="stats.equipmentAlerts"></p>
                     </div>
-                    <div class="p-3 bg-purple-100 rounded-lg">
-                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-3 bg-stone-100 rounded-lg">
+                        <svg class="w-6 h-6 text-equipment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
                         </svg>
                     </div>
@@ -124,36 +161,56 @@
 
         <!-- 分頁選單 -->
         <div class="bg-white rounded-xl shadow mb-6">
-            <div class="flex space-x-1 p-2">
-                <button @click="switchTab('items')" 
-                        :class="currentTab === 'items' ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
-                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200">
-                    📦 物品查詢
+            <div class="flex flex-wrap sm:flex-nowrap space-x-1 p-2">
+                <!-- 物品查詢 - 天藍色系 -->
+                <button @click="switchTab('items')"
+                        :class="currentTab === 'items' ? 'bg-sky-50 text-sky-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
+                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                    <span>物品查詢</span>
                 </button>
-                <button @click="switchTab('receive')" 
-                        :class="currentTab === 'receive' ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
-                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200">
-                    📥 進貨
+
+                <!-- 進貨登記 - 天藍色系 -->
+                <button @click="switchTab('receive')"
+                        :class="currentTab === 'receive' ? 'bg-sky-50 text-sky-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
+                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                    </svg>
+                    <span>進貨登記</span>
                 </button>
-                <button @click="switchTab('consume')" 
-                        :class="currentTab === 'consume' ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
-                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200">
-                    📤 消耗
+
+                <!-- 處置 - 處置色系 #4E5488 -->
+                <button @click="switchTab('treatment')"
+                        :class="currentTab === 'treatment' ? 'bg-treatment-50 text-treatment-500 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
+                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span>處置</span>
                 </button>
-                <button @click="switchTab('blood')" 
-                        :class="currentTab === 'blood' ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
-                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200">
-                    🩸 血袋
+
+                <!-- 血袋管理 - 血庫色系 #D96754 -->
+                <button @click="switchTab('blood')"
+                        :class="currentTab === 'blood' ? 'bg-rose-50 text-blood-500 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
+                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                    </svg>
+                    <span>血袋管理</span>
                 </button>
-                <button @click="switchTab('equipment')" 
-                        :class="currentTab === 'equipment' ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
-                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200">
-                    🔧 設備
-                </button>
-                <button @click="switchTab('surgery')" 
-                        :class="currentTab === 'surgery' ? 'bg-teal-50 text-teal-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
-                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200">
-                    🏥 手術記錄
+
+                <!-- 設備管理 - 設備色系 #6C7362 -->
+                <button @click="switchTab('equipment')"
+                        :class="currentTab === 'equipment' ? 'bg-stone-50 text-equipment-500 font-semibold' : 'text-gray-600 hover:bg-gray-50'"
+                        class="flex-1 py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span>設備管理</span>
                 </button>
             </div>
         </div>
@@ -161,29 +218,51 @@
         <!-- 物品查詢分頁 -->
         <div x-show="currentTab === 'items'" class="bg-white rounded-xl shadow-lg p-6">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">📦 庫存查詢</h2>
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                    庫存查詢
+                </h2>
                 <div class="flex gap-2">
-                    <button @click="showAddItemModal = true" class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
-                        ➕ 新增物品
+                    <button @click="showAddItemModal = true" class="bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span>新增物品</span>
                     </button>
-                    <button @click="loadItems()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                        🔄 重新載入
+                    <button @click="loadItems()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span>重新載入</span>
                     </button>
                 </div>
             </div>
 
             <!-- 搜尋框和匯出按鈕 -->
-            <div class="mb-4 flex gap-4 items-end">
-                <div class="flex-1">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">🔍 搜尋物品</label>
-                    <input type="text" x-model="itemSearchText" @input="filterItems()" placeholder="輸入代碼或名稱搜尋..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+            <div class="mb-4 flex gap-4 items-end flex-wrap sm:flex-nowrap">
+                <div class="flex-1 w-full sm:w-auto">
+                    <label class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        搜尋物品
+                    </label>
+                    <input type="text" x-model="itemSearchText" @input="filterItems()" placeholder="輸入代碼或名稱搜尋..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
                 </div>
                 <div class="flex gap-2">
-                    <button @click.prevent.stop="exportInventoryCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
-                        <span>📊</span> <span>CSV</span>
+                    <button @click.prevent.stop="exportInventoryCSV()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>CSV</span>
                     </button>
-                    <button @click.prevent.stop="exportInventoryJSON()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2">
-                        <span>📄</span> <span>JSON</span>
+                    <button @click.prevent.stop="exportInventoryJSON()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>JSON</span>
                     </button>
                 </div>
             </div>
@@ -216,7 +295,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="item.min_stock"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="item.unit"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                    <button @click="editItem(item)" class="text-blue-600 hover:text-blue-800">編輯</button>
+                                    <button @click="editItem(item)" class="text-sky-600 hover:text-sky-800">編輯</button>
                                     <button @click="deleteItem(item.code, item.name)" class="text-red-600 hover:text-red-800">刪除</button>
                                 </td>
                             </tr>
