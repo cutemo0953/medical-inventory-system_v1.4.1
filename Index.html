@@ -81,24 +81,24 @@
     </style>
 </head>
 <body class="min-h-screen">
-    <div x-data="medicalInventory()" x-init="init()" x-cloak class="max-w-7xl mx-auto p-6">
+    <div x-data="medicalInventory()" x-init="init()" x-cloak class="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6">
         
         <!-- Header -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <div class="flex items-center justify-between flex-wrap gap-4">
-                <div class="flex items-center gap-4">
+        <div class="bg-white rounded-xl sm:rounded-2xl shadow-lg p-3 sm:p-4 md:p-6 mb-4 sm:mb-6">
+            <div class="flex items-center justify-between flex-wrap gap-3 sm:gap-4">
+                <div class="flex items-center gap-2 sm:gap-3 md:gap-4">
                     <!-- 古陵Logo -->
-                    <img src="guling_logo.png" alt="De Novo Orthopedics Logo" class="h-16 w-auto object-contain">
+                    <img src="guling_logo.png" alt="De Novo Orthopedics Logo" class="h-10 sm:h-12 md:h-16 w-auto object-contain flex-shrink-0">
 
-                    <div class="border-l border-gray-300 pl-4">
-                        <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                            <svg class="w-7 h-7 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="border-l border-gray-300 pl-2 sm:pl-3 md:pl-4">
+                        <h1 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-1 sm:gap-2">
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                             </svg>
                             醫療站庫存系統
                         </h1>
-                        <p class="text-sm text-gray-500">v1.4.5 - Heroicons 重構版</p>
-                        <div class="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                        <p class="text-xs sm:text-sm text-gray-500">v1.4.5 - Heroicons 重構版</p>
+                        <div class="hidden sm:flex items-center gap-2 mt-1 text-xs text-gray-400">
                             <span class="font-medium">Designed in Taiwan</span>
                             <span>•</span>
                             <span>De Novo Orthopedics Inc</span>
@@ -106,7 +106,7 @@
                     </div>
                 </div>
                 <div class="text-right">
-                    <p class="text-sm text-gray-600">站點: <span class="font-semibold text-teal-600" x-text="stationId"></span></p>
+                    <p class="text-xs sm:text-sm text-gray-600">站點: <span class="font-semibold text-teal-600" x-text="stationId"></span></p>
                     <p class="text-xs text-gray-400" x-text="currentTime"></p>
                 </div>
             </div>
@@ -177,63 +177,63 @@
         </div>
 
         <!-- 分頁選單 - 深色底白字 -->
-        <div class="bg-white rounded-xl shadow mb-6">
-            <div class="flex flex-wrap sm:flex-nowrap space-x-1 p-2">
+        <div class="bg-white rounded-xl shadow mb-4 sm:mb-6">
+            <div class="grid grid-cols-2 sm:flex sm:flex-nowrap gap-1.5 sm:gap-2 p-1.5 sm:p-2">
                 <!-- 物品查詢 - 天藍色系 -->
                 <button @click="switchTab('items')"
                         :class="currentTab === 'items' ? 'bg-sky-600 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                        class="flex-1 py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="flex-1 py-2.5 sm:py-3 px-2 sm:px-3 md:px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
-                    <span>物品查詢</span>
+                    <span class="text-xs sm:text-sm truncate">物品查詢</span>
                 </button>
 
                 <!-- 進貨登記 - Teal色系 #205555 -->
                 <button @click="switchTab('receive')"
                         :class="currentTab === 'receive' ? 'bg-teal-custom-500 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                        class="flex-1 py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="flex-1 py-2.5 sm:py-3 px-2 sm:px-3 md:px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
                     </svg>
-                    <span>進貨登記</span>
+                    <span class="text-xs sm:text-sm truncate">進貨登記</span>
                 </button>
 
                 <!-- 處置 - 處置色系 #4E5488 -->
                 <button @click="switchTab('treatment')"
                         :class="currentTab === 'treatment' ? 'bg-treatment-500 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                        class="flex-1 py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="flex-1 py-2.5 sm:py-3 px-2 sm:px-3 md:px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
-                    <span>處置</span>
+                    <span class="text-xs sm:text-sm truncate">處置</span>
                 </button>
 
                 <!-- 血袋管理 - 血庫色系 #D96754 -->
                 <button @click="switchTab('blood')"
                         :class="currentTab === 'blood' ? 'bg-blood-500 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                        class="flex-1 py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="flex-1 py-2.5 sm:py-3 px-2 sm:px-3 md:px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
                     </svg>
-                    <span>血袋管理</span>
+                    <span class="text-xs sm:text-sm truncate">血袋管理</span>
                 </button>
 
                 <!-- 設備管理 - 設備色系 #6C7362 -->
                 <button @click="switchTab('equipment')"
                         :class="currentTab === 'equipment' ? 'bg-equipment-500 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                        class="flex-1 py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="col-span-2 sm:col-span-1 flex-1 py-2.5 sm:py-3 px-2 sm:px-3 md:px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
-                    <span>設備管理</span>
+                    <span class="text-xs sm:text-sm truncate">設備管理</span>
                 </button>
             </div>
         </div>
 
         <!-- 物品查詢分頁 -->
-        <div x-show="currentTab === 'items'" class="bg-white rounded-xl shadow-lg p-6">
+        <div x-show="currentTab === 'items'" class="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
                     <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -323,7 +323,7 @@
         </div>
 
         <!-- 進貨分頁 -->
-        <div x-show="currentTab === 'receive'" class="bg-white rounded-xl shadow-lg p-6">
+        <div x-show="currentTab === 'receive'" class="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
                     <svg class="w-6 h-6 text-teal-custom-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -402,7 +402,7 @@
         </div>
 
         <!-- 處置分頁 (整合手術記錄 + 一般消耗) -->
-        <div x-show="currentTab === 'treatment'" class="bg-white rounded-xl shadow-lg p-6">
+        <div x-show="currentTab === 'treatment'" class="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
             <!-- 標題與模式切換 -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -610,7 +610,7 @@
         </div>
 
         <!-- 血袋分頁 -->
-        <div x-show="currentTab === 'blood'" class="bg-white rounded-xl shadow-lg p-6">
+        <div x-show="currentTab === 'blood'" class="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
                     <svg class="w-6 h-6 text-blood-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -780,7 +780,7 @@
         </div>
 
         <!-- 設備分頁 -->
-        <div x-show="currentTab === 'equipment'" class="bg-white rounded-xl shadow-lg p-6">
+        <div x-show="currentTab === 'equipment'" class="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
                     <svg class="w-6 h-6 text-equipment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1129,7 +1129,7 @@
 
         <!-- 新增處置記錄 Modal -->
         <div x-show="showAddSurgeryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
-            <div @click.away="showAddSurgeryModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 my-8">
+            <div @click.away="showAddSurgeryModal = false" class="bg-white rounded-xl shadow-2xl p-4 sm:p-5 md:p-6 max-w-2xl w-full mx-4 my-8">
                 <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <svg class="w-6 h-6 text-treatment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
@@ -1344,7 +1344,7 @@
 
         <!-- 進貨記錄 Modal -->
         <div x-show="showReceiveHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
-            <div @click.away="showReceiveHistoryModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-6xl w-full mx-4 my-8">
+            <div @click.away="showReceiveHistoryModal = false" class="bg-white rounded-xl shadow-2xl p-3 sm:p-4 md:p-6 max-w-6xl w-full mx-4 my-8">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
                         <svg class="w-6 h-6 text-teal-custom-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1415,7 +1415,7 @@
 
         <!-- 消耗記錄 Modal -->
         <div x-show="showConsumeHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
-            <div @click.away="showConsumeHistoryModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-6xl w-full mx-4 my-8">
+            <div @click.away="showConsumeHistoryModal = false" class="bg-white rounded-xl shadow-2xl p-3 sm:p-4 md:p-6 max-w-6xl w-full mx-4 my-8">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
                         <svg class="w-6 h-6 text-treatment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1539,7 +1539,7 @@
 
         <!-- 血庫歷史記錄 Modal -->
         <div x-show="showBloodHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
-            <div @click.away="showBloodHistoryModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-6xl w-full mx-4 my-8 max-h-[90vh] overflow-y-auto">
+            <div @click.away="showBloodHistoryModal = false" class="bg-white rounded-xl shadow-2xl p-3 sm:p-4 md:p-6 max-w-6xl w-full mx-4 my-8 max-h-[90vh] overflow-y-auto">
                 <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <svg class="w-6 h-6 text-blood-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
