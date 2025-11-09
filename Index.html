@@ -384,118 +384,291 @@
             </form>
         </div>
 
-        <!-- 消耗分頁 -->
-        <div x-show="currentTab === 'consume'" class="bg-white rounded-xl shadow-lg p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">📤 消耗登記</h2>
-                <button @click.prevent.stop="showConsumeHistoryModal = true; loadConsumeHistory()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                    📋 查看消耗記錄
-                </button>
+        <!-- 處置分頁 (整合手術記錄 + 一般消耗) -->
+        <div x-show="currentTab === 'treatment'" class="bg-white rounded-xl shadow-lg p-6">
+            <!-- 標題與模式切換 -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-treatment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    處置管理
+                </h2>
+
+                <!-- 左側切換按鈕 -->
+                <div class="flex gap-2">
+                    <button @click="treatmentMode = 'surgery'"
+                            :class="treatmentMode === 'surgery' ? 'bg-treatment-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                            class="px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                        <span>處置記錄</span>
+                    </button>
+                    <button @click="treatmentMode = 'consume'"
+                            :class="treatmentMode === 'consume' ? 'bg-treatment-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
+                            class="px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        <span>一般消耗</span>
+                    </button>
+                </div>
             </div>
 
-            <form @submit.prevent="submitConsume()" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- 處置記錄模式 (手術記錄) -->
+            <div x-show="treatmentMode === 'surgery'">
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button @click.prevent.stop="showAddSurgeryModal = true" class="bg-treatment-500 text-white px-4 py-2 rounded-lg hover:bg-[#3d4270] transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span>新增處置記錄</span>
+                    </button>
+                    <button @click.prevent.stop="exportSurgeryCSV()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>匯出 CSV</span>
+                    </button>
+                    <button @click.prevent.stop="loadSurgeryRecords()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span>重新載入</span>
+                    </button>
+                </div>
+
+                <!-- 搜尋篩選 -->
+                <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼 *</label>
-                        <select x-model="consumeForm.itemCode" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                            <option value="">請選擇物品</option>
-                            <template x-for="item in items" :key="item.code">
-                                <option :value="item.code" x-text="`${item.code} - ${item.name} (庫存: ${item.current_stock})`"></option>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
+                        <input type="date" x-model="surgerySearchForm.startDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
+                        <input type="date" x-model="surgerySearchForm.endDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">病患姓名</label>
+                        <input type="text" x-model="surgerySearchForm.patientName" placeholder="搜尋病患..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 table-hover">
+                        <thead class="bg-treatment-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">記錄編號</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">病患姓名</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">處置類型</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">主刀醫師</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">時長(分)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="record in surgeryRecords" :key="record.id">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900" x-text="record.record_number"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.record_date"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.patient_name"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.surgery_type"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.surgeon_name"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.duration_minutes || '-'"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <button @click="viewSurgeryDetail(record)" class="text-treatment-500 hover:text-[#3d4270] font-medium">詳情</button>
+                                    </td>
+                                </tr>
                             </template>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">數量 *</label>
-                        <input type="number" x-model="consumeForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent">
-                    </div>
-
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">用途說明 *</label>
-                        <textarea x-model="consumeForm.purpose" required rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"></textarea>
-                    </div>
+                        </tbody>
+                    </table>
                 </div>
+            </div>
 
-                <div class="flex gap-4">
-                    <button type="submit" class="bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 transition-colors">
-                        ✅ 確認消耗
-                    </button>
-                    <button type="button" @click="resetConsumeForm()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
-                        🔄 重置
+            <!-- 一般消耗模式 -->
+            <div x-show="treatmentMode === 'consume'">
+                <div class="mb-4">
+                    <button @click.prevent.stop="showConsumeHistoryModal = true; loadConsumeHistory()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>查看消耗記錄</span>
                     </button>
                 </div>
-            </form>
+
+                <form @submit.prevent="submitConsume()" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼 *</label>
+                            <select x-model="consumeForm.itemCode" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500 focus:border-transparent">
+                                <option value="">請選擇物品</option>
+                                <template x-for="item in items" :key="item.code">
+                                    <option :value="item.code" x-text="`${item.code} - ${item.name} (庫存: ${item.current_stock})`"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">數量 *</label>
+                            <input type="number" x-model="consumeForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500 focus:border-transparent">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">用途說明 *</label>
+                            <textarea x-model="consumeForm.purpose" required rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500 focus:border-transparent"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <button type="submit" class="bg-treatment-500 text-white px-6 py-2 rounded-lg hover:bg-[#3d4270] transition-colors flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>確認消耗</span>
+                        </button>
+                        <button type="button" @click="resetConsumeForm()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            <span>重置</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <!-- 血袋分頁 -->
         <div x-show="currentTab === 'blood'" class="bg-white rounded-xl shadow-lg p-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">🩸 血袋管理</h2>
-            
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-blood-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                    血庫管理
+                </h2>
+                <button @click.prevent.stop="showBloodHistoryModal = true; loadBloodHistory()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span>歷史記錄</span>
+                </button>
+            </div>
+
+            <!-- 血液庫存卡片 - 優先顯示數量 -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <template x-for="blood in bloodInventory" :key="blood.blood_type">
-                    <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-red-300 transition-colors">
+                    <div class="border-2 border-blood-200 rounded-lg p-4 hover:border-blood-500 transition-colors bg-gradient-to-br from-white to-blood-50">
                         <div class="text-center">
-                            <div class="text-2xl font-bold text-red-600" x-text="blood.blood_type"></div>
-                            <div class="text-3xl font-bold text-gray-800 my-2" x-text="blood.quantity"></div>
-                            <div class="text-sm text-gray-500">單位 (U)</div>
+                            <!-- 數量優先，更大更醒目 -->
+                            <div class="text-5xl font-bold text-blood-500 my-3" x-text="blood.quantity"></div>
+                            <div class="text-xs text-gray-500 mb-2">單位 (U)</div>
+                            <!-- 血型次要，較小 -->
+                            <div class="text-lg font-semibold text-gray-700 bg-white px-3 py-1 rounded-full inline-block" x-text="blood.blood_type"></div>
                         </div>
                     </div>
                 </template>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- 血袋入庫 -->
-                <div class="border-2 border-green-200 rounded-lg p-4">
-                    <h3 class="text-lg font-semibold text-green-700 mb-4">📥 血袋入庫</h3>
-                    <form @submit.prevent="submitBloodReceive()" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">血型 *</label>
-                            <select x-model="bloodReceiveForm.bloodType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-                                <option value="">請選擇血型</option>
-                                <option value="A+">A+</option>
-                                <option value="A-">A-</option>
-                                <option value="B+">B+</option>
-                                <option value="B-">B-</option>
-                                <option value="O+">O+</option>
-                                <option value="O-">O-</option>
-                                <option value="AB+">AB+</option>
-                                <option value="AB-">AB-</option>
-                            </select>
+                <div class="border-2 border-blood-200 rounded-lg p-4 bg-blood-50">
+                    <h3 class="text-lg font-semibold text-blood-500 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        血袋入庫
+                    </h3>
+                    <form @submit.prevent="submitBloodReceive()" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">血型 *</label>
+                                <select x-model="bloodReceiveForm.bloodType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blood-500 focus:border-transparent">
+                                    <option value="">選擇血型</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">數量 (U) *</label>
+                                <input type="number" x-model="bloodReceiveForm.quantity" required min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blood-500 focus:border-transparent">
+                            </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">數量 (U) *</label>
-                            <input type="number" x-model="bloodReceiveForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">備註</label>
+                            <input type="text" x-model="bloodReceiveForm.remarks" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blood-500 focus:border-transparent" placeholder="批號、來源等">
                         </div>
-                        <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                            ✅ 確認入庫
+                        <button type="submit" class="w-full bg-blood-500 text-white px-4 py-2 rounded-lg hover:bg-[#c4564a] transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>確認入庫</span>
                         </button>
                     </form>
                 </div>
 
-                <!-- 血袋出庫 -->
-                <div class="border-2 border-red-200 rounded-lg p-4">
-                    <h3 class="text-lg font-semibold text-red-700 mb-4">📤 血袋出庫</h3>
-                    <form @submit.prevent="submitBloodConsume()" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">血型 *</label>
-                            <select x-model="bloodConsumeForm.bloodType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-                                <option value="">請選擇血型</option>
-                                <option value="A+">A+</option>
-                                <option value="A-">A-</option>
-                                <option value="B+">B+</option>
-                                <option value="B-">B-</option>
-                                <option value="O+">O+</option>
-                                <option value="O-">O-</option>
-                                <option value="AB+">AB+</option>
-                                <option value="AB-">AB-</option>
-                            </select>
+                <!-- 血袋出庫 (含病患資訊) -->
+                <div class="border-2 border-blood-200 rounded-lg p-4 bg-blood-50">
+                    <h3 class="text-lg font-semibold text-blood-500 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                        </svg>
+                        血袋出庫
+                    </h3>
+                    <form @submit.prevent="submitBloodConsume()" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">血型 *</label>
+                                <select x-model="bloodConsumeForm.bloodType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blood-500 focus:border-transparent">
+                                    <option value="">選擇血型</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">數量 (U) *</label>
+                                <input type="number" x-model="bloodConsumeForm.quantity" required min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blood-500 focus:border-transparent">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">數量 (U) *</label>
-                            <input type="number" x-model="bloodConsumeForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
+                        <!-- 病患資訊 -->
+                        <div class="border-t border-blood-200 pt-3 space-y-3">
+                            <div class="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-blood-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                                病患資訊
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">病患姓名 *</label>
+                                <input type="text" x-model="bloodConsumeForm.patientName" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blood-500 focus:border-transparent" placeholder="請輸入病患姓名">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">病歷號</label>
+                                <input type="text" x-model="bloodConsumeForm.patientId" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blood-500 focus:border-transparent" placeholder="選填">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">用途說明</label>
+                                <textarea x-model="bloodConsumeForm.purpose" rows="2" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blood-500 focus:border-transparent" placeholder="手術、緊急輸血等"></textarea>
+                            </div>
                         </div>
-                        <button type="submit" class="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
-                            ✅ 確認出庫
+                        <button type="submit" class="w-full bg-blood-500 text-white px-4 py-2 rounded-lg hover:bg-[#c4564a] transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>確認出庫</span>
                         </button>
                     </form>
                 </div>
@@ -504,27 +677,47 @@
 
         <!-- 設備分頁 -->
         <div x-show="currentTab === 'equipment'" class="bg-white rounded-xl shadow-lg p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">🔧 設備管理</h2>
-                <div class="flex gap-2">
-                    <button @click="showAddEquipmentModal = true" class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
-                        ➕ 新增設備
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-equipment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    設備管理
+                </h2>
+                <div class="flex flex-wrap gap-2">
+                    <button @click="showAddEquipmentModal = true" class="bg-equipment-500 text-white px-4 py-2 rounded-lg hover:bg-[#5a6155] transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span>新增設備</span>
                     </button>
-                    <button @click="loadEquipment()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                        🔄 重新載入
+                    <button @click="loadEquipment()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span>重新載入</span>
                     </button>
                 </div>
             </div>
-            
+
+            <!-- 自動刷新提示 -->
+            <div class="mb-4 p-3 bg-equipment-500 bg-opacity-10 rounded-lg flex items-center gap-2 text-sm text-gray-700">
+                <svg class="w-5 h-5 text-equipment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span>設備狀態將於每日 <strong class="text-equipment-500">07:00am</strong> 自動重置為待檢查</span>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 table-hover">
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">設備ID</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名稱</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">狀態</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">分類</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">數量</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">狀態</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">電力</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最後檢查</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
@@ -534,11 +727,7 @@
                         <template x-for="eq in equipment" :key="eq.id">
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900" x-text="eq.id"></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="eq.name"></td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800" x-text="eq.category"></span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="eq.quantity"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900" x-text="eq.name"></td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span :class="{
                                         'bg-green-100 text-green-800': eq.status === 'NORMAL',
@@ -547,80 +736,19 @@
                                         'bg-gray-100 text-gray-800': eq.status === 'UNCHECKED'
                                     }" class="px-2 py-1 text-xs font-medium rounded-full" x-text="eq.status"></span>
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700" x-text="eq.category"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="eq.quantity"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <span x-show="eq.power_level !== null" x-text="eq.power_level + '%'"></span>
                                     <span x-show="eq.power_level === null" class="text-gray-400">-</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="eq.last_check ? new Date(eq.last_check).toLocaleString('zh-TW') : '-'"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                    <button @click="checkEquipment(eq)" class="text-green-600 hover:text-green-800">檢查</button>
-                                    <button @click="editEquipment(eq)" class="text-blue-600 hover:text-blue-800">編輯</button>
-                                    <button @click="deleteEquipment(eq.id, eq.name)" class="text-red-600 hover:text-red-800">刪除</button>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- 手術記錄分頁 -->
-        <div x-show="currentTab === 'surgery'" class="bg-white rounded-xl shadow-lg p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">🏥 手術記錄管理</h2>
-                <div class="flex gap-2">
-                    <button @click.prevent.stop="showAddSurgeryModal = true" class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
-                        ➕ 新增手術記錄
-                    </button>
-                    <button @click.prevent.stop="exportSurgeryCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                        📊 匯出 CSV
-                    </button>
-                    <button @click.prevent.stop="loadSurgeryRecords()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                        🔄 重新載入
-                    </button>
-                </div>
-            </div>
-
-            <!-- 搜尋篩選 -->
-            <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
-                    <input type="date" x-model="surgerySearchForm.startDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
-                    <input type="date" x-model="surgerySearchForm.endDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">病患姓名</label>
-                    <input type="text" x-model="surgerySearchForm.patientName" placeholder="搜尋病患..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
-                </div>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 table-hover">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">記錄編號</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日期</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">病患姓名</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">手術類型</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">主刀醫師</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">時長(分)</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <template x-for="record in surgeryRecords" :key="record.id">
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900" x-text="record.record_number"></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.record_date"></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.patient_name"></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.surgery_type"></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.surgeon_name"></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="record.duration_minutes || '-'"></td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <button @click="viewSurgeryDetail(record)" class="text-blue-600 hover:text-blue-800">詳情</button>
+                                    <button @click="checkEquipment(eq)" class="text-equipment-500 hover:text-[#5a6155] font-medium">檢查</button>
+                                    <button @click="editEquipment(eq)" class="text-gray-600 hover:text-gray-800 font-medium">編輯</button>
+                                    <button @click="deleteEquipment(eq.id, eq.name)" class="text-red-600 hover:text-red-800 font-medium">刪除</button>
                                 </td>
                             </tr>
                         </template>
@@ -632,19 +760,24 @@
         <!-- 新增物品 Modal -->
         <div x-show="showAddItemModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
             <div @click.away="showAddItemModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">➕ 新增物品</h3>
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    新增物品
+                </h3>
                 <form @submit.prevent="submitAddItem()" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼 (留空自動生成)</label>
-                        <input type="text" x-model="addItemForm.code" placeholder="留空將自動生成" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="text" x-model="addItemForm.code" placeholder="留空將自動生成" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">物品名稱 *</label>
-                        <input type="text" x-model="addItemForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="text" x-model="addItemForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">分類 *</label>
-                        <select x-model="addItemForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <select x-model="addItemForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
                             <option value="手術耗材">手術耗材</option>
                             <option value="急救物資">急救物資</option>
                             <option value="藥品">藥品</option>
@@ -655,18 +788,24 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">單位</label>
-                        <input type="text" x-model="addItemForm.unit" placeholder="EA" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="text" x-model="addItemForm.unit" placeholder="EA" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">最小庫存</label>
-                        <input type="number" x-model="addItemForm.minStock" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="number" x-model="addItemForm.minStock" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
                     </div>
                     <div class="flex gap-4">
-                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
-                            ✅ 確認新增
+                        <button type="submit" class="flex-1 bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>確認新增</span>
                         </button>
-                        <button type="button" @click="showAddItemModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
-                            ❌ 取消
+                        <button type="button" @click="showAddItemModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            <span>取消</span>
                         </button>
                     </div>
                 </form>
@@ -676,7 +815,12 @@
         <!-- 編輯物品 Modal -->
         <div x-show="showEditItemModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
             <div @click.away="showEditItemModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">✏️ 編輯物品</h3>
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    編輯物品
+                </h3>
                 <form @submit.prevent="submitEditItem()" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼</label>
@@ -684,11 +828,11 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">物品名稱 *</label>
-                        <input type="text" x-model="editItemForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="text" x-model="editItemForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">分類 *</label>
-                        <select x-model="editItemForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <select x-model="editItemForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
                             <option value="手術耗材">手術耗材</option>
                             <option value="急救物資">急救物資</option>
                             <option value="藥品">藥品</option>
@@ -699,18 +843,24 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">單位</label>
-                        <input type="text" x-model="editItemForm.unit" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="text" x-model="editItemForm.unit" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">最小庫存</label>
-                        <input type="number" x-model="editItemForm.minStock" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="number" x-model="editItemForm.minStock" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
                     </div>
                     <div class="flex gap-4">
-                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
-                            ✅ 確認更新
+                        <button type="submit" class="flex-1 bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>確認更新</span>
                         </button>
-                        <button type="button" @click="showEditItemModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
-                            ❌ 取消
+                        <button type="button" @click="showEditItemModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            <span>取消</span>
                         </button>
                     </div>
                 </form>
@@ -720,15 +870,20 @@
         <!-- 新增設備 Modal -->
         <div x-show="showAddEquipmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
             <div @click.away="showAddEquipmentModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">➕ 新增設備</h3>
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-equipment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    新增設備
+                </h3>
                 <form @submit.prevent="submitAddEquipment()" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">設備名稱 *</label>
-                        <input type="text" x-model="addEquipmentForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="text" x-model="addEquipmentForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-equipment-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">分類 *</label>
-                        <select x-model="addEquipmentForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <select x-model="addEquipmentForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-equipment-500">
                             <option value="電力設備">電力設備</option>
                             <option value="空氣淨化">空氣淨化</option>
                             <option value="水處理">水處理</option>
@@ -740,18 +895,24 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">數量</label>
-                        <input type="number" x-model="addEquipmentForm.quantity" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="number" x-model="addEquipmentForm.quantity" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-equipment-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">備註</label>
-                        <textarea x-model="addEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea>
+                        <textarea x-model="addEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-equipment-500"></textarea>
                     </div>
                     <div class="flex gap-4">
-                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
-                            ✅ 確認新增
+                        <button type="submit" class="flex-1 bg-equipment-500 text-white px-4 py-2 rounded-lg hover:bg-[#5a6155] transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>確認新增</span>
                         </button>
-                        <button type="button" @click="showAddEquipmentModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
-                            ❌ 取消
+                        <button type="button" @click="showAddEquipmentModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            <span>取消</span>
                         </button>
                     </div>
                 </form>
@@ -761,7 +922,12 @@
         <!-- 編輯設備 Modal -->
         <div x-show="showEditEquipmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
             <div @click.away="showEditEquipmentModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">✏️ 編輯設備</h3>
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-equipment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    編輯設備
+                </h3>
                 <form @submit.prevent="submitEditEquipment()" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">設備ID</label>
@@ -769,11 +935,11 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">設備名稱 *</label>
-                        <input type="text" x-model="editEquipmentForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="text" x-model="editEquipmentForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-equipment-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">分類 *</label>
-                        <select x-model="editEquipmentForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <select x-model="editEquipmentForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-equipment-500">
                             <option value="電力設備">電力設備</option>
                             <option value="空氣淨化">空氣淨化</option>
                             <option value="水處理">水處理</option>
@@ -785,18 +951,24 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">數量</label>
-                        <input type="number" x-model="editEquipmentForm.quantity" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="number" x-model="editEquipmentForm.quantity" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-equipment-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">備註</label>
-                        <textarea x-model="editEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea>
+                        <textarea x-model="editEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-equipment-500"></textarea>
                     </div>
                     <div class="flex gap-4">
-                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
-                            ✅ 確認更新
+                        <button type="submit" class="flex-1 bg-equipment-500 text-white px-4 py-2 rounded-lg hover:bg-[#5a6155] transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>確認更新</span>
                         </button>
-                        <button type="button" @click="showEditEquipmentModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
-                            ❌ 取消
+                        <button type="button" @click="showEditEquipmentModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            <span>取消</span>
                         </button>
                     </div>
                 </form>
@@ -806,7 +978,12 @@
         <!-- 設備檢查 Modal -->
         <div x-show="showCheckEquipmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
             <div @click.away="showCheckEquipmentModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">🔍 設備檢查</h3>
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-equipment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                    設備檢查
+                </h3>
                 <form @submit.prevent="submitCheckEquipment()" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">設備名稱</label>
@@ -814,7 +991,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">狀態 *</label>
-                        <select x-model="checkEquipmentForm.status" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <select x-model="checkEquipmentForm.status" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-equipment-500">
                             <option value="NORMAL">正常 (NORMAL)</option>
                             <option value="WARNING">警告 (WARNING)</option>
                             <option value="ERROR">異常 (ERROR)</option>
@@ -822,18 +999,24 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">電力等級 (0-100%)</label>
-                        <input type="number" x-model="checkEquipmentForm.powerLevel" min="0" max="100" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="number" x-model="checkEquipmentForm.powerLevel" min="0" max="100" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-equipment-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">備註</label>
-                        <textarea x-model="checkEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea>
+                        <textarea x-model="checkEquipmentForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-equipment-500"></textarea>
                     </div>
                     <div class="flex gap-4">
-                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
-                            ✅ 確認檢查
+                        <button type="submit" class="flex-1 bg-equipment-500 text-white px-4 py-2 rounded-lg hover:bg-[#5a6155] transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>確認檢查</span>
                         </button>
-                        <button type="button" @click="showCheckEquipmentModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
-                            ❌ 取消
+                        <button type="button" @click="showCheckEquipmentModal = false" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            <span>取消</span>
                         </button>
                     </div>
                 </form>
@@ -1207,6 +1390,7 @@
                 apiUrl: apiBaseUrl,
                 stationId: 'TC-01',
                 currentTab: 'items',
+                treatmentMode: 'surgery', // 處置標籤頁模式: 'surgery' 或 'consume'
                 currentTime: '',
                 
                 // 資料
