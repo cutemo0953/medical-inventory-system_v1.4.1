@@ -496,7 +496,7 @@
 
             <!-- 一般消耗模式 -->
             <div x-show="treatmentMode === 'consume'">
-                <div class="mb-4">
+                <div class="mb-4 flex justify-between items-center">
                     <button @click.prevent.stop="showConsumeHistoryModal = true; loadConsumeHistory()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -505,29 +505,82 @@
                     </button>
                 </div>
 
-                <form @submit.prevent="submitConsume()" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼 *</label>
-                            <select x-model="consumeForm.itemCode" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500 focus:border-transparent">
-                                <option value="">請選擇物品</option>
-                                <template x-for="item in items" :key="item.code">
-                                    <option :value="item.code" x-text="`${item.code} - ${item.name} (庫存: ${item.current_stock})`"></option>
-                                </template>
-                            </select>
+                <form @submit.prevent="submitBatchConsume()" class="space-y-4">
+                    <!-- 消耗原因（整批共用） -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">消耗原因 *</label>
+                        <textarea x-model="batchConsumeForm.purpose" required rows="2"
+                                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500 focus:border-transparent"></textarea>
+                    </div>
+
+                    <!-- 耗材清單 -->
+                    <div class="border-2 border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="text-lg font-semibold text-gray-700 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-treatment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                                </svg>
+                                消耗品項
+                            </h4>
+                            <button type="button" @click="addBatchConsumeItem()"
+                                    class="bg-treatment-500 text-white px-3 py-1 rounded-lg hover:bg-[#3d4270] text-sm flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                新增品項
+                            </button>
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">數量 *</label>
-                            <input type="number" x-model="consumeForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500 focus:border-transparent">
+                        <div class="space-y-3">
+                            <template x-for="(item, index) in batchConsumeForm.items" :key="index">
+                                <div class="flex gap-2 items-start border border-gray-200 rounded-lg p-3">
+                                    <div class="flex-1 grid grid-cols-3 gap-2">
+                                        <!-- 搜尋輸入框（使用 relative div） -->
+                                        <div class="relative col-span-2">
+                                            <input
+                                                type="text"
+                                                x-model="item.searchText"
+                                                @input="filterBatchConsumeItems(index)"
+                                                @focus="item.showDropdown = true"
+                                                @blur="setTimeout(() => item.showDropdown = false, 200)"
+                                                placeholder="搜尋物品..."
+                                                required
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500"
+                                            >
+                                            <div x-show="item.showDropdown && item.filteredItems && item.filteredItems.length > 0"
+                                                 class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                                <template x-for="availableItem in item.filteredItems.slice(0, 8)" :key="availableItem.code">
+                                                    <div @click.stop="selectBatchConsumeItem(index, availableItem)"
+                                                         class="px-3 py-2 hover:bg-treatment-50 cursor-pointer text-sm">
+                                                        <span class="font-mono" x-text="availableItem.code"></span> -
+                                                        <span x-text="availableItem.name"></span>
+                                                        <span class="text-xs text-gray-500" x-text="`(庫存: ${availableItem.current_stock})`"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+
+                                        <!-- 數量輸入框 -->
+                                        <input type="number" x-model="item.quantity" required min="1" placeholder="數量"
+                                               class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
+                                    </div>
+
+                                    <!-- 刪除按鈕 -->
+                                    <button type="button" @click="removeBatchConsumeItem(index)" class="text-red-600 hover:text-red-800 p-2">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </template>
                         </div>
 
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">用途說明 *</label>
-                            <textarea x-model="consumeForm.purpose" required rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500 focus:border-transparent"></textarea>
+                        <div x-show="batchConsumeForm.items.length === 0" class="text-center text-gray-400 py-4">
+                            尚未新增消耗品項
                         </div>
                     </div>
 
+                    <!-- 提交按鈕 -->
                     <div class="flex gap-4">
                         <button type="submit" class="bg-treatment-500 text-white px-6 py-2 rounded-lg hover:bg-[#3d4270] transition-colors flex items-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -535,7 +588,7 @@
                             </svg>
                             <span>確認消耗</span>
                         </button>
-                        <button type="button" @click="resetConsumeForm()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
+                        <button type="button" @click="resetBatchConsumeForm()" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                             </svg>
@@ -1091,12 +1144,29 @@
                             <template x-for="(item, index) in addSurgeryForm.consumptions" :key="index">
                                 <div class="flex gap-2 items-start border border-gray-200 rounded-lg p-3">
                                     <div class="flex-1 grid grid-cols-3 gap-2">
-                                        <select x-model="item.itemCode" @change="updateConsumptionItemName(index)" required class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
-                                            <option value="">選擇物品</option>
-                                            <template x-for="availableItem in items" :key="availableItem.code">
-                                                <option :value="availableItem.code" x-text="`${availableItem.code} - ${availableItem.name}`"></option>
-                                            </template>
-                                        </select>
+                                        <div class="relative">
+                                            <input
+                                                type="text"
+                                                x-model="item.searchText"
+                                                @input="filterConsumptionItems(index)"
+                                                @focus="item.showDropdown = true"
+                                                @blur="setTimeout(() => item.showDropdown = false, 200)"
+                                                placeholder="搜尋耗材..."
+                                                required
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500"
+                                            >
+                                            <div x-show="item.showDropdown && item.filteredItems && item.filteredItems.length > 0"
+                                                 class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                                <template x-for="availableItem in item.filteredItems.slice(0, 8)" :key="availableItem.code">
+                                                    <div @click.stop="selectConsumptionItem(index, availableItem)"
+                                                         class="px-3 py-2 hover:bg-treatment-50 cursor-pointer text-sm">
+                                                        <span class="font-mono" x-text="availableItem.code"></span> -
+                                                        <span x-text="availableItem.name"></span>
+                                                        <span class="text-xs text-gray-500" x-text="`(庫存: ${availableItem.current_stock})`"></span>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
                                         <input type="number" x-model="item.quantity" required min="1" placeholder="數量" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
                                         <input type="text" x-model="item.unit" readonly placeholder="單位" class="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
                                     </div>
@@ -1523,6 +1593,11 @@
                     purpose: '',
                     stationId: 'TC-01'
                 },
+                batchConsumeForm: {
+                    purpose: '',
+                    items: [],
+                    stationId: 'TC-01'
+                },
                 bloodReceiveForm: {
                     bloodType: '',
                     quantity: 1,
@@ -1926,6 +2001,103 @@
                     };
                 },
 
+                // 批次消耗功能
+                addBatchConsumeItem() {
+                    this.batchConsumeForm.items.push({
+                        itemCode: '',
+                        itemName: '',
+                        quantity: 1,
+                        searchText: '',
+                        showDropdown: false,
+                        filteredItems: []
+                    });
+                },
+
+                removeBatchConsumeItem(index) {
+                    this.batchConsumeForm.items.splice(index, 1);
+                },
+
+                filterBatchConsumeItems(index) {
+                    const item = this.batchConsumeForm.items[index];
+                    const searchText = item.searchText.toLowerCase();
+
+                    if (!searchText) {
+                        item.filteredItems = this.items;
+                    } else {
+                        item.filteredItems = this.items.filter(i =>
+                            i.code.toLowerCase().includes(searchText) ||
+                            i.name.toLowerCase().includes(searchText)
+                        );
+                    }
+                },
+
+                selectBatchConsumeItem(index, selectedItem) {
+                    const item = this.batchConsumeForm.items[index];
+                    item.itemCode = selectedItem.code;
+                    item.itemName = selectedItem.name;
+                    item.searchText = `${selectedItem.code} - ${selectedItem.name}`;
+                    item.showDropdown = false;
+                },
+
+                async submitBatchConsume() {
+                    try {
+                        if (this.batchConsumeForm.items.length === 0) {
+                            this.toast('請至少新增一個消耗品項', 'error');
+                            return;
+                        }
+
+                        // 批次提交每個消耗品項
+                        let successCount = 0;
+                        let failCount = 0;
+
+                        for (const item of this.batchConsumeForm.items) {
+                            try {
+                                const response = await fetch(`${this.apiUrl}/consume`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        itemCode: item.itemCode,
+                                        quantity: item.quantity,
+                                        purpose: this.batchConsumeForm.purpose,
+                                        stationId: this.batchConsumeForm.stationId
+                                    })
+                                });
+
+                                if (response.ok) {
+                                    successCount++;
+                                } else {
+                                    failCount++;
+                                }
+                            } catch (error) {
+                                failCount++;
+                            }
+                        }
+
+                        // 顯示結果
+                        if (failCount === 0) {
+                            this.toast(`成功消耗 ${successCount} 項物品`, 'success');
+                            this.resetBatchConsumeForm();
+                            await this.loadItems();
+                            await this.loadStats();
+                        } else {
+                            this.toast(`成功 ${successCount} 項，失敗 ${failCount} 項`, 'warning');
+                            await this.loadItems();
+                            await this.loadStats();
+                        }
+                    } catch (error) {
+                        console.error('批次消耗失敗:', error);
+                        this.toast('批次消耗失敗', 'error');
+                    }
+                },
+
+                resetBatchConsumeForm() {
+                    this.batchConsumeForm = {
+                        purpose: '',
+                        items: [],
+                        stationId: this.stationId
+                    };
+                },
+
                 // 載入消耗記錄
                 async loadConsumeHistory() {
                     try {
@@ -2223,8 +2395,34 @@
                         itemCode: '',
                         itemName: '',
                         quantity: 1,
-                        unit: ''
+                        unit: '',
+                        searchText: '',
+                        showDropdown: false,
+                        filteredItems: []
                     });
+                },
+
+                filterConsumptionItems(index) {
+                    const item = this.addSurgeryForm.consumptions[index];
+                    const searchText = item.searchText.toLowerCase();
+
+                    if (!searchText) {
+                        item.filteredItems = this.items;
+                    } else {
+                        item.filteredItems = this.items.filter(i =>
+                            i.code.toLowerCase().includes(searchText) ||
+                            i.name.toLowerCase().includes(searchText)
+                        );
+                    }
+                },
+
+                selectConsumptionItem(index, selectedItem) {
+                    const item = this.addSurgeryForm.consumptions[index];
+                    item.itemCode = selectedItem.code;
+                    item.itemName = selectedItem.name;
+                    item.unit = selectedItem.unit;
+                    item.searchText = `${selectedItem.code} - ${selectedItem.name}`;
+                    item.showDropdown = false;
                 },
 
                 removeConsumptionItem(index) {
