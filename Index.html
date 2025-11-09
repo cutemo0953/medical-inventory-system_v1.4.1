@@ -1026,44 +1026,57 @@
         <!-- 新增手術記錄 Modal -->
         <div x-show="showAddSurgeryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
             <div @click.away="showAddSurgeryModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 my-8">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">🏥 新增手術記錄</h3>
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-treatment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    新增手術記錄
+                </h3>
                 <form @submit.prevent="submitAddSurgery()" class="space-y-4">
                     <!-- 基本資訊 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">病患姓名 *</label>
-                            <input type="text" x-model="addSurgeryForm.patientName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <input type="text" x-model="addSurgeryForm.patientName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">手術類型 *</label>
-                            <input type="text" x-model="addSurgeryForm.surgeryType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <input type="text" x-model="addSurgeryForm.surgeryType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">主刀醫師 *</label>
-                            <input type="text" x-model="addSurgeryForm.surgeonName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <input type="text" x-model="addSurgeryForm.surgeonName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">麻醉方式</label>
-                            <input type="text" x-model="addSurgeryForm.anesthesiaType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <input type="text" x-model="addSurgeryForm.anesthesiaType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">手術時長 (分鐘)</label>
-                            <input type="number" x-model="addSurgeryForm.durationMinutes" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <input type="number" x-model="addSurgeryForm.durationMinutes" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
                         </div>
                     </div>
 
                     <!-- 備註 -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">手術備註</label>
-                        <textarea x-model="addSurgeryForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"></textarea>
+                        <textarea x-model="addSurgeryForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500"></textarea>
                     </div>
 
                     <!-- 耗材清單 -->
                     <div class="border-2 border-gray-200 rounded-lg p-4">
                         <div class="flex justify-between items-center mb-3">
-                            <h4 class="text-lg font-semibold text-gray-700">📋 使用耗材</h4>
-                            <button type="button" @click="addConsumptionItem()" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 text-sm">
-                                ➕ 新增耗材
+                            <h4 class="text-lg font-semibold text-gray-700 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-treatment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                                </svg>
+                                使用耗材
+                            </h4>
+                            <button type="button" @click="addConsumptionItem()" class="bg-treatment-500 text-white px-3 py-1 rounded-lg hover:bg-[#3d4270] text-sm flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                新增耗材
                             </button>
                         </div>
 
@@ -1071,17 +1084,19 @@
                             <template x-for="(item, index) in addSurgeryForm.consumptions" :key="index">
                                 <div class="flex gap-2 items-start border border-gray-200 rounded-lg p-3">
                                     <div class="flex-1 grid grid-cols-3 gap-2">
-                                        <select x-model="item.itemCode" @change="updateConsumptionItemName(index)" required class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                        <select x-model="item.itemCode" @change="updateConsumptionItemName(index)" required class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
                                             <option value="">選擇物品</option>
                                             <template x-for="availableItem in items" :key="availableItem.code">
                                                 <option :value="availableItem.code" x-text="`${availableItem.code} - ${availableItem.name}`"></option>
                                             </template>
                                         </select>
-                                        <input type="number" x-model="item.quantity" required min="1" placeholder="數量" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                        <input type="number" x-model="item.quantity" required min="1" placeholder="數量" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
                                         <input type="text" x-model="item.unit" readonly placeholder="單位" class="px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
                                     </div>
                                     <button type="button" @click="removeConsumptionItem(index)" class="text-red-600 hover:text-red-800 p-2">
-                                        🗑️
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
                                     </button>
                                 </div>
                             </template>
@@ -1093,11 +1108,17 @@
                     </div>
 
                     <div class="flex gap-4 pt-4">
-                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors">
-                            ✅ 確認建立
+                        <button type="submit" class="flex-1 bg-treatment-500 text-white px-4 py-2 rounded-lg hover:bg-[#3d4270] transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            確認建立
                         </button>
-                        <button type="button" @click="showAddSurgeryModal = false; resetAddSurgeryForm()" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
-                            ❌ 取消
+                        <button type="button" @click="showAddSurgeryModal = false; resetAddSurgeryForm()" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                            取消
                         </button>
                     </div>
                 </form>
@@ -1107,7 +1128,12 @@
         <!-- 手術詳情 Modal -->
         <div x-show="showSurgeryDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
             <div @click.away="showSurgeryDetailModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 my-8">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">🏥 手術記錄詳情</h3>
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-treatment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    手術記錄詳情
+                </h3>
                 
                 <template x-if="selectedSurgery">
                     <div class="space-y-4">
@@ -1155,7 +1181,12 @@
 
                         <!-- 耗材清單 -->
                         <div class="border-2 border-gray-200 rounded-lg p-4">
-                            <h4 class="text-lg font-semibold text-gray-700 mb-3">📋 使用耗材</h4>
+                            <h4 class="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-treatment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                                </svg>
+                                使用耗材
+                            </h4>
                             <div class="overflow-x-auto">
                                 <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="bg-gray-50">
@@ -1194,9 +1225,17 @@
         <div x-show="showReceiveHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
             <div @click.away="showReceiveHistoryModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-6xl w-full mx-4 my-8">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-gray-800">📥 進貨記錄</h3>
-                    <button @click="exportReceiveHistoryCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
-                        📊 匯出CSV
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+                        </svg>
+                        進貨記錄
+                    </h3>
+                    <button @click="exportReceiveHistoryCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        匯出CSV
                     </button>
                 </div>
 
@@ -1204,15 +1243,15 @@
                 <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
-                        <input type="date" x-model="receiveHistorySearch.startDate" @change="loadReceiveHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="date" x-model="receiveHistorySearch.startDate" @change="loadReceiveHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
-                        <input type="date" x-model="receiveHistorySearch.endDate" @change="loadReceiveHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="date" x-model="receiveHistorySearch.endDate" @change="loadReceiveHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼</label>
-                        <input type="text" x-model="receiveHistorySearch.itemCode" @input="loadReceiveHistory()" placeholder="搜尋物品..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="text" x-model="receiveHistorySearch.itemCode" @input="loadReceiveHistory()" placeholder="搜尋物品..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
                     </div>
                 </div>
 
@@ -1257,9 +1296,17 @@
         <div x-show="showConsumeHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
             <div @click.away="showConsumeHistoryModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-6xl w-full mx-4 my-8">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-gray-800">📤 消耗記錄</h3>
-                    <button @click="exportConsumeHistoryCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm">
-                        📊 匯出CSV
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-treatment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        消耗記錄
+                    </h3>
+                    <button @click="exportConsumeHistoryCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        匯出CSV
                     </button>
                 </div>
 
@@ -1267,15 +1314,15 @@
                 <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
-                        <input type="date" x-model="consumeHistorySearch.startDate" @change="loadConsumeHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="date" x-model="consumeHistorySearch.startDate" @change="loadConsumeHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
-                        <input type="date" x-model="consumeHistorySearch.endDate" @change="loadConsumeHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="date" x-model="consumeHistorySearch.endDate" @change="loadConsumeHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼</label>
-                        <input type="text" x-model="consumeHistorySearch.itemCode" @input="loadConsumeHistory()" placeholder="搜尋物品..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500">
+                        <input type="text" x-model="consumeHistorySearch.itemCode" @input="loadConsumeHistory()" placeholder="搜尋物品..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-treatment-500">
                     </div>
                 </div>
 
@@ -1319,7 +1366,12 @@
         <!-- 消耗詳情 Modal -->
         <div x-show="showConsumeDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
             <div @click.away="showConsumeDetailModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
-                <h3 class="text-xl font-bold text-gray-800 mb-4">📤 消耗詳情</h3>
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-treatment-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    消耗詳情
+                </h3>
 
                 <template x-if="selectedConsumeEvent">
                     <div class="space-y-3">
@@ -1358,6 +1410,28 @@
 
                 <div class="pt-4">
                     <button type="button" @click="showConsumeDetailModal = false" class="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                        關閉
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 血庫歷史記錄 Modal -->
+        <div x-show="showBloodHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto" style="display: none;">
+            <div @click.away="showBloodHistoryModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-4xl w-full mx-4 my-8 max-h-[90vh] overflow-y-auto">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-blood-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    血庫歷史記錄
+                </h3>
+
+                <div class="mb-4 p-3 bg-blue-50 rounded-lg text-sm text-gray-700">
+                    <p>注意：血庫歷史記錄功能尚未完全實作，此為預留介面。</p>
+                </div>
+
+                <div class="pt-4">
+                    <button type="button" @click="showBloodHistoryModal = false" class="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
                         關閉
                     </button>
                 </div>
@@ -1425,6 +1499,7 @@
                 showReceiveHistoryModal: false,
                 showConsumeHistoryModal: false,
                 showConsumeDetailModal: false,
+                showBloodHistoryModal: false,
 
                 // 表單
                 receiveForm: {
@@ -1444,11 +1519,15 @@
                 bloodReceiveForm: {
                     bloodType: '',
                     quantity: 1,
+                    remarks: '',
                     stationId: 'TC-01'
                 },
                 bloodConsumeForm: {
                     bloodType: '',
                     quantity: 1,
+                    patientName: '',
+                    patientId: '',
+                    purpose: '',
                     stationId: 'TC-01'
                 },
                 addItemForm: {
@@ -1870,6 +1949,13 @@
                 viewConsumeDetail(event) {
                     this.selectedConsumeEvent = event;
                     this.showConsumeDetailModal = true;
+                },
+
+                // 載入血庫歷史記錄
+                async loadBloodHistory() {
+                    // TODO: 實作血庫歷史記錄 API 串接
+                    console.log('載入血庫歷史記錄');
+                    this.toast('血庫歷史記錄功能開發中', 'info');
                 },
 
                 // 匯出消耗記錄
