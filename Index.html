@@ -1352,7 +1352,7 @@
                         </svg>
                         進貨記錄
                     </h3>
-                    <button @click="exportReceiveHistoryCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center gap-2">
+                    <button @click="exportReceiveHistoryCSV()" class="bg-teal-custom-500 text-white px-4 py-2 rounded-lg hover:bg-teal-custom-600 transition-colors text-sm flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -1423,7 +1423,7 @@
                         </svg>
                         消耗記錄
                     </h3>
-                    <button @click="exportConsumeHistoryCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center gap-2">
+                    <button @click="exportConsumeHistoryCSV()" class="bg-teal-custom-500 text-white px-4 py-2 rounded-lg hover:bg-teal-custom-600 transition-colors text-sm flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -1626,7 +1626,7 @@
                 </div>
 
                 <div class="mt-4 flex justify-between items-center">
-                    <button @click="exportBloodHistoryCSV()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                    <button @click="exportBloodHistoryCSV()" class="bg-teal-custom-500 text-white px-4 py-2 rounded-lg hover:bg-teal-custom-600 transition-colors flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -1642,7 +1642,7 @@
         <!-- Toast 通知 -->
         <div x-show="showToast" x-transition class="fixed bottom-4 right-4 z-50" style="display: none;">
             <div :class="{
-                'bg-green-500': toastType === 'success',
+                'bg-teal-custom-500': toastType === 'success',
                 'bg-red-500': toastType === 'error',
                 'bg-blue-500': toastType === 'info'
             }" class="text-white px-6 py-3 rounded-lg shadow-lg">
@@ -2289,7 +2289,7 @@
                 // 載入血庫歷史記錄
                 async loadBloodHistory() {
                     try {
-                        let url = `${this.apiUrl}/blood/events?station_id=${this.currentStation.id}`;
+                        let url = `${this.apiUrl}/blood/events?station_id=${this.stationId}`;
 
                         // 添加篩選條件
                         if (this.bloodHistorySearch.startDate) {
@@ -2353,7 +2353,7 @@
 
                 // 匯出血庫歷史記錄 CSV
                 exportBloodHistoryCSV() {
-                    let url = `${this.apiUrl}/blood/events/export/csv?station_id=${this.currentStation.id}`;
+                    let url = `${this.apiUrl}/blood/events/export/csv?station_id=${this.stationId}`;
 
                     if (this.bloodHistorySearch.startDate) {
                         url += `&start_date=${this.bloodHistorySearch.startDate}`;
@@ -2463,6 +2463,11 @@
                         if (response.ok) {
                             const data = await response.json();
                             this.equipment = data.equipment;
+                            // 重新載入統計數據以更新待檢查設備數量
+                            await this.loadStats();
+                            this.toast('設備列表已更新', 'success');
+                        } else {
+                            this.toast('載入設備失敗', 'error');
                         }
                     } catch (error) {
                         console.error('載入設備失敗:', error);
