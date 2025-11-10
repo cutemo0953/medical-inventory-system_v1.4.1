@@ -20,7 +20,7 @@ import hashlib
 
 from fastapi import FastAPI, HTTPException, status, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse, HTMLResponse
 from pydantic import BaseModel, Field, field_validator
 import uvicorn
 
@@ -127,6 +127,40 @@ class BloodRequest(BaseModel):
         if v not in config.BLOOD_TYPES:
             raise ValueError(f'血型必須為以下之一: {", ".join(config.BLOOD_TYPES)}')
         return v
+
+
+class EmergencyBloodBagRequest(BaseModel):
+    """緊急血袋登記請求 (v1.4.5)"""
+    bloodType: str = Field(..., description="血型 (A+/A-/B+/B-/O+/O-/AB+/AB-)")
+    productType: str = Field(..., description="血品類型 (WHOLE_BLOOD/PLATELET/FROZEN_PLASMA/RBC_CONCENTRATE)")
+    collectionDate: str = Field(..., description="採集日期 (YYYY-MM-DD)")
+    volumeMl: int = Field(default=250, ge=50, le=500, description="容量 (ml)")
+    stationId: str = Field(default="TC-01", description="站點ID")
+    operator: str = Field(..., description="操作人員", min_length=1)
+    orgCode: str = Field(default="DNO", description="組織代碼", max_length=4)
+    remarks: Optional[str] = Field(None, description="備註", max_length=500)
+
+    @field_validator('bloodType')
+    @classmethod
+    def validate_blood_type(cls, v):
+        if v not in config.BLOOD_TYPES:
+            raise ValueError(f'血型必須為以下之一: {", ".join(config.BLOOD_TYPES)}')
+        return v
+
+    @field_validator('productType')
+    @classmethod
+    def validate_product_type(cls, v):
+        valid_types = ["WHOLE_BLOOD", "PLATELET", "FROZEN_PLASMA", "RBC_CONCENTRATE"]
+        if v not in valid_types:
+            raise ValueError(f'血品類型必須為以下之一: {", ".join(valid_types)}')
+        return v
+
+
+class EmergencyBloodBagUseRequest(BaseModel):
+    """緊急血袋使用請求 (v1.4.5)"""
+    bloodBagCode: str = Field(..., description="血袋編號")
+    patientName: str = Field(..., description="病患姓名", min_length=1, max_length=100)
+    operator: str = Field(..., description="操作人員", min_length=1)
 
 
 class EquipmentCheckRequest(BaseModel):
@@ -278,7 +312,28 @@ class DatabaseManager:
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
+
+            # 緊急血袋登記 (v1.4.5新增)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS emergency_blood_bags (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    blood_bag_code TEXT UNIQUE NOT NULL,
+                    blood_type TEXT NOT NULL,
+                    product_type TEXT NOT NULL,
+                    collection_date DATE NOT NULL,
+                    expiry_date DATE NOT NULL,
+                    volume_ml INTEGER DEFAULT 250,
+                    status TEXT DEFAULT 'AVAILABLE',
+                    station_id TEXT NOT NULL,
+                    operator TEXT NOT NULL,
+                    patient_name TEXT,
+                    usage_timestamp TIMESTAMP,
+                    remarks TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CHECK(status IN ('AVAILABLE', 'USED', 'EXPIRED', 'DISCARDED'))
+                )
+            """)
+
             # 設備主檔
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS equipment (
@@ -343,20 +398,80 @@ class DatabaseManager:
                 )
             """)
             
-            # 為手術記錄建立索引
+            # ========== 資料庫索引優化 (v1.4.5) ==========
+            # 手術記錄索引
             cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_surgery_records_date 
+                CREATE INDEX IF NOT EXISTS idx_surgery_records_date
                 ON surgery_records(record_date)
             """)
             cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_surgery_records_patient 
+                CREATE INDEX IF NOT EXISTS idx_surgery_records_patient
                 ON surgery_records(patient_name)
             """)
             cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_surgery_consumptions_surgery 
+                CREATE INDEX IF NOT EXISTS idx_surgery_consumptions_surgery
                 ON surgery_consumptions(surgery_id)
             """)
-            
+
+            # 庫存物品索引
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_items_category
+                ON items(category)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_items_updated
+                ON items(updated_at DESC)
+            """)
+
+            # 庫存事件索引
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_inventory_events_item
+                ON inventory_events(item_code, timestamp DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_inventory_events_time
+                ON inventory_events(timestamp DESC)
+            """)
+
+            # 血袋事件索引
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_blood_events_type
+                ON blood_events(blood_type, timestamp DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_blood_events_time
+                ON blood_events(timestamp DESC)
+            """)
+
+            # 緊急血袋索引 (v1.4.5新增)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_emergency_blood_status
+                ON emergency_blood_bags(status, collection_date DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_emergency_blood_type
+                ON emergency_blood_bags(blood_type, status)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_emergency_blood_expiry
+                ON emergency_blood_bags(expiry_date)
+            """)
+
+            # 設備索引
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_equipment_status
+                ON equipment(status, last_check DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_equipment_category
+                ON equipment(category)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_equipment_checks_time
+                ON equipment_checks(timestamp DESC)
+            """)
+            # ========== 索引優化結束 ==========
+
             # 初始化預設設備
             self._init_default_equipment(cursor)
             
@@ -913,7 +1028,7 @@ class DatabaseManager:
         """取得血袋庫存"""
         conn = self.get_connection()
         cursor = conn.cursor()
-        
+
         try:
             cursor.execute("""
                 SELECT blood_type, quantity, last_updated
@@ -923,7 +1038,183 @@ class DatabaseManager:
             return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
-    
+
+    # ========== 緊急血袋管理 (v1.4.5新增) ==========
+
+    def generate_emergency_blood_code(self, blood_type: str, collection_date: str, org_code: str = "DNO") -> str:
+        """生成緊急血袋編號 {ORG}-{YYMMDD}-{BLOOD_TYPE}-{SEQ}"""
+        # 讀取血型代碼映射
+        blood_type_codes = {
+            "A+": "AP", "A-": "AN",
+            "B+": "BP", "B-": "BN",
+            "O+": "OP", "O-": "ON",
+            "AB+": "ABP", "AB-": "ABN"
+        }
+        blood_code = blood_type_codes.get(blood_type, "XX")
+
+        # 解析日期為YYMMDD格式
+        from datetime import datetime
+        date_obj = datetime.strptime(collection_date, "%Y-%m-%d")
+        date_str = date_obj.strftime("%y%m%d")
+
+        # 查詢當天該血型的序號
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+                SELECT COUNT(*) as count
+                FROM emergency_blood_bags
+                WHERE blood_type = ?
+                AND collection_date = ?
+            """, (blood_type, collection_date))
+            count = cursor.fetchone()['count']
+            seq = count + 1
+
+            # 生成完整編號
+            blood_bag_code = f"{org_code}-{date_str}-{blood_code}-{seq:03d}"
+            return blood_bag_code
+        finally:
+            conn.close()
+
+    def calculate_expiry_date(self, collection_date: str, product_type: str) -> str:
+        """計算血袋效期"""
+        from datetime import datetime, timedelta
+
+        expiry_days = {
+            "WHOLE_BLOOD": 35,
+            "PLATELET": 5,
+            "FROZEN_PLASMA": 365,
+            "RBC_CONCENTRATE": 42
+        }
+
+        days = expiry_days.get(product_type, 35)
+        collection = datetime.strptime(collection_date, "%Y-%m-%d")
+        expiry = collection + timedelta(days=days)
+        return expiry.strftime("%Y-%m-%d")
+
+    def register_emergency_blood_bag(self, data: dict) -> dict:
+        """登記緊急血袋"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            # 生成血袋編號
+            blood_bag_code = self.generate_emergency_blood_code(
+                data['blood_type'],
+                data['collection_date'],
+                data.get('org_code', 'DNO')
+            )
+
+            # 計算效期
+            expiry_date = self.calculate_expiry_date(
+                data['collection_date'],
+                data['product_type']
+            )
+
+            # 插入記錄
+            cursor.execute("""
+                INSERT INTO emergency_blood_bags
+                (blood_bag_code, blood_type, product_type, collection_date, expiry_date,
+                 volume_ml, station_id, operator, remarks)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                blood_bag_code,
+                data['blood_type'],
+                data['product_type'],
+                data['collection_date'],
+                expiry_date,
+                data.get('volume_ml', 250),
+                data['station_id'],
+                data['operator'],
+                data.get('remarks', '')
+            ))
+
+            conn.commit()
+            logger.info(f"緊急血袋登記成功: {blood_bag_code}")
+
+            return {
+                "success": True,
+                "blood_bag_code": blood_bag_code,
+                "expiry_date": expiry_date,
+                "message": f"血袋 {blood_bag_code} 登記成功"
+            }
+
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"緊急血袋登記失敗: {e}")
+            raise HTTPException(status_code=500, detail=f"登記失敗: {str(e)}")
+        finally:
+            conn.close()
+
+    def get_emergency_blood_bags(self, status: str = None) -> List[Dict]:
+        """取得緊急血袋清單"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            if status:
+                cursor.execute("""
+                    SELECT * FROM emergency_blood_bags
+                    WHERE status = ?
+                    ORDER BY collection_date DESC, blood_bag_code
+                """, (status,))
+            else:
+                cursor.execute("""
+                    SELECT * FROM emergency_blood_bags
+                    ORDER BY collection_date DESC, blood_bag_code
+                """)
+
+            return [dict(row) for row in cursor.fetchall()]
+        finally:
+            conn.close()
+
+    def use_emergency_blood_bag(self, blood_bag_code: str, patient_name: str, operator: str) -> dict:
+        """使用緊急血袋"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            # 檢查血袋是否存在且可用
+            cursor.execute("""
+                SELECT * FROM emergency_blood_bags
+                WHERE blood_bag_code = ?
+            """, (blood_bag_code,))
+
+            bag = cursor.fetchone()
+            if not bag:
+                raise HTTPException(status_code=404, detail=f"血袋編號 {blood_bag_code} 不存在")
+
+            if bag['status'] != 'AVAILABLE':
+                raise HTTPException(status_code=400, detail=f"血袋狀態為 {bag['status']}，無法使用")
+
+            # 更新血袋狀態
+            cursor.execute("""
+                UPDATE emergency_blood_bags
+                SET status = 'USED',
+                    patient_name = ?,
+                    usage_timestamp = CURRENT_TIMESTAMP
+                WHERE blood_bag_code = ?
+            """, (patient_name, blood_bag_code))
+
+            conn.commit()
+            logger.info(f"緊急血袋使用記錄: {blood_bag_code} -> {patient_name}")
+
+            return {
+                "success": True,
+                "message": f"血袋 {blood_bag_code} 已用於病患 {patient_name}"
+            }
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"血袋使用記錄失敗: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+        finally:
+            conn.close()
+
+    # ========== 緊急血袋管理結束 ==========
+
     def check_equipment(self, equipment_id: str, request: EquipmentCheckRequest) -> dict:
         """設備檢查"""
         conn = self.get_connection()
@@ -1344,6 +1635,155 @@ async def receive_blood(request: BloodRequest):
 async def consume_blood(request: BloodRequest):
     """血袋出庫"""
     return db.process_blood('consume', request)
+
+
+# ========== 緊急血袋管理 API (v1.4.5) ==========
+
+@app.post("/api/blood/emergency/register")
+async def register_emergency_blood_bag(request: EmergencyBloodBagRequest):
+    """登記緊急血袋"""
+    try:
+        data = {
+            'blood_type': request.bloodType,
+            'product_type': request.productType,
+            'collection_date': request.collectionDate,
+            'volume_ml': request.volumeMl,
+            'station_id': request.stationId,
+            'operator': request.operator,
+            'org_code': request.orgCode,
+            'remarks': request.remarks or ''
+        }
+        return db.register_emergency_blood_bag(data)
+    except Exception as e:
+        logger.error(f"緊急血袋登記失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/blood/emergency/list")
+async def get_emergency_blood_bags(status: Optional[str] = Query(None, description="狀態篩選 (AVAILABLE/USED/EXPIRED/DISCARDED)")):
+    """取得緊急血袋清單"""
+    try:
+        bags = db.get_emergency_blood_bags(status)
+        return {
+            "bloodBags": bags,
+            "count": len(bags)
+        }
+    except Exception as e:
+        logger.error(f"取得緊急血袋清單失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/blood/emergency/use")
+async def use_emergency_blood_bag(request: EmergencyBloodBagUseRequest):
+    """使用緊急血袋"""
+    try:
+        return db.use_emergency_blood_bag(
+            request.bloodBagCode,
+            request.patientName,
+            request.operator
+        )
+    except Exception as e:
+        logger.error(f"緊急血袋使用失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/blood/emergency/label/{blood_bag_code}")
+async def get_emergency_blood_bag_label(blood_bag_code: str):
+    """取得緊急血袋標籤 (HTML)"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT * FROM emergency_blood_bags
+            WHERE blood_bag_code = ?
+        """, (blood_bag_code,))
+
+        bag = cursor.fetchone()
+        conn.close()
+
+        if not bag:
+            raise HTTPException(status_code=404, detail=f"血袋編號 {blood_bag_code} 不存在")
+
+        # 生成HTML標籤
+        html_content = f"""
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>緊急血袋標籤 - {bag['blood_bag_code']}</title>
+    <style>
+        @media print {{
+            @page {{ size: 10cm 5cm; margin: 0; }}
+            body {{ margin: 0.5cm; }}
+        }}
+        body {{
+            font-family: 'Microsoft JhengHei', 'SimHei', sans-serif;
+            font-size: 12pt;
+            line-height: 1.4;
+        }}
+        .label {{
+            width: 9cm;
+            height: 4cm;
+            border: 2px solid #000;
+            padding: 0.3cm;
+            box-sizing: border-box;
+        }}
+        .header {{
+            text-align: center;
+            font-weight: bold;
+            font-size: 14pt;
+            border-bottom: 2px solid #000;
+            padding-bottom: 3px;
+            margin-bottom: 5px;
+        }}
+        .blood-type {{
+            font-size: 28pt;
+            font-weight: bold;
+            color: #d00;
+            text-align: center;
+            margin: 5px 0;
+        }}
+        .info {{
+            font-size: 10pt;
+            margin: 2px 0;
+        }}
+        .code {{
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 11pt;
+        }}
+        .warning {{
+            color: #d00;
+            font-weight: bold;
+            font-size: 9pt;
+            text-align: center;
+            margin-top: 3px;
+        }}
+    </style>
+</head>
+<body onload="window.print();">
+    <div class="label">
+        <div class="header">緊急血袋標籤 EMERGENCY BLOOD BAG</div>
+        <div class="blood-type">{bag['blood_type']}</div>
+        <div class="info">編號: <span class="code">{bag['blood_bag_code']}</span></div>
+        <div class="info">血品: {bag['product_type']}</div>
+        <div class="info">容量: {bag['volume_ml']} ml</div>
+        <div class="info">採集: {bag['collection_date']}</div>
+        <div class="info">效期: {bag['expiry_date']}</div>
+        <div class="warning">⚠ 使用前請確認血型與效期 ⚠</div>
+    </div>
+</body>
+</html>
+"""
+        return HTMLResponse(content=html_content)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"生成血袋標籤失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ========== 設備管理 API ==========

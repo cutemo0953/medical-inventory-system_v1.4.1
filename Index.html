@@ -1928,16 +1928,24 @@
                 // 緊急功能 (v1.4.5新增)
                 showEmergencyModal: false,
 
-                // 初始化
+                // 載入狀態追蹤 (v1.4.5效能優化)
+                dataLoaded: {
+                    items: false,
+                    blood: false,
+                    equipment: false,
+                    surgery: false
+                },
+
+                // 初始化 (v1.4.5優化: 延遲載入)
                 async init() {
                     this.updateTime();
                     setInterval(() => this.updateTime(), 1000);
-                    
+
+                    // 只載入統計資料（輕量級）
                     await this.loadStats();
-                    await this.loadItems();
-                    await this.loadBloodInventory();
-                    await this.loadEquipment();
-                    await this.loadSurgeryRecords();
+
+                    // 根據當前標籤載入對應資料
+                    await this.lazyLoadTabData(this.currentTab);
                 },
 
                 updateTime() {
@@ -1953,13 +1961,30 @@
                     });
                 },
 
-                // 分頁切換
-                switchTab(tab) {
+                // 延遲載入標籤資料 (v1.4.5效能優化)
+                async lazyLoadTabData(tab) {
+                    if (tab === 'items' && !this.dataLoaded.items) {
+                        await this.loadItems();
+                        this.dataLoaded.items = true;
+                    }
+                    if (tab === 'blood' && !this.dataLoaded.blood) {
+                        await this.loadBloodInventory();
+                        this.dataLoaded.blood = true;
+                    }
+                    if (tab === 'equipment' && !this.dataLoaded.equipment) {
+                        await this.loadEquipment();
+                        this.dataLoaded.equipment = true;
+                    }
+                    if (tab === 'surgery' && !this.dataLoaded.surgery) {
+                        await this.loadSurgeryRecords();
+                        this.dataLoaded.surgery = true;
+                    }
+                },
+
+                // 分頁切換 (v1.4.5優化: 延遲載入)
+                async switchTab(tab) {
                     this.currentTab = tab;
-                    if (tab === 'items') this.loadItems();
-                    if (tab === 'blood') this.loadBloodInventory();
-                    if (tab === 'equipment') this.loadEquipment();
-                    if (tab === 'surgery') this.loadSurgeryRecords();
+                    await this.lazyLoadTabData(tab);
                 },
 
                 // 載入統計
