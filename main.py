@@ -14,12 +14,35 @@ import sqlite3
 import json
 import csv
 import io
+import zipfile
+import shutil
+import hashlib
 
 from fastapi import FastAPI, HTTPException, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 import uvicorn
+
+# v1.4.5新增: 緊急功能相關套件
+import qrcode
+from io import BytesIO
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+    logger.warning("Pandas not available, some export features will be limited")
+
+try:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
+    logger.warning("ReportLab not available, PDF generation will be limited")
 
 
 # ============================================================================
@@ -1564,6 +1587,268 @@ async def export_inventory_events_csv(
     except Exception as e:
         logger.error(f"匯出事件記錄 CSV 失敗: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# 緊急功能 API (v1.4.5新增)
+# ============================================================================
+
+@app.get("/api/emergency/quick-backup")
+async def emergency_quick_backup():
+    """
+    緊急快速備份 - 直接下載資料庫檔案
+
+    戰時緊急撤離使用：最快速的資料保全方式
+    """
+    try:
+        db_path = Path(config.DATABASE_PATH)
+
+        if not db_path.exists():
+            raise HTTPException(status_code=404, detail="資料庫檔案不存在")
+
+        # 生成檔名: {STATION_ID}_{TIMESTAMP}.db
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"{config.STATION_ID}_{timestamp}.db"
+
+        logger.info(f"緊急快速備份: {filename}")
+
+        return FileResponse(
+            path=str(db_path),
+            media_type="application/octet-stream",
+            filename=filename
+        )
+
+    except Exception as e:
+        logger.error(f"快速備份失敗: {e}")
+        raise HTTPException(status_code=500, detail=f"備份失敗: {str(e)}")
+
+
+@app.get("/api/emergency/download-all")
+async def emergency_download_all():
+    """
+    緊急完整備份 - 生成包含所有資料的ZIP包
+
+    包含內容：
+    - database/: 完整資料庫
+    - exports/: CSV + JSON 分類資料
+    - config/: 站點設定檔
+    - README.txt: 使用說明
+    - manifest.json: 檔案清單與檢查碼
+    """
+    try:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        zip_filename = f"emergency_backup_{config.STATION_ID}_{timestamp}.zip"
+        zip_path = Path("exports") / zip_filename
+
+        # 確保exports目錄存在
+        zip_path.parent.mkdir(exist_ok=True)
+
+        logger.info(f"開始生成完整備份包: {zip_filename}")
+
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            # 1. 加入資料庫
+            db_path = Path(config.DATABASE_PATH)
+            if db_path.exists():
+                zipf.write(db_path, f"database/{db_path.name}")
+                logger.info("✓ 資料庫已加入")
+
+            # 2. 導出CSV資料
+            exports_dir = Path("exports/temp")
+            exports_dir.mkdir(exist_ok=True, parents=True)
+
+            try:
+                # 導出庫存清單
+                inventory_data = db.get_all_items()
+                if inventory_data:
+                    csv_path = exports_dir / "inventory.csv"
+                    with open(csv_path, 'w', encoding='utf-8-sig', newline='') as f:
+                        writer = csv.DictWriter(f, fieldnames=inventory_data[0].keys())
+                        writer.writeheader()
+                        writer.writerows([dict(item) for item in inventory_data])
+                    zipf.write(csv_path, "exports/inventory.csv")
+                    logger.info("✓ 庫存清單已導出")
+
+                # 導出血袋庫存
+                blood_data = db.get_blood_inventory()
+                if blood_data:
+                    csv_path = exports_dir / "blood_inventory.csv"
+                    with open(csv_path, 'w', encoding='utf-8-sig', newline='') as f:
+                        writer = csv.DictWriter(f, fieldnames=['blood_type', 'quantity', 'station_id'])
+                        writer.writeheader()
+                        writer.writerows([dict(b) for b in blood_data])
+                    zipf.write(csv_path, "exports/blood_inventory.csv")
+                    logger.info("✓ 血袋庫存已導出")
+
+                # 導出設備清單
+                conn = db.get_connection()
+                cursor = conn.cursor()
+                equipment = cursor.execute("SELECT * FROM equipment").fetchall()
+                if equipment:
+                    csv_path = exports_dir / "equipment.csv"
+                    with open(csv_path, 'w', encoding='utf-8-sig', newline='') as f:
+                        writer = csv.DictWriter(f, fieldnames=[desc[0] for desc in cursor.description])
+                        writer.writeheader()
+                        writer.writerows([dict(zip([desc[0] for desc in cursor.description], row)) for row in equipment])
+                    zipf.write(csv_path, "exports/equipment.csv")
+                    logger.info("✓ 設備清單已導出")
+
+            except Exception as e:
+                logger.warning(f"部分資料導出失敗: {e}")
+
+            # 3. 加入配置文件
+            config_path = Path("config/station_config.json")
+            if config_path.exists():
+                zipf.write(config_path, "config/station_config.json")
+                logger.info("✓ 配置文件已加入")
+
+            # 4. 生成README
+            readme_content = f"""
+==============================================
+醫療站庫存系統 - 緊急備份包
+==============================================
+
+備份時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+站點ID: {config.STATION_ID}
+系統版本: {config.VERSION}
+
+目錄結構:
+-----------------------
+database/          完整資料庫檔案
+exports/           CSV格式資料
+  - inventory.csv     庫存清單
+  - blood_inventory.csv  血袋庫存
+  - equipment.csv     設備清單
+config/            站點設定檔
+README.txt         本說明文件
+manifest.json      檔案清單與檢查碼
+
+使用方式:
+-----------------------
+1. 恢復資料庫:
+   將database/*.db複製到新系統的database目錄
+
+2. 查看資料:
+   使用Excel或文字編輯器開啟exports/*.csv
+
+3. 重新部署:
+   參考config/station_config.json設定新系統
+
+緊急聯絡:
+-----------------------
+如有問題請聯繫系統管理員
+
+==============================================
+此為自動生成的緊急備份包
+請妥善保管並定期更新
+==============================================
+"""
+            zipf.writestr("README.txt", readme_content.encode('utf-8'))
+            logger.info("✓ README已生成")
+
+            # 5. 生成manifest
+            manifest = {
+                "backup_time": datetime.now().isoformat(),
+                "station_id": config.STATION_ID,
+                "version": config.VERSION,
+                "files": {},
+                "statistics": {
+                    "total_items": len(inventory_data) if inventory_data else 0,
+                    "total_blood_types": len(blood_data) if blood_data else 0,
+                    "total_equipment": len(equipment) if equipment else 0
+                }
+            }
+
+            # 計算檔案檢查碼
+            for item in zipf.filelist:
+                if item.filename != "manifest.json":
+                    manifest["files"][item.filename] = {
+                        "size": item.file_size,
+                        "compressed_size": item.compress_size
+                    }
+
+            zipf.writestr("manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
+            logger.info("✓ Manifest已生成")
+
+        # 清理臨時目錄
+        if exports_dir.exists():
+            shutil.rmtree(exports_dir)
+
+        logger.info(f"完整備份包生成成功: {zip_filename}")
+
+        return FileResponse(
+            path=str(zip_path),
+            media_type="application/zip",
+            filename=zip_filename
+        )
+
+    except Exception as e:
+        logger.error(f"完整備份失敗: {e}")
+        raise HTTPException(status_code=500, detail=f"備份失敗: {str(e)}")
+
+
+@app.get("/api/emergency/qr-code")
+async def emergency_qr_code():
+    """
+    生成緊急QR Code - 包含關鍵資訊
+
+    掃描QR Code可快速獲得:
+    - 站點代碼
+    - 時間戳記
+    - 關鍵物資統計
+    - 血袋庫存統計
+    """
+    try:
+        # 收集關鍵資訊
+        stats = db.get_stats()
+        blood_inventory = db.get_blood_inventory()
+
+        # 計算血袋總量
+        total_blood = sum(b['quantity'] for b in blood_inventory)
+
+        # 構建QR Code內容
+        qr_data = {
+            "station_id": config.STATION_ID,
+            "timestamp": datetime.now().isoformat(),
+            "version": config.VERSION,
+            "stats": {
+                "total_items": stats.get('total_items', 0),
+                "low_stock_items": stats.get('low_stock_items', 0),
+                "total_blood_units": total_blood,
+                "equipment_alerts": stats.get('equipment_alerts', 0)
+            },
+            "blood_inventory": {b['blood_type']: b['quantity'] for b in blood_inventory}
+        }
+
+        # 生成QR Code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(json.dumps(qr_data, ensure_ascii=False))
+        qr.make(fit=True)
+
+        # 生成圖片
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        # 保存到BytesIO
+        img_io = BytesIO()
+        img.save(img_io, 'PNG')
+        img_io.seek(0)
+
+        logger.info("緊急QR Code已生成")
+
+        # 返回圖片
+        return StreamingResponse(
+            img_io,
+            media_type="image/png",
+            headers={"Content-Disposition": f"inline; filename=emergency_qr_{config.STATION_ID}.png"}
+        )
+
+    except Exception as e:
+        logger.error(f"QR Code生成失敗: {e}")
+        raise HTTPException(status_code=500, detail=f"QR Code生成失敗: {str(e)}")
 
 
 # ============================================================================
