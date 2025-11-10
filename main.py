@@ -7,7 +7,7 @@
 
 import logging
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from typing import Optional, List, Dict, Any
 from pathlib import Path
 import sqlite3
@@ -17,6 +17,7 @@ import io
 import zipfile
 import shutil
 import hashlib
+import asyncio
 
 from fastapi import FastAPI, HTTPException, status, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -1265,7 +1266,36 @@ class DatabaseManager:
             raise HTTPException(status_code=500, detail=str(e))
         finally:
             conn.close()
-    
+
+    def reset_equipment_daily(self) -> int:
+        """每日重置設備狀態（清空備註、重置為UNCHECKED）"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("""
+                UPDATE equipment
+                SET status = 'UNCHECKED',
+                    remarks = NULL,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE status != 'UNCHECKED'
+            """)
+
+            affected_rows = cursor.rowcount
+            conn.commit()
+
+            if affected_rows > 0:
+                logger.info(f"設備每日重置完成: {affected_rows} 個設備已重置")
+
+            return affected_rows
+
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"設備每日重置失敗: {e}")
+            return 0
+        finally:
+            conn.close()
+
     def get_equipment_status(self) -> List[Dict[str, Any]]:
         """取得所有設備狀態"""
         conn = self.get_connection()
@@ -1442,6 +1472,44 @@ app.add_middleware(
 )
 
 db = DatabaseManager(config.DATABASE_PATH)
+
+
+# ========== 背景任務：每日設備重置 (v1.4.5) ==========
+
+async def daily_equipment_reset():
+    """每日07:00重置設備狀態"""
+    while True:
+        try:
+            now = datetime.now()
+            target_time = datetime.combine(now.date(), time(7, 0))
+
+            # 如果已經過了今天的07:00，設定為明天的07:00
+            if now >= target_time:
+                target_time += timedelta(days=1)
+
+            # 計算到下次執行的秒數
+            wait_seconds = (target_time - now).total_seconds()
+            logger.info(f"下次設備重置時間: {target_time.strftime('%Y-%m-%d %H:%M:%S')} (等待 {wait_seconds/3600:.1f} 小時)")
+
+            # 等待到目標時間
+            await asyncio.sleep(wait_seconds)
+
+            # 執行重置
+            affected = db.reset_equipment_daily()
+            logger.info(f"✓ 設備每日重置已執行 ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')}): {affected} 個設備已重置")
+
+        except Exception as e:
+            logger.error(f"設備每日重置任務錯誤: {e}")
+            # 發生錯誤時等待1小時後重試
+            await asyncio.sleep(3600)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """應用啟動時執行"""
+    # 啟動每日設備重置背景任務
+    asyncio.create_task(daily_equipment_reset())
+    logger.info("✓ 每日設備重置背景任務已啟動 (07:00am)")
 
 
 # ============================================================================
@@ -1635,6 +1703,67 @@ async def receive_blood(request: BloodRequest):
 async def consume_blood(request: BloodRequest):
     """血袋出庫"""
     return db.process_blood('consume', request)
+
+
+@app.get("/api/blood/events")
+async def get_blood_events(
+    station_id: str = Query("TC-01"),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    blood_type: Optional[str] = Query(None),
+    event_type: Optional[str] = Query(None),
+    limit: int = Query(200, ge=1, le=500)
+):
+    """取得血袋入庫出庫歷史記錄"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        # 建立查詢條件
+        where_clauses = ["station_id = ?"]
+        params = [station_id]
+
+        if start_date:
+            where_clauses.append("DATE(timestamp) >= ?")
+            params.append(start_date)
+
+        if end_date:
+            where_clauses.append("DATE(timestamp) <= ?")
+            params.append(end_date)
+
+        if blood_type:
+            where_clauses.append("blood_type = ?")
+            params.append(blood_type)
+
+        if event_type:
+            where_clauses.append("event_type = ?")
+            params.append(event_type)
+
+        where_sql = " AND ".join(where_clauses)
+        params.append(limit)
+
+        cursor.execute(f"""
+            SELECT
+                id,
+                event_type,
+                blood_type,
+                quantity,
+                station_id,
+                operator,
+                timestamp
+            FROM blood_events
+            WHERE {where_sql}
+            ORDER BY timestamp DESC
+            LIMIT ?
+        """, params)
+
+        events = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+
+        return {"status": "success", "data": events, "count": len(events)}
+    except Exception as e:
+        logger.error(f"取得血袋歷史記錄失敗: {e}")
+        return {"status": "error", "message": str(e)}
 
 
 # ========== 緊急血袋管理 API (v1.4.5) ==========
@@ -2231,27 +2360,18 @@ manifest.json      檔案清單與檢查碼
         raise HTTPException(status_code=500, detail=f"備份失敗: {str(e)}")
 
 
-@app.get("/api/emergency/qr-code")
-async def emergency_qr_code():
-    """
-    生成緊急QR Code - 包含關鍵資訊
-
-    掃描QR Code可快速獲得:
-    - 站點代碼
-    - 時間戳記
-    - 關鍵物資統計
-    - 血袋庫存統計
-    """
+@app.get("/api/emergency/info")
+async def get_emergency_info():
+    """取得緊急資訊（用於QR Code掃描後顯示）"""
     try:
-        # 收集關鍵資訊
         stats = db.get_stats()
         blood_inventory = db.get_blood_inventory()
+        equipment = db.get_equipment_status()
 
-        # 計算血袋總量
         total_blood = sum(b['quantity'] for b in blood_inventory)
+        equipment_alerts = sum(1 for e in equipment if e['status'] not in ['NORMAL', 'UNCHECKED'])
 
-        # 構建QR Code內容
-        qr_data = {
+        return {
             "station_id": config.STATION_ID,
             "timestamp": datetime.now().isoformat(),
             "version": config.VERSION,
@@ -2259,10 +2379,282 @@ async def emergency_qr_code():
                 "total_items": stats.get('total_items', 0),
                 "low_stock_items": stats.get('low_stock_items', 0),
                 "total_blood_units": total_blood,
-                "equipment_alerts": stats.get('equipment_alerts', 0)
+                "equipment_alerts": equipment_alerts
             },
-            "blood_inventory": {b['blood_type']: b['quantity'] for b in blood_inventory}
+            "blood_inventory": blood_inventory,
+            "equipment_status": [
+                {"id": e['id'], "name": e['name'], "status": e['status']}
+                for e in equipment
+            ]
         }
+    except Exception as e:
+        logger.error(f"取得緊急資訊失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/emergency/view")
+async def view_emergency_info():
+    """緊急資訊顯示頁面（QR Code掃描後跳轉）"""
+    try:
+        stats = db.get_stats()
+        blood_inventory = db.get_blood_inventory()
+        equipment = db.get_equipment_status()
+
+        total_blood = sum(b['quantity'] for b in blood_inventory)
+        equipment_alerts = sum(1 for e in equipment if e['status'] not in ['NORMAL', 'UNCHECKED'])
+        now = datetime.now()
+
+        # 建立血袋庫存表格
+        blood_rows = ""
+        for b in blood_inventory:
+            blood_rows += f"""
+                <tr>
+                    <td class="blood-type">{b['blood_type']}</td>
+                    <td class="quantity">{b['quantity']} U</td>
+                </tr>
+            """
+
+        # 建立設備狀態表格
+        equipment_rows = ""
+        for e in equipment:
+            status_class = "status-normal" if e['status'] == 'NORMAL' else "status-alert"
+            status_text = {
+                'NORMAL': '正常',
+                'WARNING': '警告',
+                'CRITICAL': '嚴重',
+                'UNCHECKED': '未檢查'
+            }.get(e['status'], e['status'])
+
+            equipment_rows += f"""
+                <tr>
+                    <td>{e['name']}</td>
+                    <td class="{status_class}">{status_text}</td>
+                </tr>
+            """
+
+        html_content = f"""
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>緊急資訊 - {config.STATION_ID}</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
+            font-family: 'Microsoft JhengHei', 'SimHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }}
+        .container {{
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }}
+        .header h1 {{
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }}
+        .station-id {{
+            font-size: 20px;
+            font-weight: bold;
+            opacity: 0.95;
+        }}
+        .timestamp {{
+            font-size: 14px;
+            opacity: 0.85;
+            margin-top: 5px;
+        }}
+        .content {{
+            padding: 20px;
+        }}
+        .stats-grid {{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }}
+        .stat-card {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }}
+        .stat-value {{
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+        }}
+        .stat-label {{
+            font-size: 14px;
+            opacity: 0.9;
+        }}
+        .section {{
+            margin-bottom: 30px;
+        }}
+        .section-title {{
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+        }}
+        th, td {{
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }}
+        th {{
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }}
+        .blood-type {{
+            font-weight: bold;
+            color: #d32f2f;
+            font-size: 18px;
+        }}
+        .quantity {{
+            font-weight: bold;
+            color: #1976d2;
+        }}
+        .status-normal {{
+            color: #2e7d32;
+            font-weight: bold;
+        }}
+        .status-alert {{
+            color: #d32f2f;
+            font-weight: bold;
+        }}
+        .footer {{
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+            border-top: 1px solid #eee;
+        }}
+        .alert {{
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }}
+        .alert-critical {{
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 緊急醫療站資訊</h1>
+            <div class="station-id">站點ID: {config.STATION_ID}</div>
+            <div class="timestamp">更新時間: {now.strftime('%Y-%m-%d %H:%M:%S')}</div>
+        </div>
+
+        <div class="content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">總物資項目</div>
+                    <div class="stat-value">{stats.get('total_items', 0)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">低庫存警示</div>
+                    <div class="stat-value">{stats.get('low_stock_items', 0)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">血袋庫存</div>
+                    <div class="stat-value">{total_blood} U</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">設備警示</div>
+                    <div class="stat-value">{equipment_alerts}</div>
+                </div>
+            </div>
+
+            {f'<div class="alert alert-critical">⚠ 低庫存警示: {stats.get("low_stock_items", 0)} 項物資庫存不足</div>' if stats.get('low_stock_items', 0) > 0 else ''}
+            {f'<div class="alert">⚠ 設備警示: {equipment_alerts} 個設備需要注意</div>' if equipment_alerts > 0 else ''}
+
+            <div class="section">
+                <div class="section-title">🩸 血袋庫存</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>血型</th>
+                            <th>數量</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {blood_rows}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <div class="section-title">⚙ 設備狀態</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>設備名稱</th>
+                            <th>狀態</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {equipment_rows}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            醫療站庫存管理系統 v{config.VERSION}<br>
+            此資訊由系統自動生成，僅供緊急參考使用
+        </div>
+    </div>
+</body>
+</html>
+"""
+        return HTMLResponse(content=html_content)
+
+    except Exception as e:
+        logger.error(f"顯示緊急資訊頁面失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/emergency/qr-code")
+async def emergency_qr_code():
+    """
+    生成緊急QR Code - 掃描後跳轉到資訊頁面
+
+    QR Code內容為URL，掃描後可直接在手機上查看:
+    - 站點代碼
+    - 關鍵物資統計
+    - 血袋庫存統計
+    - 設備狀態
+    """
+    try:
+        # QR Code內容改為URL（假設部署在localhost:8000）
+        # 生產環境應改為實際域名
+        qr_url = f"http://localhost:8000/emergency/view"
 
         # 生成QR Code
         qr = qrcode.QRCode(
@@ -2271,7 +2663,7 @@ async def emergency_qr_code():
             box_size=10,
             border=4,
         )
-        qr.add_data(json.dumps(qr_data, ensure_ascii=False))
+        qr.add_data(qr_url)
         qr.make(fit=True)
 
         # 生成圖片
