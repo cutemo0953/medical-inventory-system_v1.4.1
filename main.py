@@ -1656,9 +1656,14 @@ async def emergency_download_all():
             exports_dir = Path("exports/temp")
             exports_dir.mkdir(exist_ok=True, parents=True)
 
+            # 初始化變數
+            inventory_data = []
+            blood_data = []
+            equipment = []
+
             try:
                 # 導出庫存清單
-                inventory_data = db.get_all_items()
+                inventory_data = db.get_inventory_items()
                 if inventory_data:
                     csv_path = exports_dir / "inventory.csv"
                     with open(csv_path, 'w', encoding='utf-8-sig', newline='') as f:
