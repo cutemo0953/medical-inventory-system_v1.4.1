@@ -380,8 +380,14 @@ class DatabaseManager:
                     duration_minutes INTEGER,
                     remarks TEXT,
                     station_id TEXT NOT NULL,
+                    status TEXT DEFAULT 'ONGOING',
+                    patient_outcome TEXT,
+                    archived_at TIMESTAMP,
+                    archived_by TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CHECK(status IN ('ONGOING', 'COMPLETED', 'ARCHIVED', 'CANCELLED')),
+                    CHECK(patient_outcome IS NULL OR patient_outcome IN ('DISCHARGED', 'TRANSFERRED', 'DECEASED'))
                 )
             """)
             
@@ -398,7 +404,63 @@ class DatabaseManager:
                     FOREIGN KEY (item_code) REFERENCES items(code)
                 )
             """)
-            
+
+            # 站點合併歷史 (v1.4.5新增 - 合併功能)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS station_merge_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    source_station_id TEXT NOT NULL,
+                    target_station_id TEXT NOT NULL,
+                    merge_type TEXT NOT NULL,
+                    items_merged INTEGER DEFAULT 0,
+                    blood_merged INTEGER DEFAULT 0,
+                    equipment_merged INTEGER DEFAULT 0,
+                    surgery_records_merged INTEGER DEFAULT 0,
+                    merge_notes TEXT,
+                    merged_by TEXT NOT NULL,
+                    merged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CHECK(merge_type IN ('FULL_MERGE', 'PARTIAL_MERGE', 'IMPORT_BACKUP'))
+                )
+            """)
+
+            # 盤點記錄 (v1.4.5新增 - 清點功能)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS inventory_audit (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    audit_number TEXT UNIQUE NOT NULL,
+                    audit_type TEXT NOT NULL,
+                    status TEXT DEFAULT 'IN_PROGRESS',
+                    station_id TEXT NOT NULL,
+                    started_by TEXT NOT NULL,
+                    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    completed_by TEXT,
+                    completed_at TIMESTAMP,
+                    total_items INTEGER DEFAULT 0,
+                    discrepancies INTEGER DEFAULT 0,
+                    notes TEXT,
+                    CHECK(audit_type IN ('ROUTINE', 'PRE_MERGE', 'POST_MERGE', 'EMERGENCY')),
+                    CHECK(status IN ('IN_PROGRESS', 'COMPLETED', 'CANCELLED'))
+                )
+            """)
+
+            # 盤點明細 (v1.4.5新增)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS inventory_audit_details (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    audit_id INTEGER NOT NULL,
+                    item_code TEXT NOT NULL,
+                    item_name TEXT NOT NULL,
+                    system_quantity INTEGER NOT NULL,
+                    actual_quantity INTEGER NOT NULL,
+                    discrepancy INTEGER NOT NULL,
+                    remarks TEXT,
+                    audited_by TEXT NOT NULL,
+                    audited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (audit_id) REFERENCES inventory_audit(id) ON DELETE CASCADE,
+                    FOREIGN KEY (item_code) REFERENCES items(code)
+                )
+            """)
+
             # ========== 資料庫索引優化 (v1.4.5) ==========
             # 手術記錄索引
             cursor.execute("""
@@ -470,6 +532,32 @@ class DatabaseManager:
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_equipment_checks_time
                 ON equipment_checks(timestamp DESC)
+            """)
+
+            # 手術記錄狀態索引 (v1.4.5新增 - 封存功能)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_surgery_records_status
+                ON surgery_records(status, record_date DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_surgery_records_outcome
+                ON surgery_records(patient_outcome)
+            """)
+
+            # 站點合併索引 (v1.4.5新增)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_merge_history_station
+                ON station_merge_history(target_station_id, merged_at DESC)
+            """)
+
+            # 盤點記錄索引 (v1.4.5新增)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_audit_status
+                ON inventory_audit(status, started_at DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_audit_details_audit
+                ON inventory_audit_details(audit_id)
             """)
             # ========== 索引優化結束 ==========
 
@@ -741,12 +829,12 @@ class DatabaseManager:
             where_sql = " AND ".join(where_clauses) if where_clauses else "1=1"
             params.append(limit)
             
-            # 查詢手術記錄
+            # 查詢手術記錄 (v1.4.5更新：新增status和patient_outcome欄位)
             cursor.execute(f"""
-                SELECT 
+                SELECT
                     id, record_number, record_date, patient_name, surgery_sequence,
                     surgery_type, surgeon_name, anesthesia_type, duration_minutes,
-                    remarks, station_id, created_at
+                    remarks, station_id, status, patient_outcome, archived_at, archived_by, created_at
                 FROM surgery_records
                 WHERE {where_sql}
                 ORDER BY record_date DESC, surgery_sequence DESC
@@ -813,7 +901,105 @@ class DatabaseManager:
                 ])
         
         return output.getvalue()
-    
+
+    # ========== 手術記錄封存功能 (v1.4.5新增) ==========
+
+    def archive_surgery_record(self, record_number: str, patient_outcome: str, archived_by: str, notes: str = None) -> dict:
+        """封存手術記錄"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            # 檢查記錄是否存在
+            cursor.execute("""
+                SELECT id, status, patient_name
+                FROM surgery_records
+                WHERE record_number = ?
+            """, (record_number,))
+
+            record = cursor.fetchone()
+            if not record:
+                raise HTTPException(status_code=404, detail=f"手術記錄 {record_number} 不存在")
+
+            if record['status'] == 'ARCHIVED':
+                raise HTTPException(status_code=400, detail="該記錄已封存，無法再次封存")
+
+            # 更新記錄狀態
+            cursor.execute("""
+                UPDATE surgery_records
+                SET status = 'ARCHIVED',
+                    patient_outcome = ?,
+                    archived_at = CURRENT_TIMESTAMP,
+                    archived_by = ?,
+                    remarks = CASE
+                        WHEN remarks IS NULL OR remarks = '' THEN ?
+                        ELSE remarks || ' | ' || ?
+                    END,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE record_number = ?
+            """, (patient_outcome, archived_by, notes or '', notes or '', record_number))
+
+            conn.commit()
+            logger.info(f"手術記錄已封存: {record_number} - {patient_outcome}")
+
+            outcome_text = {
+                'DISCHARGED': '康復出院',
+                'TRANSFERRED': '轉院',
+                'DECEASED': '死亡'
+            }.get(patient_outcome, patient_outcome)
+
+            return {
+                "success": True,
+                "record_number": record_number,
+                "patient_name": record['patient_name'],
+                "status": "ARCHIVED",
+                "patient_outcome": patient_outcome,
+                "outcome_text": outcome_text,
+                "message": f"手術記錄已封存：病患{record['patient_name']} - {outcome_text}"
+            }
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"封存手術記錄失敗: {e}")
+            raise HTTPException(status_code=500, detail=f"封存失敗: {str(e)}")
+        finally:
+            conn.close()
+
+    def get_archived_records(self, outcome: str = None, limit: int = 50) -> List[Dict]:
+        """查詢已封存的手術記錄"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            where_clauses = ["status = 'ARCHIVED'"]
+            params = []
+
+            if outcome:
+                where_clauses.append("patient_outcome = ?")
+                params.append(outcome)
+
+            where_sql = " AND ".join(where_clauses)
+            params.append(limit)
+
+            cursor.execute(f"""
+                SELECT
+                    record_number, record_date, patient_name, surgery_type,
+                    surgeon_name, status, patient_outcome, archived_at, archived_by, remarks
+                FROM surgery_records
+                WHERE {where_sql}
+                ORDER BY archived_at DESC
+                LIMIT ?
+            """, params)
+
+            return [dict(row) for row in cursor.fetchall()]
+
+        finally:
+            conn.close()
+
+    # ========== 封存功能結束 ==========
+
     def get_stats(self) -> Dict[str, int]:
         """取得系統統計"""
         conn = self.get_connection()
