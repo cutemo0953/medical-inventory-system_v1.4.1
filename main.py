@@ -130,6 +130,24 @@ class BloodRequest(BaseModel):
         return v
 
 
+class BloodTransferRequest(BaseModel):
+    """血袋併站轉移請求"""
+    bloodType: str = Field(..., description="血型")
+    quantity: int = Field(..., gt=0, description="數量(U)必須大於0")
+    sourceStationId: str = Field(..., description="來源站點ID")
+    targetStationId: str = Field(..., description="目標站點ID")
+    operator: str = Field(default="SYSTEM", description="操作人員")
+    remarks: Optional[str] = Field(None, description="備註")
+
+    @field_validator('bloodType')
+    @classmethod
+    def validate_blood_type(cls, v):
+        """驗證血型"""
+        if v not in config.BLOOD_TYPES:
+            raise ValueError(f'血型必須為以下之一: {", ".join(config.BLOOD_TYPES)}')
+        return v
+
+
 class EmergencyBloodBagRequest(BaseModel):
     """緊急血袋登記請求 (v1.4.5)"""
     bloodType: str = Field(..., description="血型 (A+/A-/B+/B-/O+/O-/AB+/AB-)")
@@ -2098,6 +2116,207 @@ async def get_emergency_blood_bag_label(blood_bag_code: str):
         raise
     except Exception as e:
         logger.error(f"生成血袋標籤失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/blood/label")
+async def get_blood_batch_label(
+    blood_type: str = Query(..., description="血型"),
+    quantity: int = Query(..., ge=1, description="數量"),
+    station_id: str = Query("TC-01", description="站點ID"),
+    remarks: str = Query("", description="批號或備註")
+):
+    """取得一般血袋批次標籤 (HTML) - 用於列印"""
+    try:
+        from datetime import datetime
+
+        # 生成批次編號
+        now = datetime.now()
+        batch_number = f"BATCH-{station_id}-{now.strftime('%Y%m%d-%H%M%S')}"
+
+        # 生成HTML標籤
+        html_content = f"""
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>血袋批次標籤 - {blood_type}</title>
+    <style>
+        @media print {{
+            @page {{ size: 10cm 6cm; margin: 0; }}
+            body {{ margin: 0.5cm; }}
+        }}
+        body {{
+            font-family: 'Microsoft JhengHei', 'SimHei', sans-serif;
+            font-size: 12pt;
+            line-height: 1.4;
+        }}
+        .label {{
+            width: 9cm;
+            height: 5cm;
+            border: 2px solid #000;
+            padding: 0.3cm;
+            box-sizing: border-box;
+        }}
+        .header {{
+            text-align: center;
+            font-weight: bold;
+            font-size: 14pt;
+            border-bottom: 2px solid #000;
+            padding-bottom: 3px;
+            margin-bottom: 5px;
+            background-color: #f0f0f0;
+        }}
+        .blood-type {{
+            font-size: 32pt;
+            font-weight: bold;
+            color: #d00;
+            text-align: center;
+            margin: 8px 0;
+        }}
+        .info {{
+            font-size: 10pt;
+            margin: 3px 0;
+        }}
+        .code {{
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 10pt;
+        }}
+        .quantity {{
+            font-size: 18pt;
+            font-weight: bold;
+            color: #d00;
+            text-align: center;
+            margin: 5px 0;
+        }}
+        .warning {{
+            color: #d00;
+            font-weight: bold;
+            font-size: 9pt;
+            text-align: center;
+            margin-top: 5px;
+            border-top: 1px solid #000;
+            padding-top: 3px;
+        }}
+    </style>
+</head>
+<body onload="window.print();">
+    <div class="label">
+        <div class="header">血袋批次標籤 BLOOD BAG BATCH</div>
+        <div class="blood-type">{blood_type}</div>
+        <div class="quantity">數量: {quantity} U</div>
+        <div class="info">批號: <span class="code">{batch_number}</span></div>
+        <div class="info">站點: {station_id}</div>
+        <div class="info">入庫時間: {now.strftime('%Y-%m-%d %H:%M')}</div>
+        {f'<div class="info">備註: {remarks}</div>' if remarks else ''}
+        <div class="warning">⚠ 使用前請確認血型 ⚠</div>
+    </div>
+</body>
+</html>
+"""
+        return HTMLResponse(content=html_content)
+
+    except Exception as e:
+        logger.error(f"生成血袋批次標籤失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/blood/transfer")
+async def transfer_blood(request: BloodTransferRequest):
+    """血袋併站轉移 - 從來源站點轉移血袋到目標站點"""
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+
+        # 1. 檢查來源站點是否有足夠血袋
+        cursor.execute("""
+            SELECT quantity FROM blood_inventory
+            WHERE blood_type = ? AND station_id = ?
+        """, (request.bloodType, request.sourceStationId))
+
+        source_result = cursor.fetchone()
+        if not source_result:
+            conn.close()
+            raise HTTPException(
+                status_code=400,
+                detail=f"來源站點 {request.sourceStationId} 無此血型 {request.bloodType}"
+            )
+
+        source_quantity = source_result[0]
+        if source_quantity < request.quantity:
+            conn.close()
+            raise HTTPException(
+                status_code=400,
+                detail=f"來源站點血袋不足: 需要 {request.quantity}U, 僅有 {source_quantity}U"
+            )
+
+        # 2. 從來源站點減少血袋
+        cursor.execute("""
+            UPDATE blood_inventory
+            SET quantity = quantity - ?,
+                last_updated = CURRENT_TIMESTAMP
+            WHERE blood_type = ? AND station_id = ?
+        """, (request.quantity, request.bloodType, request.sourceStationId))
+
+        # 3. 記錄來源站點的出庫事件
+        cursor.execute("""
+            INSERT INTO blood_events
+            (event_type, blood_type, quantity, station_id, operator, remarks)
+            VALUES ('TRANSFER_OUT', ?, ?, ?, ?, ?)
+        """, (
+            request.bloodType,
+            request.quantity,
+            request.sourceStationId,
+            request.operator,
+            f"轉移至 {request.targetStationId}. {request.remarks or ''}"
+        ))
+
+        # 4. 在目標站點增加血袋（如果不存在則新增）
+        cursor.execute("""
+            INSERT INTO blood_inventory (blood_type, quantity, station_id)
+            VALUES (?, ?, ?)
+            ON CONFLICT(blood_type, station_id) DO UPDATE SET
+                quantity = quantity + excluded.quantity,
+                last_updated = CURRENT_TIMESTAMP
+        """, (request.bloodType, request.quantity, request.targetStationId))
+
+        # 5. 記錄目標站點的入庫事件
+        cursor.execute("""
+            INSERT INTO blood_events
+            (event_type, blood_type, quantity, station_id, operator, remarks)
+            VALUES ('TRANSFER_IN', ?, ?, ?, ?, ?)
+        """, (
+            request.bloodType,
+            request.quantity,
+            request.targetStationId,
+            request.operator,
+            f"來自 {request.sourceStationId}. {request.remarks or ''}"
+        ))
+
+        conn.commit()
+        conn.close()
+
+        logger.info(
+            f"血袋併站轉移成功: {request.bloodType} {request.quantity}U "
+            f"從 {request.sourceStationId} -> {request.targetStationId}"
+        )
+
+        return {
+            "success": True,
+            "message": f"成功轉移 {request.quantity}U {request.bloodType} 血袋",
+            "source_station": request.sourceStationId,
+            "target_station": request.targetStationId,
+            "blood_type": request.bloodType,
+            "quantity": request.quantity,
+            "operator": request.operator
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"血袋併站轉移失敗: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
