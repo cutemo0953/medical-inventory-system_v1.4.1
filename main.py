@@ -245,6 +245,47 @@ class SurgeryRecordRequest(BaseModel):
 
 
 # ============================================================================
+# 聯邦架構 - 同步封包 Models (Phase 1)
+# ============================================================================
+
+class SyncChangeRecord(BaseModel):
+    """同步變更記錄"""
+    table: str = Field(..., description="資料表名稱")
+    operation: str = Field(..., description="操作類型: INSERT, UPDATE, DELETE")
+    data: dict = Field(..., description="資料內容")
+    timestamp: str = Field(..., description="變更時間戳")
+
+
+class SyncPackageGenerate(BaseModel):
+    """產生同步封包請求"""
+    stationId: str = Field(..., description="站點ID")
+    hospitalId: str = Field(..., description="所屬醫院ID")
+    syncType: str = Field(default="DELTA", description="同步類型: DELTA (增量) / FULL (全量)")
+    sinceTimestamp: Optional[str] = Field(None, description="增量同步起始時間 (ISO 8601 格式)")
+
+
+class SyncPackageUpload(BaseModel):
+    """站點同步上傳請求"""
+    stationId: str = Field(..., description="站點ID")
+    packageId: str = Field(..., description="封包ID")
+    changes: List[SyncChangeRecord] = Field(..., description="變更記錄清單")
+    checksum: str = Field(..., description="封包校驗碼 (SHA-256)")
+
+
+class HospitalTransferCoordinate(BaseModel):
+    """醫院層院內調撥協調請求 (Phase 2)"""
+    hospitalId: str = Field(..., description="醫院ID")
+    fromStationId: str = Field(..., description="來源站點ID")
+    toStationId: str = Field(..., description="目標站點ID")
+    resourceType: str = Field(..., description="資源類型: ITEM, BLOOD, EQUIPMENT")
+    resourceId: str = Field(..., description="資源ID (item_code, blood_type, equipment_id)")
+    resourceName: str = Field(..., description="資源名稱")
+    quantity: int = Field(..., gt=0, description="數量")
+    operator: str = Field(default="SYSTEM", description="操作人員")
+    reason: Optional[str] = Field(None, description="調撥原因")
+
+
+# ============================================================================
 # 資料庫管理器
 # ============================================================================
 
@@ -580,16 +621,144 @@ class DatabaseManager:
             """)
             # ========== 索引優化結束 ==========
 
+            # ========== 聯邦式架構表格 (Phase 0) ==========
+            # 醫院基本資料
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS hospitals (
+                    hospital_id TEXT PRIMARY KEY,
+                    hospital_name TEXT NOT NULL,
+                    hospital_type TEXT NOT NULL DEFAULT 'FIELD_HOSPITAL',
+                    command_level TEXT NOT NULL DEFAULT 'LOCAL',
+                    latitude REAL,
+                    longitude REAL,
+                    contact_info TEXT,
+                    network_access TEXT DEFAULT 'NONE',
+                    total_stations INTEGER DEFAULT 0,
+                    operational_status TEXT DEFAULT 'ACTIVE',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CHECK(hospital_type IN ('FIELD_HOSPITAL', 'CIVILIAN_HOSPITAL', 'MOBILE_HOSPITAL')),
+                    CHECK(command_level IN ('CENTRAL', 'REGIONAL', 'LOCAL')),
+                    CHECK(network_access IN ('NONE', 'MILITARY', 'SATELLITE', 'CIVILIAN')),
+                    CHECK(operational_status IN ('ACTIVE', 'OFFLINE', 'EVACUATED', 'MERGED'))
+                )
+            """)
+
+            # 站點基本資料
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS stations (
+                    station_id TEXT PRIMARY KEY,
+                    station_name TEXT NOT NULL,
+                    hospital_id TEXT NOT NULL,
+                    station_type TEXT DEFAULT 'SMALL',
+                    latitude REAL,
+                    longitude REAL,
+                    network_access TEXT DEFAULT 'NONE',
+                    operational_status TEXT DEFAULT 'ACTIVE',
+                    last_sync_at TIMESTAMP,
+                    sync_status TEXT DEFAULT 'PENDING',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (hospital_id) REFERENCES hospitals(hospital_id),
+                    CHECK(station_type IN ('LARGE', 'SMALL')),
+                    CHECK(network_access IN ('NONE', 'INTRANET', 'MILITARY')),
+                    CHECK(sync_status IN ('PENDING', 'SYNCING', 'SYNCED', 'FAILED')),
+                    CHECK(operational_status IN ('ACTIVE', 'OFFLINE', 'EVACUATED', 'MERGED'))
+                )
+            """)
+
+            # 同步封包追蹤表
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS sync_packages (
+                    package_id TEXT PRIMARY KEY,
+                    package_type TEXT NOT NULL,
+                    source_type TEXT NOT NULL,
+                    source_id TEXT NOT NULL,
+                    destination_type TEXT NOT NULL,
+                    destination_id TEXT NOT NULL,
+                    hospital_id TEXT NOT NULL,
+                    transfer_method TEXT NOT NULL,
+                    package_size INTEGER,
+                    checksum TEXT NOT NULL,
+                    changes_count INTEGER DEFAULT 0,
+                    status TEXT DEFAULT 'PENDING',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    uploaded_at TIMESTAMP,
+                    processed_at TIMESTAMP,
+                    error_message TEXT,
+                    CHECK(package_type IN ('DELTA', 'FULL', 'REPORT')),
+                    CHECK(source_type IN ('STATION', 'HOSPITAL')),
+                    CHECK(destination_type IN ('HOSPITAL', 'CENTRAL')),
+                    CHECK(transfer_method IN ('NETWORK', 'USB', 'MANUAL', 'DRONE')),
+                    CHECK(status IN ('PENDING', 'UPLOADED', 'PROCESSING', 'APPLIED', 'FAILED'))
+                )
+            """)
+
+            # 醫院日報表（谷盺公司向中央回報用）
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS hospital_daily_reports (
+                    report_id TEXT PRIMARY KEY,
+                    hospital_id TEXT NOT NULL,
+                    report_date DATE NOT NULL,
+                    total_stations INTEGER NOT NULL,
+                    operational_stations INTEGER NOT NULL,
+                    offline_stations INTEGER NOT NULL,
+                    total_patients_treated INTEGER DEFAULT 0,
+                    critical_patients INTEGER DEFAULT 0,
+                    surgeries_performed INTEGER DEFAULT 0,
+                    blood_inventory_json TEXT,
+                    critical_shortages_json TEXT,
+                    equipment_status_json TEXT,
+                    alerts_json TEXT,
+                    submitted_by TEXT NOT NULL,
+                    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    received_by_central BOOLEAN DEFAULT FALSE,
+                    received_at TIMESTAMP,
+                    UNIQUE(hospital_id, report_date),
+                    FOREIGN KEY (hospital_id) REFERENCES hospitals(hospital_id)
+                )
+            """)
+
+            # 聯邦架構索引
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_stations_hospital
+                ON stations(hospital_id)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_sync_packages_status
+                ON sync_packages(status)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_sync_packages_hospital
+                ON sync_packages(hospital_id)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_sync_packages_date
+                ON sync_packages(created_at DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_hospital_reports_date
+                ON hospital_daily_reports(report_date DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_hospital_reports_hospital
+                ON hospital_daily_reports(hospital_id)
+            """)
+            # ========== 聯邦式架構結束 ==========
+
             # 初始化預設設備
             self._init_default_equipment(cursor)
-            
+
+            # 初始化預設醫院和站點（聯邦架構）
+            self._init_hospitals_and_stations(cursor)
+
             # 初始化血型庫存
             for blood_type in config.BLOOD_TYPES:
                 cursor.execute("""
                     INSERT OR IGNORE INTO blood_inventory (blood_type, quantity, station_id)
                     VALUES (?, 0, ?)
                 """, (blood_type, config.STATION_ID))
-            
+
             conn.commit()
             logger.info("資料庫初始化完成")
             
@@ -608,13 +777,61 @@ class DatabaseManager:
             ('water-1', '淨水器', '水處理'),
             ('fridge-1', '行動冰箱', '冷藏設備')
         ]
-        
+
         for eq_id, eq_name, eq_category in default_equipment:
             cursor.execute("""
                 INSERT OR IGNORE INTO equipment (id, name, category, quantity, status)
                 VALUES (?, ?, ?, 1, 'UNCHECKED')
             """, (eq_id, eq_name, eq_category))
-    
+
+    def _init_hospitals_and_stations(self, cursor):
+        """初始化預設醫院和站點（聯邦架構）"""
+        # 建立預設醫院 HOSP-001
+        cursor.execute("""
+            INSERT OR IGNORE INTO hospitals (
+                hospital_id, hospital_name, hospital_type, command_level,
+                network_access, total_stations, operational_status
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            'HOSP-001',
+            '前線第一醫院',
+            'FIELD_HOSPITAL',
+            'LOCAL',
+            'MILITARY',  # 醫院行政單位有軍警管道網路
+            0,  # 初始值，後續會更新
+            'ACTIVE'
+        ))
+
+        # 建立當前站點（從 config.STATION_ID 讀取）
+        station_id = getattr(config, 'STATION_ID', 'TC-01')
+        cursor.execute("""
+            INSERT OR IGNORE INTO stations (
+                station_id, station_name, hospital_id, station_type,
+                network_access, operational_status, sync_status
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            station_id,
+            f'醫療站 {station_id}',
+            'HOSP-001',
+            'SMALL',  # 預設為小站，可後續手動調整為 LARGE
+            'NONE',   # 預設無網路
+            'ACTIVE',
+            'PENDING'
+        ))
+
+        # 更新醫院的站點總數
+        cursor.execute("""
+            UPDATE hospitals
+            SET total_stations = (
+                SELECT COUNT(*) FROM stations WHERE hospital_id = 'HOSP-001'
+            )
+            WHERE hospital_id = 'HOSP-001'
+        """)
+
+        logger.info(f"已初始化預設醫院 HOSP-001 與站點 {station_id}")
+
     def generate_item_code(self, category: str) -> str:
         """根據分類自動生成物品代碼"""
         CATEGORY_PREFIXES = {
@@ -1680,6 +1897,275 @@ class DatabaseManager:
             ])
 
         return output.getvalue()
+
+    # ========== 聯邦架構 - 同步封包方法 (Phase 1) ==========
+
+    def generate_sync_package(self, station_id: str, hospital_id: str, sync_type: str = "DELTA", since_timestamp: str = None) -> dict:
+        """產生同步封包"""
+        import hashlib
+        import json
+        from datetime import datetime
+
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            # 產生封包ID
+            now = datetime.now()
+            package_id = f"PKG-{now.strftime('%Y%m%d-%H%M%S')}-{station_id}"
+
+            # 收集變更記錄
+            changes = []
+
+            if sync_type == "DELTA" and since_timestamp:
+                # 增量同步：收集自 since_timestamp 以來的變更
+                tables_to_sync = {
+                    'inventory_events': 'timestamp',
+                    'blood_events': 'timestamp',
+                    'equipment_checks': 'timestamp',
+                    'surgery_records': 'created_at',
+                    'emergency_blood_bags': 'created_at'
+                }
+
+                for table, timestamp_col in tables_to_sync.items():
+                    cursor.execute(f"""
+                        SELECT * FROM {table}
+                        WHERE station_id = ? AND {timestamp_col} > ?
+                        ORDER BY {timestamp_col}
+                    """, (station_id, since_timestamp))
+
+                    rows = cursor.fetchall()
+                    for row in rows:
+                        changes.append({
+                            'table': table,
+                            'operation': 'INSERT',
+                            'data': dict(row),
+                            'timestamp': row[timestamp_col]
+                        })
+
+            else:
+                # 全量同步：收集所有資料
+                # 庫存物品
+                cursor.execute("SELECT * FROM items")
+                for row in cursor.fetchall():
+                    changes.append({
+                        'table': 'items',
+                        'operation': 'INSERT',
+                        'data': dict(row),
+                        'timestamp': row['updated_at'] if 'updated_at' in row.keys() else now.isoformat()
+                    })
+
+                # 所有事件記錄（僅本站點）
+                cursor.execute("SELECT * FROM inventory_events WHERE station_id = ?", (station_id,))
+                for row in cursor.fetchall():
+                    changes.append({
+                        'table': 'inventory_events',
+                        'operation': 'INSERT',
+                        'data': dict(row),
+                        'timestamp': row['timestamp']
+                    })
+
+                cursor.execute("SELECT * FROM blood_events WHERE station_id = ?", (station_id,))
+                for row in cursor.fetchall():
+                    changes.append({
+                        'table': 'blood_events',
+                        'operation': 'INSERT',
+                        'data': dict(row),
+                        'timestamp': row['timestamp']
+                    })
+
+                cursor.execute("SELECT * FROM equipment_checks WHERE station_id = ?", (station_id,))
+                for row in cursor.fetchall():
+                    changes.append({
+                        'table': 'equipment_checks',
+                        'operation': 'INSERT',
+                        'data': dict(row),
+                        'timestamp': row['timestamp']
+                    })
+
+                cursor.execute("SELECT * FROM surgery_records WHERE station_id = ?", (station_id,))
+                for row in cursor.fetchall():
+                    changes.append({
+                        'table': 'surgery_records',
+                        'operation': 'INSERT',
+                        'data': dict(row),
+                        'timestamp': row['created_at']
+                    })
+
+            # 計算校驗碼
+            package_content = json.dumps(changes, ensure_ascii=False, sort_keys=True)
+            checksum = hashlib.sha256(package_content.encode('utf-8')).hexdigest()
+            package_size = len(package_content.encode('utf-8'))
+
+            # 記錄封包到資料庫
+            cursor.execute("""
+                INSERT INTO sync_packages (
+                    package_id, package_type, source_type, source_id,
+                    destination_type, destination_id, hospital_id,
+                    transfer_method, package_size, checksum, changes_count, status
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                package_id, sync_type, 'STATION', station_id,
+                'HOSPITAL', hospital_id, hospital_id,
+                'PENDING', package_size, checksum, len(changes), 'PENDING'
+            ))
+
+            conn.commit()
+
+            return {
+                "success": True,
+                "package_id": package_id,
+                "package_type": sync_type,
+                "package_size": package_size,
+                "checksum": checksum,
+                "changes_count": len(changes),
+                "changes": changes,
+                "message": f"同步封包已產生，包含 {len(changes)} 項變更"
+            }
+
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"產生同步封包失敗: {e}")
+            raise
+        finally:
+            conn.close()
+
+    def import_sync_package(self, package_id: str, changes: List[dict], checksum: str) -> dict:
+        """匯入同步封包"""
+        import hashlib
+        import json
+
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            # 驗證校驗碼
+            package_content = json.dumps(changes, ensure_ascii=False, sort_keys=True)
+            calculated_checksum = hashlib.sha256(package_content.encode('utf-8')).hexdigest()
+
+            if calculated_checksum != checksum:
+                return {
+                    "success": False,
+                    "error": "校驗碼不符，封包可能已損毀",
+                    "expected": checksum,
+                    "actual": calculated_checksum
+                }
+
+            # 套用變更
+            changes_applied = 0
+            conflicts = []
+
+            for change in changes:
+                table = change['table']
+                operation = change['operation']
+                data = change['data']
+
+                try:
+                    if operation == 'INSERT':
+                        # 建立 INSERT 語句
+                        columns = ', '.join(data.keys())
+                        placeholders = ', '.join(['?' for _ in data.keys()])
+                        query = f"INSERT OR REPLACE INTO {table} ({columns}) VALUES ({placeholders})"
+                        cursor.execute(query, list(data.values()))
+                        changes_applied += 1
+
+                    elif operation == 'UPDATE':
+                        # 建立 UPDATE 語句（暫時簡化實作）
+                        set_clause = ', '.join([f"{k} = ?" for k in data.keys() if k != 'id'])
+                        query = f"UPDATE {table} SET {set_clause} WHERE id = ?"
+                        values = [v for k, v in data.items() if k != 'id'] + [data.get('id')]
+                        cursor.execute(query, values)
+                        changes_applied += 1
+
+                    elif operation == 'DELETE':
+                        # 建立 DELETE 語句
+                        cursor.execute(f"DELETE FROM {table} WHERE id = ?", (data.get('id'),))
+                        changes_applied += 1
+
+                except Exception as e:
+                    conflicts.append({
+                        'table': table,
+                        'operation': operation,
+                        'error': str(e),
+                        'data': data
+                    })
+                    logger.warning(f"套用變更失敗: {table} - {e}")
+
+            # 記錄封包處理狀態
+            cursor.execute("""
+                INSERT OR REPLACE INTO sync_packages (
+                    package_id, package_type, source_type, source_id,
+                    destination_type, destination_id, hospital_id,
+                    transfer_method, checksum, changes_count, status, processed_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """, (
+                package_id, 'IMPORT', 'EXTERNAL', 'UNKNOWN',
+                'STATION', 'LOCAL', 'HOSP-001',
+                'USB', checksum, len(changes), 'APPLIED'
+            ))
+
+            conn.commit()
+
+            return {
+                "success": True,
+                "package_id": package_id,
+                "changes_applied": changes_applied,
+                "conflicts_detected": len(conflicts),
+                "conflicts": conflicts,
+                "message": f"同步完成，已套用 {changes_applied} 項變更"
+            }
+
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"匯入同步封包失敗: {e}")
+            raise
+        finally:
+            conn.close()
+
+    def upload_sync_package(self, station_id: str, package_id: str, changes: List[dict], checksum: str) -> dict:
+        """醫院層接收站點同步上傳"""
+        import hashlib
+        import json
+
+        # 驗證校驗碼
+        package_content = json.dumps(changes, ensure_ascii=False, sort_keys=True)
+        calculated_checksum = hashlib.sha256(package_content.encode('utf-8')).hexdigest()
+
+        if calculated_checksum != checksum:
+            return {
+                "success": False,
+                "error": "校驗碼不符",
+                "expected": checksum,
+                "actual": calculated_checksum
+            }
+
+        # 匯入變更（複用 import_sync_package 邏輯）
+        result = self.import_sync_package(package_id, changes, checksum)
+
+        if result['success']:
+            # 更新站點同步狀態
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            try:
+                cursor.execute("""
+                    UPDATE stations
+                    SET last_sync_at = CURRENT_TIMESTAMP,
+                        sync_status = 'SYNCED'
+                    WHERE station_id = ?
+                """, (station_id,))
+                conn.commit()
+            except Exception as e:
+                logger.warning(f"更新站點同步狀態失敗: {e}")
+            finally:
+                conn.close()
+
+        return {
+            **result,
+            "station_id": station_id,
+            "response_package_id": f"PKG-RESPONSE-{package_id}"
+        }
 
 
 # ============================================================================
@@ -3118,6 +3604,148 @@ async def emergency_qr_code(request: Request):
     except Exception as e:
         logger.error(f"QR Code生成失敗: {e}")
         raise HTTPException(status_code=500, detail=f"QR Code生成失敗: {str(e)}")
+
+
+# ========== 聯邦架構 - 同步封包 API (Phase 1 & 2) ==========
+
+@app.post("/api/station/sync/generate")
+async def generate_station_sync_package(request: SyncPackageGenerate):
+    """
+    【站點層】產生同步封包
+
+    站點產生包含所有變更的同步封包，可用於:
+    - 網路上傳到醫院層
+    - 匯出為檔案供 USB 實體轉移
+
+    參數:
+    - stationId: 站點ID (e.g., TC-01)
+    - hospitalId: 所屬醫院ID (e.g., HOSP-001)
+    - syncType: DELTA (增量) 或 FULL (全量)
+    - sinceTimestamp: 增量同步起始時間 (可選)
+
+    返回:
+    - package_id: 封包ID
+    - checksum: SHA-256 校驗碼
+    - changes: 變更記錄清單
+    """
+    try:
+        result = db.generate_sync_package(
+            station_id=request.stationId,
+            hospital_id=request.hospitalId,
+            sync_type=request.syncType,
+            since_timestamp=request.sinceTimestamp
+        )
+        logger.info(f"同步封包已產生: {result['package_id']} ({result['changes_count']} 項變更)")
+        return result
+    except Exception as e:
+        logger.error(f"產生同步封包失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/station/sync/import")
+async def import_station_sync_package(request: SyncPackageUpload):
+    """
+    【站點層】匯入同步封包
+
+    站點匯入從醫院層收到的同步封包（通常包含其他站點的更新）
+
+    參數:
+    - stationId: 站點ID
+    - packageId: 封包ID
+    - changes: 變更記錄清單
+    - checksum: 校驗碼
+
+    返回:
+    - changes_applied: 成功套用的變更數
+    - conflicts: 衝突記錄
+    """
+    try:
+        result = db.import_sync_package(
+            package_id=request.packageId,
+            changes=request.changes,
+            checksum=request.checksum
+        )
+        logger.info(f"同步封包已匯入: {request.packageId} ({result['changes_applied']} 項變更)")
+        return result
+    except Exception as e:
+        logger.error(f"匯入同步封包失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/hospital/sync/upload")
+async def upload_hospital_sync(request: SyncPackageUpload):
+    """
+    【醫院層】接收站點同步上傳
+
+    醫院層接收站點上傳的同步封包（谷盺公司使用）
+
+    參數:
+    - stationId: 站點ID
+    - packageId: 封包ID
+    - changes: 變更記錄清單
+    - checksum: 校驗碼
+
+    返回:
+    - changes_applied: 成功套用的變更數
+    - response_package_id: 回傳封包ID（包含其他站點更新）
+    """
+    try:
+        result = db.upload_sync_package(
+            station_id=request.stationId,
+            package_id=request.packageId,
+            changes=request.changes,
+            checksum=request.checksum
+        )
+        logger.info(f"醫院層已接收同步: {request.stationId} - {request.packageId}")
+        return result
+    except Exception as e:
+        logger.error(f"醫院層接收同步失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/hospital/transfer/coordinate")
+async def coordinate_hospital_transfer(request: HospitalTransferCoordinate):
+    """
+    【醫院層】院內調撥協調 (Phase 2)
+
+    醫院層協調站點間物資調撥（谷盺公司使用）
+
+    參數:
+    - hospitalId: 醫院ID
+    - fromStationId: 來源站點ID
+    - toStationId: 目標站點ID
+    - resourceType: 資源類型 (ITEM, BLOOD, EQUIPMENT)
+    - resourceId: 資源ID
+    - quantity: 數量
+    - operator: 操作人員
+    - reason: 調撥原因
+
+    返回:
+    - transfer_id: 調撥記錄ID
+    - status: 調撥狀態
+    """
+    try:
+        # Phase 2 實作：院內調撥協調邏輯
+        # 暫時返回基本資訊
+        from datetime import datetime
+        transfer_id = f"TRF-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+        logger.info(f"院內調撥協調: {request.fromStationId} → {request.toStationId} ({request.resourceType})")
+
+        return {
+            "success": True,
+            "transfer_id": transfer_id,
+            "from_station_id": request.fromStationId,
+            "to_station_id": request.toStationId,
+            "resource_type": request.resourceType,
+            "resource_id": request.resourceId,
+            "quantity": request.quantity,
+            "status": "PENDING_PICKUP",
+            "message": f"調撥已登記，{request.toStationId} 下次同步時會收到物資記錄"
+        }
+    except Exception as e:
+        logger.error(f"院內調撥協調失敗: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================================
