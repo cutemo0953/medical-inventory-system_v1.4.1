@@ -2233,7 +2233,38 @@ async def startup_event():
 
 @app.get("/")
 async def root():
-    """根端點"""
+    """根端點 - 返回主頁面"""
+    try:
+        with open("Index.html", "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    except FileNotFoundError:
+        return {
+            "name": "醫療站庫存管理系統 API",
+            "version": config.VERSION,
+            "station": config.STATION_ID,
+            "docs": "/docs",
+            "error": "Index.html not found"
+        }
+
+
+@app.get("/setup")
+async def setup_station():
+    """站點設定頁面"""
+    try:
+        with open("setup_station.html", "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    except FileNotFoundError:
+        return HTMLResponse(
+            content="<h1>站點設定頁面未找到</h1><p>請確認 setup_station.html 存在</p>",
+            status_code=404
+        )
+
+
+@app.get("/api/info")
+async def api_info():
+    """API 資訊端點"""
     return {
         "name": "醫療站庫存管理系統 API",
         "version": config.VERSION,
