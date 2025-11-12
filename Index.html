@@ -1711,6 +1711,203 @@
             </div>
         </div>
 
+        <!-- 同步管理分頁 (聯邦架構 Phase 1-2) -->
+        <div x-show="currentTab === 'sync'" class="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    同步管理
+                </h2>
+                <div class="text-sm text-gray-600">
+                    <span class="font-semibold">站點:</span> <span x-text="stationId"></span> |
+                    <span class="font-semibold">醫院:</span> HOSP-001
+                </div>
+            </div>
+
+            <!-- 站點資訊卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-purple-50 border-2 border-purple-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">待同步變更</p>
+                            <p class="text-2xl font-bold text-purple-600" x-text="syncStats.pendingChanges"></p>
+                        </div>
+                        <svg class="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">已同步封包</p>
+                            <p class="text-2xl font-bold text-green-600" x-text="syncStats.syncedPackages"></p>
+                        </div>
+                        <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">上次同步</p>
+                            <p class="text-sm font-semibold text-blue-600" x-text="syncStats.lastSync || '尚未同步'"></p>
+                        </div>
+                        <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 產生同步封包區塊 -->
+            <div class="bg-purple-50 border-2 border-purple-200 rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    產生同步封包
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">同步類型</label>
+                        <select x-model="syncPackageForm.syncType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            <option value="DELTA">增量同步 (DELTA)</option>
+                            <option value="FULL">全量同步 (FULL)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">起始時間 (增量用)</label>
+                        <input type="datetime-local" x-model="syncPackageForm.sinceTimestamp" :disabled="syncPackageForm.syncType === 'FULL'" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100">
+                    </div>
+                    <div class="flex items-end">
+                        <button @click="generateSyncPackage()" class="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            產生封包
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 產生的封包資訊 -->
+                <div x-show="generatedPackage" class="mt-4 bg-white border-2 border-purple-300 rounded-lg p-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 class="font-bold text-gray-800 mb-2">封包資訊</h4>
+                            <div class="text-sm space-y-1">
+                                <p><span class="font-semibold">封包ID:</span> <span x-text="generatedPackage?.package_id" class="text-purple-600 font-mono text-xs"></span></p>
+                                <p><span class="font-semibold">類型:</span> <span x-text="generatedPackage?.package_type"></span></p>
+                                <p><span class="font-semibold">變更數:</span> <span x-text="generatedPackage?.changes_count"></span> 項</p>
+                                <p><span class="font-semibold">大小:</span> <span x-text="formatBytes(generatedPackage?.package_size)"></span></p>
+                                <p><span class="font-semibold">校驗碼:</span> <span x-text="generatedPackage?.checksum?.substring(0, 16) + '...'" class="text-xs font-mono"></span></p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button @click="downloadSyncPackage()" class="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1.5 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                下載 JSON
+                            </button>
+                            <button @click="copySyncPackage()" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                                複製
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded p-2 overflow-auto max-h-40">
+                        <pre class="text-xs font-mono" x-text="JSON.stringify(generatedPackage, null, 2)"></pre>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 匯入同步封包區塊 -->
+            <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    匯入同步封包
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">選擇同步封包檔案 (JSON)</label>
+                        <input type="file" @change="handleSyncFileUpload($event)" accept=".json" class="w-full px-4 py-2 border-2 border-dashed border-blue-300 rounded-lg focus:border-blue-500 bg-white">
+                    </div>
+                    <div class="flex gap-3">
+                        <button @click="importSyncPackage()" :disabled="!uploadedPackage" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                            匯入封包
+                        </button>
+                        <button @click="clearUploadedPackage()" :disabled="!uploadedPackage" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            清除
+                        </button>
+                    </div>
+
+                    <!-- 上傳的封包預覽 -->
+                    <div x-show="uploadedPackage" class="bg-white border-2 border-blue-300 rounded-lg p-4">
+                        <h4 class="font-bold text-gray-800 mb-2">已上傳封包</h4>
+                        <div class="text-sm space-y-1 mb-3">
+                            <p><span class="font-semibold">封包ID:</span> <span x-text="uploadedPackage?.packageId" class="text-blue-600 font-mono text-xs"></span></p>
+                            <p><span class="font-semibold">變更數:</span> <span x-text="uploadedPackage?.changes?.length"></span> 項</p>
+                            <p><span class="font-semibold">校驗碼:</span> <span x-text="uploadedPackage?.checksum?.substring(0, 16) + '...'" class="text-xs font-mono"></span></p>
+                        </div>
+                    </div>
+
+                    <!-- 匯入結果 -->
+                    <div x-show="importResult" class="rounded-lg p-4" :class="importResult?.success ? 'bg-green-50 border-2 border-green-300' : 'bg-red-50 border-2 border-red-300'">
+                        <h4 class="font-bold mb-2" :class="importResult?.success ? 'text-green-800' : 'text-red-800'">
+                            <span x-show="importResult?.success">✓ 匯入成功</span>
+                            <span x-show="!importResult?.success">✗ 匯入失敗</span>
+                        </h4>
+                        <div class="text-sm space-y-1">
+                            <p x-show="importResult?.changes_applied"><span class="font-semibold">套用變更:</span> <span x-text="importResult?.changes_applied"></span> 項</p>
+                            <p x-show="importResult?.conflicts_detected"><span class="font-semibold">衝突:</span> <span x-text="importResult?.conflicts_detected"></span> 項</p>
+                            <p><span class="font-semibold">訊息:</span> <span x-text="importResult?.message"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 同步狀態說明 -->
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    同步說明
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-gray-600">
+                    <div>
+                        <p class="font-semibold mb-1">📦 產生封包：</p>
+                        <ul class="list-disc list-inside space-y-0.5 ml-2">
+                            <li><strong>增量同步</strong>：僅包含指定時間後的變更</li>
+                            <li><strong>全量同步</strong>：包含所有資料</li>
+                            <li>產生後可下載為 JSON 檔案</li>
+                            <li>透過 USB 實體轉移到醫院層</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p class="font-semibold mb-1">📥 匯入封包：</p>
+                        <ul class="list-disc list-inside space-y-0.5 ml-2">
+                            <li>上傳從醫院層收到的封包</li>
+                            <li>自動驗證 SHA-256 校驗碼</li>
+                            <li>檢測並記錄資料衝突</li>
+                            <li>更新本站點資料</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Toast 通知 -->
         <div x-show="showToast" x-transition class="fixed bottom-4 right-4 z-50" style="display: none;">
             <div :class="{
@@ -2007,6 +2204,20 @@
 
                 // 緊急功能 (v1.4.5新增)
                 showEmergencyModal: false,
+
+                // 同步管理 (聯邦架構 Phase 1-2)
+                syncPackageForm: {
+                    syncType: 'DELTA',
+                    sinceTimestamp: ''
+                },
+                generatedPackage: null,
+                uploadedPackage: null,
+                importResult: null,
+                syncStats: {
+                    pendingChanges: 0,
+                    syncedPackages: 0,
+                    lastSync: null
+                },
 
                 // 載入狀態追蹤 (v1.4.5效能優化)
                 dataLoaded: {
@@ -3053,6 +3264,179 @@
                     window.open(`${this.apiUrl}/emergency/qr-code`, '_blank');
                     this.showEmergencyModal = false;
                     this.toast('正在生成緊急QR Code...', 'info');
+                },
+
+                // ========== 同步管理功能 (聯邦架構 Phase 1-2) ==========
+
+                // 產生同步封包
+                async generateSyncPackage() {
+                    try {
+                        const requestBody = {
+                            stationId: this.stationId,
+                            hospitalId: 'HOSP-001',
+                            syncType: this.syncPackageForm.syncType
+                        };
+
+                        // 如果是增量同步且有指定時間
+                        if (this.syncPackageForm.syncType === 'DELTA' && this.syncPackageForm.sinceTimestamp) {
+                            // 轉換為 ISO 8601 格式
+                            const dt = new Date(this.syncPackageForm.sinceTimestamp);
+                            requestBody.sinceTimestamp = dt.toISOString();
+                        }
+
+                        const response = await fetch(`${this.apiUrl}/station/sync/generate`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(requestBody)
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.generatedPackage = data;
+                            this.syncStats.pendingChanges = data.changes_count;
+                            this.toast(`封包已產生：${data.changes_count} 項變更`, 'success');
+                        } else {
+                            const error = await response.json();
+                            this.toast(`產生封包失敗：${error.detail}`, 'error');
+                        }
+                    } catch (error) {
+                        console.error('產生同步封包失敗:', error);
+                        this.toast('產生同步封包失敗', 'error');
+                    }
+                },
+
+                // 下載同步封包為 JSON 檔案
+                downloadSyncPackage() {
+                    if (!this.generatedPackage) {
+                        this.toast('請先產生同步封包', 'error');
+                        return;
+                    }
+
+                    const dataStr = JSON.stringify(this.generatedPackage, null, 2);
+                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(dataBlob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `${this.generatedPackage.package_id}.json`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+
+                    this.toast('封包已下載', 'success');
+                },
+
+                // 複製同步封包到剪貼簿
+                async copySyncPackage() {
+                    if (!this.generatedPackage) {
+                        this.toast('請先產生同步封包', 'error');
+                        return;
+                    }
+
+                    try {
+                        const dataStr = JSON.stringify(this.generatedPackage, null, 2);
+                        await navigator.clipboard.writeText(dataStr);
+                        this.toast('封包已複製到剪貼簿', 'success');
+                    } catch (error) {
+                        console.error('複製失敗:', error);
+                        this.toast('複製失敗', 'error');
+                    }
+                },
+
+                // 處理同步檔案上傳
+                handleSyncFileUpload(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const jsonData = JSON.parse(e.target.result);
+                            this.uploadedPackage = {
+                                packageId: jsonData.package_id,
+                                changes: jsonData.changes,
+                                checksum: jsonData.checksum
+                            };
+                            this.importResult = null; // 清除之前的匯入結果
+                            this.toast('封包已載入', 'info');
+                        } catch (error) {
+                            console.error('解析 JSON 失敗:', error);
+                            this.toast('檔案格式錯誤', 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                },
+
+                // 清除已上傳的封包
+                clearUploadedPackage() {
+                    this.uploadedPackage = null;
+                    this.importResult = null;
+                    // 清除 file input
+                    const fileInput = document.querySelector('input[type="file"]');
+                    if (fileInput) fileInput.value = '';
+                    this.toast('已清除上傳封包', 'info');
+                },
+
+                // 匯入同步封包
+                async importSyncPackage() {
+                    if (!this.uploadedPackage) {
+                        this.toast('請先上傳同步封包', 'error');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`${this.apiUrl}/station/sync/import`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                stationId: this.stationId,
+                                packageId: this.uploadedPackage.packageId,
+                                changes: this.uploadedPackage.changes,
+                                checksum: this.uploadedPackage.checksum
+                            })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.importResult = data;
+
+                            if (data.success) {
+                                this.syncStats.syncedPackages += 1;
+                                this.syncStats.lastSync = new Date().toLocaleString('zh-TW');
+                                this.toast(`匯入成功：${data.changes_applied} 項變更已套用`, 'success');
+
+                                // 重新載入資料
+                                await this.loadStats();
+                                await this.loadItems();
+                                await this.loadBloodInventory();
+                            } else {
+                                this.toast(`匯入失敗：${data.message}`, 'error');
+                            }
+                        } else {
+                            const error = await response.json();
+                            this.importResult = {
+                                success: false,
+                                message: error.detail || '匯入失敗'
+                            };
+                            this.toast(`匯入失敗：${error.detail}`, 'error');
+                        }
+                    } catch (error) {
+                        console.error('匯入同步封包失敗:', error);
+                        this.importResult = {
+                            success: false,
+                            message: '匯入失敗：網路錯誤'
+                        };
+                        this.toast('匯入同步封包失敗', 'error');
+                    }
+                },
+
+                // 格式化位元組大小
+                formatBytes(bytes) {
+                    if (!bytes) return '0 Bytes';
+                    const k = 1024;
+                    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
                 }
             };
         }
