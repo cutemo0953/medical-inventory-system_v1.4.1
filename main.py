@@ -3046,7 +3046,7 @@ async def view_emergency_info():
 
 
 @app.get("/api/emergency/qr-code")
-async def emergency_qr_code():
+async def emergency_qr_code(request: Request):
     """
     生成緊急QR Code - 掃描後跳轉到資訊頁面
 
@@ -3057,9 +3057,11 @@ async def emergency_qr_code():
     - 設備狀態
     """
     try:
-        # QR Code內容改為URL（假設部署在localhost:8000）
-        # 生產環境應改為實際域名
-        qr_url = f"http://localhost:8000/emergency/view"
+        # 獲取請求的主機名稱（支持手機掃描）
+        # 優先使用環境變數，否則使用請求的 Host header
+        host = config.BASE_URL if hasattr(config, 'BASE_URL') and config.BASE_URL else request.headers.get("host", "localhost:8000")
+        protocol = "https" if request.url.scheme == "https" else "http"
+        qr_url = f"{protocol}://{host}/emergency/view"
 
         # 生成QR Code
         qr = qrcode.QRCode(
