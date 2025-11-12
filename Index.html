@@ -785,6 +785,60 @@
                     </form>
                 </div>
             </div>
+
+            <!-- 站點轉移 -->
+            <div class="border-2 border-purple-200 rounded-lg p-4 bg-purple-50 mt-6">
+                <h3 class="text-lg font-semibold text-purple-700 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                    </svg>
+                    血袋站點轉移（調撥）
+                </h3>
+                <form @submit.prevent="submitBloodTransfer()" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">來源站點 *</label>
+                            <input type="text" x-model="bloodTransferForm.sourceStationId" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="例: TC-01">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">目標站點 *</label>
+                            <input type="text" x-model="bloodTransferForm.targetStationId" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="例: TC-02">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">血型 *</label>
+                            <select x-model="bloodTransferForm.bloodType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                <option value="">選擇血型</option>
+                                <option value="A+">A+</option>
+                                <option value="A-">A-</option>
+                                <option value="B+">B+</option>
+                                <option value="B-">B-</option>
+                                <option value="O+">O+</option>
+                                <option value="O-">O-</option>
+                                <option value="AB+">AB+</option>
+                                <option value="AB-">AB-</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">數量 (U) *</label>
+                            <input type="number" x-model="bloodTransferForm.quantity" required min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">操作人員</label>
+                        <input type="text" x-model="bloodTransferForm.operator" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="選填">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">調撥原因/備註</label>
+                        <textarea x-model="bloodTransferForm.remarks" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="例: 緊急支援、資源整合等"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                        </svg>
+                        <span>執行轉移</span>
+                    </button>
+                </form>
+            </div>
         </div>
 
         <!-- 設備分頁 -->
@@ -1865,6 +1919,14 @@
                     purpose: '',
                     stationId: 'TC-01'
                 },
+                bloodTransferForm: {
+                    sourceStationId: 'TC-01',
+                    targetStationId: '',
+                    bloodType: '',
+                    quantity: 1,
+                    operator: 'SYSTEM',
+                    remarks: ''
+                },
                 addItemForm: {
                     code: '',
                     name: '',
@@ -2602,6 +2664,52 @@
                     } catch (error) {
                         console.error('血袋出庫失敗:', error);
                         this.toast('血袋出庫失敗', 'error');
+                    }
+                },
+
+                async submitBloodTransfer() {
+                    try {
+                        // 驗證必填欄位
+                        if (!this.bloodTransferForm.sourceStationId || !this.bloodTransferForm.targetStationId) {
+                            this.toast('請輸入來源站點和目標站點', 'error');
+                            return;
+                        }
+                        if (this.bloodTransferForm.sourceStationId === this.bloodTransferForm.targetStationId) {
+                            this.toast('來源站點與目標站點不能相同', 'error');
+                            return;
+                        }
+                        if (!this.bloodTransferForm.bloodType) {
+                            this.toast('請選擇血型', 'error');
+                            return;
+                        }
+
+                        const response = await fetch(`${this.apiUrl}/blood/transfer`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.bloodTransferForm)
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            this.toast(data.message || '血袋轉移成功', 'success');
+                            // 重置表單
+                            this.bloodTransferForm = {
+                                sourceStationId: 'TC-01',
+                                targetStationId: '',
+                                bloodType: '',
+                                quantity: 1,
+                                operator: 'SYSTEM',
+                                remarks: ''
+                            };
+                            await this.loadBloodInventory();
+                            await this.loadStats();
+                        } else {
+                            this.toast(data.detail || '轉移失敗', 'error');
+                        }
+                    } catch (error) {
+                        console.error('血袋站點轉移失敗:', error);
+                        this.toast('血袋站點轉移失敗', 'error');
                     }
                 },
 
