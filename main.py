@@ -309,13 +309,14 @@ class DatabaseManager:
                 ON inventory_events(timestamp)
             """)
             
-            # 血袋庫存
+            # 血袋庫存（支援多站點）
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS blood_inventory (
-                    blood_type TEXT PRIMARY KEY,
+                    blood_type TEXT NOT NULL,
                     quantity INTEGER DEFAULT 0,
                     station_id TEXT NOT NULL,
-                    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (blood_type, station_id)
                 )
             """)
             
@@ -1171,38 +1172,52 @@ class DatabaseManager:
             conn.close()
     
     def process_blood(self, action: str, request: BloodRequest) -> dict:
-        """血袋處理"""
+        """血袋處理（支援多站點）"""
         conn = self.get_connection()
         cursor = conn.cursor()
-        
+
         try:
             cursor.execute(
-                "SELECT quantity FROM blood_inventory WHERE blood_type = ?",
-                (request.bloodType,)
+                "SELECT quantity FROM blood_inventory WHERE blood_type = ? AND station_id = ?",
+                (request.bloodType, request.stationId)
             )
             blood = cursor.fetchone()
-            if not blood:
-                raise HTTPException(status_code=404, detail=f"血型 {request.bloodType} 不存在")
-            
-            current_quantity = blood['quantity']
-            
+
             if action == 'receive':
-                new_quantity = current_quantity + request.quantity
+                # 入庫：如果記錄不存在則新增
+                if not blood:
+                    new_quantity = request.quantity
+                    cursor.execute("""
+                        INSERT INTO blood_inventory (blood_type, quantity, station_id)
+                        VALUES (?, ?, ?)
+                    """, (request.bloodType, new_quantity, request.stationId))
+                else:
+                    current_quantity = blood['quantity']
+                    new_quantity = current_quantity + request.quantity
+                    cursor.execute("""
+                        UPDATE blood_inventory
+                        SET quantity = ?, last_updated = CURRENT_TIMESTAMP
+                        WHERE blood_type = ? AND station_id = ?
+                    """, (new_quantity, request.bloodType, request.stationId))
                 event_type = 'RECEIVE'
             else:
+                # 出庫：記錄必須存在且庫存足夠
+                if not blood:
+                    raise HTTPException(status_code=404, detail=f"站點 {request.stationId} 無此血型 {request.bloodType}")
+
+                current_quantity = blood['quantity']
                 if current_quantity < request.quantity:
                     raise HTTPException(
                         status_code=400,
                         detail=f"血袋庫存不足: 目前 {current_quantity}U,需求 {request.quantity}U"
                     )
                 new_quantity = current_quantity - request.quantity
+                cursor.execute("""
+                    UPDATE blood_inventory
+                    SET quantity = ?, last_updated = CURRENT_TIMESTAMP
+                    WHERE blood_type = ? AND station_id = ?
+                """, (new_quantity, request.bloodType, request.stationId))
                 event_type = 'CONSUME'
-            
-            cursor.execute("""
-                UPDATE blood_inventory 
-                SET quantity = ?, last_updated = CURRENT_TIMESTAMP
-                WHERE blood_type = ?
-            """, (new_quantity, request.bloodType))
             
             cursor.execute("""
                 INSERT INTO blood_events 
@@ -1229,17 +1244,27 @@ class DatabaseManager:
         finally:
             conn.close()
     
-    def get_blood_inventory(self) -> List[Dict]:
-        """取得血袋庫存"""
+    def get_blood_inventory(self, station_id: str = None) -> List[Dict]:
+        """取得血袋庫存（支援多站點）"""
         conn = self.get_connection()
         cursor = conn.cursor()
 
         try:
-            cursor.execute("""
-                SELECT blood_type, quantity, last_updated
-                FROM blood_inventory
-                ORDER BY blood_type
-            """)
+            if station_id:
+                # 查詢特定站點
+                cursor.execute("""
+                    SELECT blood_type, quantity, station_id, last_updated
+                    FROM blood_inventory
+                    WHERE station_id = ?
+                    ORDER BY blood_type
+                """, (station_id,))
+            else:
+                # 查詢所有站點
+                cursor.execute("""
+                    SELECT blood_type, quantity, station_id, last_updated
+                    FROM blood_inventory
+                    ORDER BY station_id, blood_type
+                """)
             return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
@@ -1888,11 +1913,11 @@ async def consume_item(request: ConsumeRequest):
 # ========== 血袋管理 API ==========
 
 @app.get("/api/blood/inventory")
-async def get_blood_inventory():
-    """取得血袋庫存"""
+async def get_blood_inventory(station_id: str = Query(None, description="站點ID，留空則查詢所有站點")):
+    """取得血袋庫存（支援多站點）"""
     try:
-        inventory = db.get_blood_inventory()
-        return {"bloodInventory": inventory}
+        inventory = db.get_blood_inventory(station_id)
+        return {"bloodInventory": inventory, "station_id": station_id}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
