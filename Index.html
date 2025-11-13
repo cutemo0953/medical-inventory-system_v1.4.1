@@ -11,20 +11,59 @@
             theme: {
                 extend: {
                     colors: {
-                        'teal-custom': {
-                            500: '#205555',
-                            600: '#194444',
-                            700: '#123333',
-                            50: '#e6f2f2',
+                        // Teal 主色系 (#205555, #2C7471, #94C4C3)
+                        'teal': {
+                            50: '#e8f4f4',
+                            100: '#d1e9e9',
+                            200: '#94C4C3',  // 用戶指定
+                            300: '#6ba5a4',
+                            400: '#4a8988',
+                            500: '#2C7471',  // 用戶指定
+                            600: '#205555',  // 用戶指定（主色）
+                            700: '#194444',
+                            800: '#123333',
+                            900: '#0d2525',
                         },
-                        'treatment': {
-                            500: '#4E5488',
-                            50: '#F3F2F8',
+                        // Claude 紅色系 (#CC7251)
+                        'claude-red': {
+                            50: '#fef3f0',
+                            100: '#fde7e1',
+                            200: '#fbc9b9',
+                            300: '#f9ac91',
+                            400: '#f58f69',
+                            500: '#CC7251',  // 用戶指定（主色）
+                            600: '#b85e3f',
+                            700: '#9a4d33',
+                            800: '#7c3e29',
+                            900: '#5e2f1f',
                         },
+                        // 天藍色系 (#245FA7, #193C66, #5B9BD5, #345168)
+                        'sky-blue': {
+                            50: '#eff7fd',
+                            100: '#e0f0fb',
+                            200: '#5B9BD5',  // 用戶指定
+                            300: '#4a8ac4',
+                            400: '#3a7ab3',
+                            500: '#245FA7',  // 用戶指定（主色）
+                            600: '#1e5090',
+                            700: '#345168',  // 用戶指定
+                            800: '#193C66',  // 用戶指定
+                            900: '#132d4d',
+                        },
+                        // 血液紅（保留原有，但可能改用 claude-red）
                         'blood': {
-                            500: '#D96754',
-                            200: '#F1AAAB',
+                            50: '#fef2f2',
+                            100: '#fee2e2',
+                            200: '#fecaca',
+                            300: '#fca5a5',
+                            400: '#f87171',
+                            500: '#D96754',  // 原有顏色
+                            600: '#c25644',
+                            700: '#ab4939',
+                            800: '#8f3d30',
+                            900: '#733127',
                         },
+                        // 設備灰
                         'equipment': {
                             500: '#6C7362',
                         }
@@ -2040,7 +2079,8 @@
             return {
                 // 基本設定
                 apiUrl: apiBaseUrl,
-                stationId: 'TC-01',
+                stationId: localStorage.getItem('stationId') || 'TC-01',
+                stationName: localStorage.getItem('stationName') || '醫療站-01',
                 currentTab: 'items',
                 treatmentMode: 'surgery', // 處置標籤頁模式: 'surgery' 或 'consume'
                 currentTime: '',
@@ -2229,6 +2269,16 @@
 
                 // 初始化 (v1.4.5優化: 延遲載入)
                 async init() {
+                    // 監聽 localStorage 變化（跨分頁同步站點設定）
+                    window.addEventListener('storage', (e) => {
+                        if (e.key === 'stationId' && e.newValue) {
+                            this.stationId = e.newValue;
+                        }
+                        if (e.key === 'stationName' && e.newValue) {
+                            this.stationName = e.newValue;
+                        }
+                    });
+
                     this.updateTime();
                     setInterval(() => this.updateTime(), 1000);
 

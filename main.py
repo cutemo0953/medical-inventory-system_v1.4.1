@@ -2008,7 +2008,7 @@ class DatabaseManager:
             """, (
                 package_id, sync_type, 'STATION', station_id,
                 'HOSPITAL', hospital_id, hospital_id,
-                'PENDING', package_size, checksum, len(changes), 'PENDING'
+                'MANUAL', package_size, checksum, len(changes), 'PENDING'  # transfer_method 改為 'MANUAL'
             ))
 
             conn.commit()
