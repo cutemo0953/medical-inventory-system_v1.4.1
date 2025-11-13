@@ -22,6 +22,7 @@ import asyncio
 from fastapi import FastAPI, HTTPException, status, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 import uvicorn
 
@@ -1714,7 +1715,7 @@ class DatabaseManager:
             conn.close()
 
     def reset_equipment_daily(self) -> int:
-        """每日重置設備狀態（清空備註、重置為UNCHECKED）"""
+        """每日重置設備狀態（清空備註、電力、重置為UNCHECKED）"""
         conn = self.get_connection()
         cursor = conn.cursor()
 
@@ -1723,6 +1724,7 @@ class DatabaseManager:
                 UPDATE equipment
                 SET status = 'UNCHECKED',
                     remarks = NULL,
+                    power_level = NULL,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE status != 'UNCHECKED'
             """)
@@ -2185,6 +2187,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 掛載靜態文件（Logo圖片等）
+app.mount("/static", StaticFiles(directory="."), name="static")
 
 db = DatabaseManager(config.DATABASE_PATH)
 
@@ -2686,67 +2691,76 @@ async def get_blood_batch_label(
     <title>血袋批次標籤 - {blood_type}</title>
     <style>
         @media print {{
-            @page {{ size: 10cm 6cm; margin: 0; }}
-            body {{ margin: 0.5cm; }}
+            @page {{ size: 5cm 5cm landscape; margin: 0; }}
+            body {{ margin: 0; padding: 0; }}
         }}
         body {{
             font-family: 'Microsoft JhengHei', 'SimHei', sans-serif;
-            font-size: 12pt;
-            line-height: 1.4;
+            font-size: 8pt;
+            line-height: 1.2;
+            margin: 0;
+            padding: 0;
         }}
         .label {{
-            width: 9cm;
+            width: 5cm;
             height: 5cm;
             border: 2px solid #000;
-            padding: 0.3cm;
+            padding: 0.15cm;
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }}
         .header {{
             text-align: center;
             font-weight: bold;
-            font-size: 14pt;
-            border-bottom: 2px solid #000;
-            padding-bottom: 3px;
-            margin-bottom: 5px;
+            font-size: 9pt;
+            border-bottom: 1px solid #000;
+            padding-bottom: 2px;
+            margin-bottom: 2px;
             background-color: #f0f0f0;
         }}
         .blood-type {{
-            font-size: 32pt;
+            font-size: 22pt;
             font-weight: bold;
             color: #d00;
             text-align: center;
-            margin: 8px 0;
+            margin: 2px 0;
+            line-height: 1;
         }}
         .info {{
-            font-size: 10pt;
-            margin: 3px 0;
+            font-size: 7pt;
+            margin: 1px 0;
+            line-height: 1.1;
         }}
         .code {{
             font-family: 'Courier New', monospace;
             font-weight: bold;
-            font-size: 10pt;
+            font-size: 6pt;
         }}
         .quantity {{
-            font-size: 18pt;
+            font-size: 12pt;
             font-weight: bold;
             color: #d00;
             text-align: center;
-            margin: 5px 0;
+            margin: 2px 0;
+            line-height: 1;
         }}
         .warning {{
             color: #d00;
             font-weight: bold;
-            font-size: 9pt;
+            font-size: 7pt;
             text-align: center;
-            margin-top: 5px;
+            margin-top: 2px;
             border-top: 1px solid #000;
-            padding-top: 3px;
+            padding-top: 2px;
+            line-height: 1;
         }}
     </style>
 </head>
 <body onload="window.print();">
     <div class="label">
-        <div class="header">血袋批次標籤 BLOOD BAG BATCH</div>
+        <div class="header">血袋批次標籤</div>
         <div class="blood-type">{blood_type}</div>
         <div class="quantity">數量: {quantity} U</div>
         <div class="info">批號: <span class="code">{batch_number}</span></div>

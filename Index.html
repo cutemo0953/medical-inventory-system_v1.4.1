@@ -127,7 +127,7 @@
             <div class="flex items-center justify-between flex-wrap gap-3 sm:gap-4">
                 <div class="flex items-center gap-2 sm:gap-3 md:gap-4">
                     <!-- 古陵Logo -->
-                    <img src="guling_logo.png" alt="De Novo Orthopedics Logo" class="h-10 sm:h-12 md:h-16 w-auto object-contain flex-shrink-0">
+                    <img src="/static/guling_logo.png" alt="De Novo Orthopedics Logo" class="h-10 sm:h-12 md:h-16 w-auto object-contain flex-shrink-0">
 
                     <div class="border-l border-gray-300 pl-2 sm:pl-3 md:pl-4">
                         <h1 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-1 sm:gap-2">
@@ -957,7 +957,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="eq.quantity"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <span x-show="eq.power_level !== null" x-text="eq.power_level + '%'"></span>
-                                    <span x-show="eq.power_level === null" class="text-gray-400">-</span>
+                                    <span x-show="eq.power_level === null" class="text-gray-400">--</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="eq.last_check ? new Date(eq.last_check).toLocaleString('zh-TW') : '-'"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
@@ -1832,6 +1832,39 @@
                     </div>
                 </div>
 
+                <!-- 操作說明 -->
+                <div class="bg-gradient-to-r from-teal-50 to-gray-50 border-2 border-teal-200 rounded-lg p-4 mt-4">
+                    <h4 class="font-semibold text-teal-700 mb-3 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        📋 使用說明
+                    </h4>
+                    <div class="space-y-2 text-sm text-gray-700">
+                        <div class="flex items-start gap-2">
+                            <span class="flex-shrink-0 w-6 h-6 bg-teal-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                            <p><strong>產生封包：</strong>選擇同步類型後點擊「產生封包」按鈕</p>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="flex-shrink-0 w-6 h-6 bg-teal-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                            <p><strong>下載檔案：</strong>封包產生後，點擊「下載」按鈕將 JSON 檔案儲存到電腦</p>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="flex-shrink-0 w-6 h-6 bg-teal-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                            <p><strong>存入 USB：</strong>將下載的檔案複製到 USB 隨身碟</p>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="flex-shrink-0 w-6 h-6 bg-teal-500 text-white rounded-full flex items-center justify-center text-xs font-bold">4</span>
+                            <p><strong>傳輸同步：</strong>將 USB 隨身碟帶到目標站點，在該站點的「匯入同步封包」區塊上傳檔案</p>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-teal-200">
+                            <p class="text-xs text-gray-600">
+                                <strong>💡 提示：</strong>此流程適用於筆記型電腦和 Raspberry Pi 5，透過瀏覽器操作，與硬體平台無關。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 產生的封包資訊 -->
                 <div x-show="generatedPackage" class="mt-4 bg-white border-2 border-purple-300 rounded-lg p-4">
                     <div class="flex justify-between items-start mb-3">
@@ -2052,7 +2085,7 @@
             <div class="flex flex-col items-center justify-center gap-4">
                 <!-- iRehab Logo -->
                 <div class="flex items-center justify-center">
-                    <img src="iRehab_logo.png" alt="iRehab Logo" class="h-12 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity">
+                    <img src="/static/iRehab_logo.png" alt="iRehab Logo" class="h-12 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity">
                 </div>
 
                 <!-- Footer Text -->
