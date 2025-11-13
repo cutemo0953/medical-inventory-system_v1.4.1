@@ -220,7 +220,7 @@
             <div class="grid grid-cols-2 sm:flex sm:flex-nowrap gap-1.5 sm:gap-2 p-1.5 sm:p-2">
                 <!-- 物品查詢 - 天藍色系 -->
                 <button @click="switchTab('items')"
-                        :class="currentTab === 'items' ? 'bg-sky-600 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                        :class="currentTab === 'items' ? 'bg-teal-600 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
                         class="flex-1 py-2.5 sm:py-3 px-2 sm:px-3 md:px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
@@ -230,7 +230,7 @@
 
                 <!-- 進貨登記 - Teal色系 #205555 -->
                 <button @click="switchTab('receive')"
-                        :class="currentTab === 'receive' ? 'bg-teal-custom-500 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                        :class="currentTab === 'receive' ? 'bg-sky-blue-500 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
                         class="flex-1 py-2.5 sm:py-3 px-2 sm:px-3 md:px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
@@ -271,7 +271,7 @@
 
                 <!-- 同步管理 - 紫色系（聯邦架構） -->
                 <button @click="switchTab('sync')"
-                        :class="currentTab === 'sync' ? 'bg-purple-600 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                        :class="currentTab === 'sync' ? 'bg-teal-600 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
                         class="col-span-2 sm:col-span-1 flex-1 py-2.5 sm:py-3 px-2 sm:px-3 md:px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -285,13 +285,13 @@
         <div x-show="currentTab === 'items'" class="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
                     庫存查詢
                 </h2>
                 <div class="flex gap-2">
-                    <button @click="showAddItemModal = true" class="bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors flex items-center gap-2">
+                    <button @click="showAddItemModal = true" class="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-600 transition-colors flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -315,7 +315,7 @@
                         </svg>
                         搜尋物品
                     </label>
-                    <input type="text" x-model="itemSearchText" @input="filterItems()" placeholder="輸入代碼或名稱搜尋..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                    <input type="text" x-model="itemSearchText" @input="filterItems()" placeholder="輸入代碼或名稱搜尋..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600">
                 </div>
                 <div class="flex gap-2">
                     <button @click.prevent.stop="exportInventoryCSV()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
@@ -361,7 +361,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="item.min_stock"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="item.unit"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                    <button @click="editItem(item)" class="text-sky-600 hover:text-sky-800">編輯</button>
+                                    <button @click="editItem(item)" class="text-teal-600 hover:text-teal-700">編輯</button>
                                     <button @click="deleteItem(item.code, item.name)" class="text-red-600 hover:text-red-800">刪除</button>
                                 </td>
                             </tr>
@@ -375,12 +375,12 @@
         <div x-show="currentTab === 'receive'" class="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-teal-custom-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-sky-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
                     </svg>
                     進貨登記
                 </h2>
-                <button @click.prevent.stop="showReceiveHistoryModal = true; loadReceiveHistory()" class="bg-teal-custom-500 text-white px-4 py-2 rounded-lg hover:bg-teal-custom-600 transition-colors flex items-center gap-2">
+                <button @click.prevent.stop="showReceiveHistoryModal = true; loadReceiveHistory()" class="bg-sky-blue-500 text-white px-4 py-2 rounded-lg hover:bg-sky-blue-600 transition-colors flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
@@ -399,11 +399,11 @@
                             @focus="showReceiveDropdown = true; if (filteredReceiveItems.length === 0) filterReceiveItems();"
                             @blur="setTimeout(() => showReceiveDropdown = false, 200)"
                             placeholder="輸入代碼或名稱搜尋..."
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-custom-500 focus:border-transparent"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-blue-500 focus:border-transparent"
                         >
                         <div x-show="showReceiveDropdown && filteredReceiveItems.length > 0" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                             <template x-for="item in filteredReceiveItems.slice(0, 10)" :key="item.code">
-                                <div @click.stop="selectReceiveItem(item)" class="px-4 py-2 hover:bg-teal-custom-50 cursor-pointer">
+                                <div @click.stop="selectReceiveItem(item)" class="px-4 py-2 hover:bg-sky-blue-50 cursor-pointer">
                                     <span class="font-mono text-sm" x-text="item.code"></span> -
                                     <span x-text="item.name"></span>
                                     <span class="text-xs text-gray-500" x-text="`(庫存: ${item.current_stock})`"></span>
@@ -414,27 +414,27 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">數量 *</label>
-                        <input type="number" x-model="receiveForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-custom-500 focus:border-transparent">
+                        <input type="number" x-model="receiveForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-blue-500 focus:border-transparent">
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">批號</label>
-                        <input type="text" x-model="receiveForm.batchNumber" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-custom-500 focus:border-transparent">
+                        <input type="text" x-model="receiveForm.batchNumber" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-blue-500 focus:border-transparent">
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">效期</label>
-                        <input type="date" x-model="receiveForm.expiryDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-custom-500 focus:border-transparent">
+                        <input type="date" x-model="receiveForm.expiryDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-blue-500 focus:border-transparent">
                     </div>
 
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-2">備註</label>
-                        <textarea x-model="receiveForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-custom-500 focus:border-transparent"></textarea>
+                        <textarea x-model="receiveForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-blue-500 focus:border-transparent"></textarea>
                     </div>
                 </div>
 
                 <div class="flex gap-4">
-                    <button type="submit" class="bg-teal-custom-500 text-white px-6 py-2 rounded-lg hover:bg-teal-custom-600 transition-colors flex items-center gap-2">
+                    <button type="submit" class="bg-sky-blue-500 text-white px-6 py-2 rounded-lg hover:bg-sky-blue-600 transition-colors flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
@@ -765,7 +765,7 @@
                                 </svg>
                                 <span>確認入庫</span>
                             </button>
-                            <button type="button" @click="printBloodLabel()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                            <button type="button" @click="printBloodLabel()" class="border-2 border-red-600 bg-white text-red-700 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                                 </svg>
@@ -836,8 +836,8 @@
             </div>
 
             <!-- 站點轉移 -->
-            <div class="border-2 border-purple-200 rounded-lg p-4 bg-purple-50 mt-6">
-                <h3 class="text-lg font-semibold text-purple-700 mb-4 flex items-center gap-2">
+            <div class="border-2 border-teal-200 rounded-lg p-4 bg-teal-50 mt-6">
+                <h3 class="text-lg font-semibold text-teal-700 mb-4 flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                     </svg>
@@ -847,15 +847,15 @@
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">來源站點 *</label>
-                            <input type="text" x-model="bloodTransferForm.sourceStationId" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="例: TC-01">
+                            <input type="text" x-model="bloodTransferForm.sourceStationId" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent" placeholder="例: TC-01">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">目標站點 *</label>
-                            <input type="text" x-model="bloodTransferForm.targetStationId" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="例: TC-02">
+                            <input type="text" x-model="bloodTransferForm.targetStationId" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent" placeholder="例: TC-02">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">血型 *</label>
-                            <select x-model="bloodTransferForm.bloodType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <select x-model="bloodTransferForm.bloodType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent">
                                 <option value="">選擇血型</option>
                                 <option value="A+">A+</option>
                                 <option value="A-">A-</option>
@@ -869,18 +869,18 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">數量 (U) *</label>
-                            <input type="number" x-model="bloodTransferForm.quantity" required min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <input type="number" x-model="bloodTransferForm.quantity" required min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent">
                         </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">操作人員</label>
-                        <input type="text" x-model="bloodTransferForm.operator" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="選填">
+                        <input type="text" x-model="bloodTransferForm.operator" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent" placeholder="選填">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">調撥原因/備註</label>
-                        <textarea x-model="bloodTransferForm.remarks" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="例: 緊急支援、資源整合等"></textarea>
+                        <textarea x-model="bloodTransferForm.remarks" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 focus:border-transparent" placeholder="例: 緊急支援、資源整合等"></textarea>
                     </div>
-                    <button type="submit" class="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                    <button type="submit" class="w-full bg-claude-red-500 text-white px-4 py-2 rounded-lg hover:bg-[#b86447] transition-colors flex items-center justify-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
                         </svg>
@@ -976,7 +976,7 @@
         <div x-show="showAddItemModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
             <div @click.away="showAddItemModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
                 <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
                     新增物品
@@ -984,15 +984,15 @@
                 <form @submit.prevent="submitAddItem()" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼 (留空自動生成)</label>
-                        <input type="text" x-model="addItemForm.code" placeholder="留空將自動生成" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                        <input type="text" x-model="addItemForm.code" placeholder="留空將自動生成" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">物品名稱 *</label>
-                        <input type="text" x-model="addItemForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                        <input type="text" x-model="addItemForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">分類 *</label>
-                        <select x-model="addItemForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                        <select x-model="addItemForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600">
                             <option value="手術耗材">手術耗材</option>
                             <option value="急救物資">急救物資</option>
                             <option value="藥品">藥品</option>
@@ -1003,14 +1003,14 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">單位</label>
-                        <input type="text" x-model="addItemForm.unit" placeholder="EA" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                        <input type="text" x-model="addItemForm.unit" placeholder="EA" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">最小庫存</label>
-                        <input type="number" x-model="addItemForm.minStock" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                        <input type="number" x-model="addItemForm.minStock" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600">
                     </div>
                     <div class="flex gap-4">
-                        <button type="submit" class="flex-1 bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 transition-colors flex items-center justify-center gap-2">
+                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
@@ -1031,7 +1031,7 @@
         <div x-show="showEditItemModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
             <div @click.away="showEditItemModal = false" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
                 <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                     </svg>
                     編輯物品
@@ -1043,11 +1043,11 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">物品名稱 *</label>
-                        <input type="text" x-model="editItemForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                        <input type="text" x-model="editItemForm.name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">分類 *</label>
-                        <select x-model="editItemForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                        <select x-model="editItemForm.category" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600">
                             <option value="手術耗材">手術耗材</option>
                             <option value="急救物資">急救物資</option>
                             <option value="藥品">藥品</option>
@@ -1058,14 +1058,14 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">單位</label>
-                        <input type="text" x-model="editItemForm.unit" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                        <input type="text" x-model="editItemForm.unit" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">最小庫存</label>
-                        <input type="number" x-model="editItemForm.minStock" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                        <input type="number" x-model="editItemForm.minStock" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600">
                     </div>
                     <div class="flex gap-4">
-                        <button type="submit" class="flex-1 bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 transition-colors flex items-center justify-center gap-2">
+                        <button type="submit" class="flex-1 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
@@ -1458,12 +1458,12 @@
             <div @click.away="showReceiveHistoryModal = false" class="bg-white rounded-xl shadow-2xl p-3 sm:p-4 md:p-6 max-w-6xl w-full mx-4 my-8">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        <svg class="w-6 h-6 text-teal-custom-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-6 h-6 text-sky-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
                         </svg>
                         進貨記錄
                     </h3>
-                    <button @click="exportReceiveHistoryCSV()" class="bg-teal-custom-500 text-white px-4 py-2 rounded-lg hover:bg-teal-custom-600 transition-colors text-sm flex items-center gap-2">
+                    <button @click="exportReceiveHistoryCSV()" class="bg-sky-blue-500 text-white px-4 py-2 rounded-lg hover:bg-sky-blue-600 transition-colors text-sm flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -1475,15 +1475,15 @@
                 <div class="mb-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">開始日期</label>
-                        <input type="date" x-model="receiveHistorySearch.startDate" @change="loadReceiveHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-custom-500">
+                        <input type="date" x-model="receiveHistorySearch.startDate" @change="loadReceiveHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-blue-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">結束日期</label>
-                        <input type="date" x-model="receiveHistorySearch.endDate" @change="loadReceiveHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-custom-500">
+                        <input type="date" x-model="receiveHistorySearch.endDate" @change="loadReceiveHistory()" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-blue-500">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">物品代碼</label>
-                        <input type="text" x-model="receiveHistorySearch.itemCode" @input="loadReceiveHistory()" placeholder="搜尋物品..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-custom-500">
+                        <input type="text" x-model="receiveHistorySearch.itemCode" @input="loadReceiveHistory()" placeholder="搜尋物品..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-blue-500">
                     </div>
                 </div>
 
@@ -1534,7 +1534,7 @@
                         </svg>
                         消耗記錄
                     </h3>
-                    <button @click="exportConsumeHistoryCSV()" class="bg-teal-custom-500 text-white px-4 py-2 rounded-lg hover:bg-teal-custom-600 transition-colors text-sm flex items-center gap-2">
+                    <button @click="exportConsumeHistoryCSV()" class="bg-sky-blue-500 text-white px-4 py-2 rounded-lg hover:bg-sky-blue-600 transition-colors text-sm flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -1737,7 +1737,7 @@
                 </div>
 
                 <div class="mt-4 flex justify-between items-center">
-                    <button @click="exportBloodHistoryCSV()" class="bg-teal-custom-500 text-white px-4 py-2 rounded-lg hover:bg-teal-custom-600 transition-colors flex items-center gap-2">
+                    <button @click="exportBloodHistoryCSV()" class="bg-sky-blue-500 text-white px-4 py-2 rounded-lg hover:bg-sky-blue-600 transition-colors flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -1754,7 +1754,7 @@
         <div x-show="currentTab === 'sync'" class="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
                     同步管理
@@ -1767,13 +1767,13 @@
 
             <!-- 站點資訊卡片 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="bg-purple-50 border-2 border-purple-200 rounded-lg p-4">
+                <div class="bg-teal-50 border-2 border-teal-200 rounded-lg p-4">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600">待同步變更</p>
-                            <p class="text-2xl font-bold text-purple-600" x-text="syncStats.pendingChanges"></p>
+                            <p class="text-2xl font-bold text-teal-600" x-text="syncStats.pendingChanges"></p>
                         </div>
-                        <svg class="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                         </svg>
                     </div>
@@ -1803,9 +1803,9 @@
             </div>
 
             <!-- 產生同步封包區塊 -->
-            <div class="bg-purple-50 border-2 border-purple-200 rounded-lg p-4 mb-6">
+            <div class="bg-teal-50 border-2 border-teal-200 rounded-lg p-4 mb-6">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
                     產生同步封包
@@ -1813,17 +1813,17 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">同步類型</label>
-                        <select x-model="syncPackageForm.syncType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        <select x-model="syncPackageForm.syncType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600">
                             <option value="DELTA">增量同步 (DELTA)</option>
                             <option value="FULL">全量同步 (FULL)</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">起始時間 (增量用)</label>
-                        <input type="datetime-local" x-model="syncPackageForm.sinceTimestamp" :disabled="syncPackageForm.syncType === 'FULL'" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100">
+                        <input type="datetime-local" x-model="syncPackageForm.sinceTimestamp" :disabled="syncPackageForm.syncType === 'FULL'" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-600 disabled:bg-gray-100">
                     </div>
                     <div class="flex items-end">
-                        <button @click="generateSyncPackage()" class="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                        <button @click="generateSyncPackage()" class="w-full bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                             </svg>
@@ -1836,9 +1836,9 @@
                 <div class="bg-gradient-to-r from-teal-50 to-gray-50 border-2 border-teal-200 rounded-lg p-4 mt-4">
                     <h4 class="font-semibold text-teal-700 mb-3 flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                         </svg>
-                        📋 使用說明
+                        使用說明
                     </h4>
                     <div class="space-y-2 text-sm text-gray-700">
                         <div class="flex items-start gap-2">
@@ -1858,20 +1858,23 @@
                             <p><strong>傳輸同步：</strong>將 USB 隨身碟帶到目標站點，在該站點的「匯入同步封包」區塊上傳檔案</p>
                         </div>
                         <div class="mt-3 pt-3 border-t border-teal-200">
-                            <p class="text-xs text-gray-600">
-                                <strong>💡 提示：</strong>此流程適用於筆記型電腦和 Raspberry Pi 5，透過瀏覽器操作，與硬體平台無關。
+                            <p class="text-xs text-gray-600 flex items-start gap-1">
+                                <svg class="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                </svg>
+                                <span><strong>提示：</strong>此流程適用於筆記型電腦和 Raspberry Pi 5，透過瀏覽器操作，與硬體平台無關。</span>
                             </p>
                         </div>
                     </div>
                 </div>
 
                 <!-- 產生的封包資訊 -->
-                <div x-show="generatedPackage" class="mt-4 bg-white border-2 border-purple-300 rounded-lg p-4">
+                <div x-show="generatedPackage" class="mt-4 bg-white border-2 border-teal-300 rounded-lg p-4">
                     <div class="flex justify-between items-start mb-3">
                         <div>
                             <h4 class="font-bold text-gray-800 mb-2">封包資訊</h4>
                             <div class="text-sm space-y-1">
-                                <p><span class="font-semibold">封包ID:</span> <span x-text="generatedPackage?.package_id" class="text-purple-600 font-mono text-xs"></span></p>
+                                <p><span class="font-semibold">封包ID:</span> <span x-text="generatedPackage?.package_id" class="text-teal-600 font-mono text-xs"></span></p>
                                 <p><span class="font-semibold">類型:</span> <span x-text="generatedPackage?.package_type"></span></p>
                                 <p><span class="font-semibold">變更數:</span> <span x-text="generatedPackage?.changes_count"></span> 項</p>
                                 <p><span class="font-semibold">大小:</span> <span x-text="formatBytes(generatedPackage?.package_size)"></span></p>
@@ -1983,7 +1986,7 @@
         <!-- Toast 通知 -->
         <div x-show="showToast" x-transition class="fixed bottom-4 right-4 z-50" style="display: none;">
             <div :class="{
-                'bg-teal-custom-500': toastType === 'success',
+                'bg-sky-blue-500': toastType === 'success',
                 'bg-red-500': toastType === 'error',
                 'bg-blue-500': toastType === 'info'
             }" class="text-white px-6 py-3 rounded-lg shadow-lg">
