@@ -3447,22 +3447,93 @@
                     const file = event.target.files[0];
                     if (!file) return;
 
+                    // 檢查檔案類型
+                    if (!file.name.endsWith('.json')) {
+                        this.toast('請上傳 JSON 格式的封包檔案', 'error');
+                        return;
+                    }
+
+                    console.log('[同步] 開始讀取封包檔案:', file.name, '大小:', file.size, 'bytes');
+
                     const reader = new FileReader();
                     reader.onload = (e) => {
                         try {
+                            // 步驟 1: 解析 JSON（只執行一次）
                             const jsonData = JSON.parse(e.target.result);
+                            console.log('[同步] JSON 解析成功');
+
+                            // 步驟 2: 驗證必要欄位
+                            const missingFields = [];
+                            if (!jsonData.package_id) missingFields.push('package_id');
+                            if (!jsonData.changes) missingFields.push('changes');
+                            if (!jsonData.checksum) missingFields.push('checksum');
+
+                            if (missingFields.length > 0) {
+                                console.error('[同步] 封包缺少必要欄位:', missingFields);
+                                this.toast(`封包格式錯誤：缺少 ${missingFields.join(', ')}`, 'error');
+                                return;
+                            }
+
+                            // 步驟 3: 驗證 changes 陣列
+                            if (!Array.isArray(jsonData.changes)) {
+                                console.error('[同步] changes 不是陣列:', typeof jsonData.changes);
+                                this.toast('封包格式錯誤：changes 必須是陣列', 'error');
+                                return;
+                            }
+
+                            console.log('[同步] 封包包含', jsonData.changes.length, '筆變更記錄');
+
+                            // 步驟 4: 驗證第一筆變更記錄的格式（抽樣檢查）
+                            if (jsonData.changes.length > 0) {
+                                const firstChange = jsonData.changes[0];
+                                const requiredChangeFields = ['table', 'operation', 'data', 'timestamp'];
+                                const missingChangeFields = requiredChangeFields.filter(field => !firstChange[field]);
+
+                                if (missingChangeFields.length > 0) {
+                                    console.error('[同步] 變更記錄缺少欄位:', missingChangeFields);
+                                    this.toast(`變更記錄格式錯誤：缺少 ${missingChangeFields.join(', ')}`, 'error');
+                                    return;
+                                }
+
+                                // 驗證 operation 值
+                                const validOperations = ['INSERT', 'UPDATE', 'DELETE'];
+                                if (!validOperations.includes(firstChange.operation)) {
+                                    console.error('[同步] 無效的 operation:', firstChange.operation);
+                                    this.toast(`無效的操作類型：${firstChange.operation}`, 'error');
+                                    return;
+                                }
+
+                                console.log('[同步] 變更記錄格式驗證通過');
+                            }
+
+                            // 步驟 5: 存儲封包資料
                             this.uploadedPackage = {
                                 packageId: jsonData.package_id,
                                 changes: jsonData.changes,
                                 checksum: jsonData.checksum
                             };
+
                             this.importResult = null; // 清除之前的匯入結果
-                            this.toast('封包已載入', 'info');
+                            console.log('[同步] 封包已載入:', {
+                                packageId: jsonData.package_id,
+                                changesCount: jsonData.changes.length,
+                                checksum: jsonData.checksum.substring(0, 16) + '...'
+                            });
+
+                            this.toast(`封包已載入：${jsonData.changes.length} 項變更`, 'success');
+
                         } catch (error) {
-                            console.error('解析 JSON 失敗:', error);
-                            this.toast('檔案格式錯誤', 'error');
+                            console.error('[同步] 解析 JSON 失敗:', error);
+                            console.error('[同步] 錯誤堆疊:', error.stack);
+                            this.toast('檔案格式錯誤：' + error.message, 'error');
                         }
                     };
+
+                    reader.onerror = (error) => {
+                        console.error('[同步] 讀取檔案失敗:', error);
+                        this.toast('讀取檔案失敗', 'error');
+                    };
+
                     reader.readAsText(file);
                 },
 
@@ -3483,36 +3554,83 @@
                         return;
                     }
 
+                    console.log('[同步] 開始匯入封包:', {
+                        packageId: this.uploadedPackage.packageId,
+                        changesCount: this.uploadedPackage.changes.length,
+                        stationId: this.stationId
+                    });
+
                     try {
+                        // 構建請求 payload
+                        const payload = {
+                            stationId: this.stationId,
+                            packageId: this.uploadedPackage.packageId,
+                            changes: this.uploadedPackage.changes,  // 直接使用載入的 changes 陣列
+                            checksum: this.uploadedPackage.checksum
+                        };
+
+                        console.log('[同步] 發送請求到 API:', {
+                            url: `${this.apiUrl}/station/sync/import`,
+                            method: 'POST',
+                            payloadSize: JSON.stringify(payload).length + ' bytes',
+                            changesCount: payload.changes.length
+                        });
+
+                        // 顯示進度提示
+                        this.toast('正在匯入封包...', 'info');
+
                         const response = await fetch(`${this.apiUrl}/station/sync/import`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                stationId: this.stationId,
-                                packageId: this.uploadedPackage.packageId,
-                                changes: this.uploadedPackage.changes,
-                                checksum: this.uploadedPackage.checksum
-                            })
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        console.log('[同步] 收到響應:', {
+                            status: response.status,
+                            statusText: response.statusText,
+                            ok: response.ok
                         });
 
                         if (response.ok) {
                             const data = await response.json();
+                            console.log('[同步] 響應資料:', data);
                             this.importResult = data;
 
                             if (data.success) {
                                 this.syncStats.syncedPackages += 1;
                                 this.syncStats.lastSync = new Date().toLocaleString('zh-TW');
+
+                                console.log('[同步] ✓ 匯入成功:', {
+                                    changesApplied: data.changes_applied,
+                                    conflicts: data.conflicts?.length || 0
+                                });
+
                                 this.toast(`匯入成功：${data.changes_applied} 項變更已套用`, 'success');
+
+                                // 如果有衝突，顯示警告
+                                if (data.conflicts && data.conflicts.length > 0) {
+                                    console.warn('[同步] 發現衝突:', data.conflicts);
+                                    this.toast(`警告：發現 ${data.conflicts.length} 項衝突`, 'warning');
+                                }
 
                                 // 重新載入資料
                                 await this.loadStats();
                                 await this.loadItems();
                                 await this.loadBloodInventory();
                             } else {
+                                console.error('[同步] ✗ 匯入失敗:', data.message);
                                 this.toast(`匯入失敗：${data.message}`, 'error');
                             }
                         } else {
                             const error = await response.json();
+                            console.error('[同步] ✗ API 錯誤:', {
+                                status: response.status,
+                                detail: error.detail,
+                                error: error
+                            });
+
                             this.importResult = {
                                 success: false,
                                 message: error.detail || '匯入失敗'
@@ -3520,7 +3638,8 @@
                             this.toast(`匯入失敗：${error.detail}`, 'error');
                         }
                     } catch (error) {
-                        console.error('匯入同步封包失敗:', error);
+                        console.error('[同步] ✗ 匯入同步封包異常:', error);
+                        console.error('[同步] 錯誤堆疊:', error.stack);
                         this.importResult = {
                             success: false,
                             message: '匯入失敗：網路錯誤'
