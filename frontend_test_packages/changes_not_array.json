@@ -1,0 +1,8 @@
+{
+  "success": true,
+  "package_id": "PKG-INVALID-CHANGES",
+  "package_type": "DELTA",
+  "checksum": "abc123def4567890123456789012345678901234567890123456789012345678",
+  "changes_count": 1,
+  "changes": "not an array"
+}

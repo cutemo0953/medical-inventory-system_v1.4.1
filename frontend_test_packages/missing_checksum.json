@@ -1,0 +1,14 @@
+{
+  "success": true,
+  "package_id": "PKG-MISSING-CHECKSUM",
+  "package_type": "DELTA",
+  "changes_count": 1,
+  "changes": [
+    {
+      "table": "items",
+      "operation": "INSERT",
+      "data": {"item_code": "TEST001"},
+      "timestamp": "2025-11-14T15:00:00"
+    }
+  ]
+}

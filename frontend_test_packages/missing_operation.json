@@ -1,0 +1,18 @@
+{
+  "success": true,
+  "package_id": "PKG-MISSING-OPERATION",
+  "package_type": "DELTA",
+  "package_size": 90,
+  "checksum": "f8e233b6bfaef57fb2289b92b88d17214da26f372927f9a0929452f460fc67ed",
+  "changes_count": 1,
+  "changes": [
+    {
+      "table": "items",
+      "data": {
+        "item_code": "TEST001"
+      },
+      "timestamp": "2025-11-14T15:00:00"
+    }
+  ],
+  "message": "缺少 operation"
+}

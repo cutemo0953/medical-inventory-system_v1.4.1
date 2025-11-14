@@ -1,0 +1,19 @@
+{
+  "success": true,
+  "package_id": "PKG-INVALID-OPERATION",
+  "package_type": "DELTA",
+  "package_size": 117,
+  "checksum": "b867c4c1c9dc848dad8a533ef983d6b5612ac55329b0e91ddacb29509ed065f2",
+  "changes_count": 1,
+  "changes": [
+    {
+      "table": "items",
+      "operation": "INVALID_OP",
+      "data": {
+        "item_code": "TEST001"
+      },
+      "timestamp": "2025-11-14T15:00:00"
+    }
+  ],
+  "message": "無效的 operation"
+}
