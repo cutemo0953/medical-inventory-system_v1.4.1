@@ -269,6 +269,7 @@ class SyncPackageUpload(BaseModel):
     """站點同步上傳請求"""
     stationId: str = Field(..., description="站點ID")
     packageId: str = Field(..., description="封包ID")
+    packageType: str = Field(default="FULL", description="封包類型：DELTA 或 FULL")
     changes: List[SyncChangeRecord] = Field(..., description="變更記錄清單")
     checksum: str = Field(..., description="封包校驗碼 (SHA-256)")
 
@@ -2070,7 +2071,7 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def import_sync_package(self, package_id: str, changes: List[dict], checksum: str) -> dict:
+    def import_sync_package(self, package_id: str, changes: List[dict], checksum: str, package_type: str = "FULL") -> dict:
         """匯入同步封包"""
         import hashlib
         import json
@@ -2140,8 +2141,8 @@ class DatabaseManager:
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             """, (
-                package_id, 'IMPORT', 'EXTERNAL', 'UNKNOWN',
-                'STATION', 'LOCAL', 'HOSP-001',
+                package_id, package_type, 'STATION', 'UNKNOWN',
+                'HOSPITAL', 'LOCAL', 'HOSP-001',
                 'USB', checksum, len(changes), 'APPLIED'
             ))
 
@@ -2163,7 +2164,7 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def upload_sync_package(self, station_id: str, package_id: str, changes: List[dict], checksum: str) -> dict:
+    def upload_sync_package(self, station_id: str, package_id: str, changes: List[dict], checksum: str, package_type: str = "FULL") -> dict:
         """醫院層接收站點同步上傳"""
         import hashlib
         import json
@@ -2181,7 +2182,7 @@ class DatabaseManager:
             }
 
         # 匯入變更（複用 import_sync_package 邏輯）
-        result = self.import_sync_package(package_id, changes, checksum)
+        result = self.import_sync_package(package_id, changes, checksum, package_type)
 
         if result['success']:
             # 更新站點同步狀態
@@ -3795,7 +3796,8 @@ async def import_station_sync_package(request: SyncPackageUpload):
         result = db.import_sync_package(
             package_id=request.packageId,
             changes=changes_dict,
-            checksum=request.checksum
+            checksum=request.checksum,
+            package_type=request.packageType
         )
 
         if result.get('success'):
@@ -3879,7 +3881,8 @@ async def upload_hospital_sync(request: SyncPackageUpload):
             station_id=request.stationId,
             package_id=request.packageId,
             changes=changes_dict,
-            checksum=request.checksum
+            checksum=request.checksum,
+            package_type=request.packageType
         )
 
         if result.get('success'):
