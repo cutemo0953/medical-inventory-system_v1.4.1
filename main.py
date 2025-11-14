@@ -1930,90 +1930,127 @@ class DatabaseManager:
                 }
 
                 for table, timestamp_col in tables_to_sync.items():
-                    cursor.execute(f"""
-                        SELECT * FROM {table}
-                        WHERE station_id = ? AND {timestamp_col} > ?
-                        ORDER BY {timestamp_col}
-                    """, (station_id, since_timestamp))
+                    try:
+                        cursor.execute(f"""
+                            SELECT * FROM {table}
+                            WHERE station_id = ? AND {timestamp_col} > ?
+                            ORDER BY {timestamp_col}
+                        """, (station_id, since_timestamp))
 
-                    rows = cursor.fetchall()
-                    for row in rows:
-                        changes.append({
-                            'table': table,
-                            'operation': 'INSERT',
-                            'data': dict(row),
-                            'timestamp': row[timestamp_col]
-                        })
+                        rows = cursor.fetchall()
+                        logger.info(f"查詢表 {table}: 找到 {len(rows)} 筆變更記錄")
+
+                        for idx, row in enumerate(rows):
+                            try:
+                                row_dict = dict(row)
+                                change_dict = {
+                                    'table': table,
+                                    'operation': 'INSERT',
+                                    'data': row_dict,
+                                    'timestamp': row[timestamp_col]
+                                }
+                                changes.append(change_dict)
+                            except Exception as e:
+                                logger.error(f"無法序列化記錄 {table}[{idx}]: {str(e)}")
+                                logger.error(f"Record type: {type(row)}")
+                                logger.error(f"Record keys: {row.keys() if hasattr(row, 'keys') else 'N/A'}")
+                                raise
+                    except Exception as e:
+                        logger.error(f"查詢表 {table} 失敗: {str(e)}")
+                        raise
 
             else:
                 # 全量同步：收集所有資料
-                # 庫存物品
-                cursor.execute("SELECT * FROM items")
-                for row in cursor.fetchall():
-                    changes.append({
-                        'table': 'items',
-                        'operation': 'INSERT',
-                        'data': dict(row),
-                        'timestamp': row['updated_at'] if 'updated_at' in row.keys() else now.isoformat()
-                    })
+                logger.info(f"開始全量同步: station_id={station_id}")
 
-                # 所有事件記錄（僅本站點）
-                cursor.execute("SELECT * FROM inventory_events WHERE station_id = ?", (station_id,))
-                for row in cursor.fetchall():
-                    changes.append({
-                        'table': 'inventory_events',
-                        'operation': 'INSERT',
-                        'data': dict(row),
-                        'timestamp': row['timestamp']
-                    })
+                # 定義需要同步的表及其時間戳欄位
+                full_sync_tables = [
+                    ('items', None, 'updated_at'),  # (table, filter_col, timestamp_col)
+                    ('inventory_events', 'station_id', 'timestamp'),
+                    ('blood_events', 'station_id', 'timestamp'),
+                    ('equipment_checks', 'station_id', 'timestamp'),
+                    ('surgery_records', 'station_id', 'created_at'),
+                ]
 
-                cursor.execute("SELECT * FROM blood_events WHERE station_id = ?", (station_id,))
-                for row in cursor.fetchall():
-                    changes.append({
-                        'table': 'blood_events',
-                        'operation': 'INSERT',
-                        'data': dict(row),
-                        'timestamp': row['timestamp']
-                    })
+                for table, filter_col, timestamp_col in full_sync_tables:
+                    try:
+                        # 建立查詢
+                        if filter_col:
+                            query = f"SELECT * FROM {table} WHERE {filter_col} = ?"
+                            cursor.execute(query, (station_id,))
+                        else:
+                            query = f"SELECT * FROM {table}"
+                            cursor.execute(query)
 
-                cursor.execute("SELECT * FROM equipment_checks WHERE station_id = ?", (station_id,))
-                for row in cursor.fetchall():
-                    changes.append({
-                        'table': 'equipment_checks',
-                        'operation': 'INSERT',
-                        'data': dict(row),
-                        'timestamp': row['timestamp']
-                    })
+                        rows = cursor.fetchall()
+                        logger.info(f"查詢表 {table}: 找到 {len(rows)} 筆記錄")
 
-                cursor.execute("SELECT * FROM surgery_records WHERE station_id = ?", (station_id,))
-                for row in cursor.fetchall():
-                    changes.append({
-                        'table': 'surgery_records',
-                        'operation': 'INSERT',
-                        'data': dict(row),
-                        'timestamp': row['created_at']
-                    })
+                        for idx, row in enumerate(rows):
+                            try:
+                                row_dict = dict(row)
+                                # 獲取時間戳
+                                timestamp = row[timestamp_col] if timestamp_col in row.keys() else now.isoformat()
+
+                                change_dict = {
+                                    'table': table,
+                                    'operation': 'INSERT',
+                                    'data': row_dict,
+                                    'timestamp': timestamp
+                                }
+                                changes.append(change_dict)
+                            except Exception as e:
+                                logger.error(f"無法序列化記錄 {table}[{idx}]: {str(e)}")
+                                logger.error(f"Record type: {type(row)}")
+                                logger.error(f"Record keys: {row.keys() if hasattr(row, 'keys') else 'N/A'}")
+                                raise
+                    except Exception as e:
+                        logger.error(f"查詢表 {table} 失敗: {str(e)}")
+                        raise
 
             # 計算校驗碼
-            package_content = json.dumps(changes, ensure_ascii=False, sort_keys=True)
+            logger.info(f"成功收集 {len(changes)} 筆變更記錄")
+
+            try:
+                logger.debug("開始 JSON 序列化...")
+                package_content = json.dumps(changes, ensure_ascii=False, sort_keys=True)
+                logger.info(f"JSON 序列化成功，封包大小: {len(package_content)} bytes")
+            except TypeError as e:
+                logger.error(f"JSON 序列化失敗: {str(e)}")
+                logger.error(f"Changes count: {len(changes)}")
+                # 找出無法序列化的變更
+                for idx, change in enumerate(changes):
+                    try:
+                        json.dumps(change)
+                    except TypeError:
+                        logger.error(f"無法序列化的變更 [{idx}]: table={change.get('table')}, data_type={type(change.get('data'))}")
+                raise
+
             checksum = hashlib.sha256(package_content.encode('utf-8')).hexdigest()
             package_size = len(package_content.encode('utf-8'))
+            logger.debug(f"校驗碼: {checksum}")
 
             # 記錄封包到資料庫
-            cursor.execute("""
-                INSERT INTO sync_packages (
-                    package_id, package_type, source_type, source_id,
-                    destination_type, destination_id, hospital_id,
-                    transfer_method, package_size, checksum, changes_count, status
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                package_id, sync_type, 'STATION', station_id,
-                'HOSPITAL', hospital_id, hospital_id,
-                'MANUAL', package_size, checksum, len(changes), 'PENDING'  # transfer_method 改為 'MANUAL'
-            ))
+            try:
+                cursor.execute("""
+                    INSERT INTO sync_packages (
+                        package_id, package_type, source_type, source_id,
+                        destination_type, destination_id, hospital_id,
+                        transfer_method, package_size, checksum, changes_count, status
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    package_id, sync_type, 'STATION', station_id,
+                    'HOSPITAL', hospital_id, hospital_id,
+                    'MANUAL', package_size, checksum, len(changes), 'PENDING'  # transfer_method 改為 'MANUAL'
+                ))
+                logger.info(f"封包記錄已保存到資料庫: {package_id}")
+            except Exception as e:
+                logger.error(f"保存封包記錄失敗: {str(e)}")
+                raise
 
             conn.commit()
+
+            logger.info(f"同步封包產生完成: {package_id} ({len(changes)} 項變更, {package_size} bytes)")
 
             return {
                 "success": True,
@@ -3674,17 +3711,31 @@ async def generate_station_sync_package(request: SyncPackageGenerate):
     - changes: 變更記錄清單
     """
     try:
+        logger.info(f"開始產生同步封包: station={request.stationId}, type={request.syncType}, since={request.sinceTimestamp}")
+
+        # 驗證參數
+        if request.syncType not in ["DELTA", "FULL"]:
+            logger.error(f"無效的同步類型: {request.syncType}")
+            raise HTTPException(status_code=400, detail=f"無效的同步類型: {request.syncType}")
+
+        if request.syncType == "DELTA" and not request.sinceTimestamp:
+            logger.warning("增量同步未提供 sinceTimestamp，將使用全量同步")
+
         result = db.generate_sync_package(
             station_id=request.stationId,
             hospital_id=request.hospitalId,
             sync_type=request.syncType,
             since_timestamp=request.sinceTimestamp
         )
-        logger.info(f"同步封包已產生: {result['package_id']} ({result['changes_count']} 項變更)")
+
+        logger.info(f"✓ 同步封包已產生: {result['package_id']} ({result['changes_count']} 項變更, {result['package_size']} bytes)")
         return result
+
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"產生同步封包失敗: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"✗ 產生同步封包失敗: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"產生同步封包失敗: {str(e)}")
 
 
 @app.post("/api/station/sync/import")
@@ -3705,19 +3756,65 @@ async def import_station_sync_package(request: SyncPackageUpload):
     - conflicts: 衝突記錄
     """
     try:
+        logger.info(f"開始匯入同步封包: package_id={request.packageId}, station={request.stationId}")
+
+        # 驗證封包格式
+        if not request.changes:
+            logger.error("封包格式錯誤：changes 清單為空")
+            raise HTTPException(status_code=400, detail="封包格式錯誤：變更記錄清單為空")
+
+        if not request.packageId:
+            logger.error("封包格式錯誤：缺少 packageId")
+            raise HTTPException(status_code=400, detail="封包格式錯誤：缺少封包ID")
+
+        if not request.checksum:
+            logger.error("封包格式錯誤：缺少 checksum")
+            raise HTTPException(status_code=400, detail="封包格式錯誤：缺少校驗碼")
+
+        logger.info(f"準備匯入 {len(request.changes)} 筆變更")
+
         # 將 Pydantic 模型轉換為 dict 以支援 JSON 序列化
-        changes_dict = [change.dict() for change in request.changes]
+        changes_dict = []
+        for i, change in enumerate(request.changes):
+            try:
+                change_dict = change.dict()
+                # 驗證必要欄位
+                if 'table' not in change_dict or 'operation' not in change_dict or 'data' not in change_dict:
+                    logger.error(f"變更 {i+1} 格式錯誤: 缺少必要欄位")
+                    raise ValueError(f"變更 {i+1} 缺少必要欄位 (table/operation/data)")
+
+                changes_dict.append(change_dict)
+                logger.debug(f"處理變更 {i+1}/{len(request.changes)}: table={change_dict.get('table')}, operation={change_dict.get('operation')}")
+            except Exception as e:
+                logger.error(f"處理變更 {i+1} 失敗: {str(e)}")
+                logger.error(f"變更內容: {change}")
+                raise
+
+        logger.info(f"變更記錄轉換完成，共 {len(changes_dict)} 筆")
 
         result = db.import_sync_package(
             package_id=request.packageId,
             changes=changes_dict,
             checksum=request.checksum
         )
-        logger.info(f"同步封包已匯入: {request.packageId} ({result['changes_applied']} 項變更)")
+
+        if result.get('success'):
+            logger.info(f"✓ 同步封包匯入成功: {request.packageId} ({result['changes_applied']} 項變更)")
+            if result.get('conflicts'):
+                logger.warning(f"發現 {len(result['conflicts'])} 項衝突")
+        else:
+            logger.error(f"✗ 同步封包匯入失敗: {result.get('error', 'Unknown error')}")
+
         return result
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        logger.error(f"✗ 封包驗證失敗: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"匯入同步封包失敗: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"✗ 匯入同步封包失敗: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"匯入同步封包失敗: {str(e)}")
 
 
 @app.post("/api/hospital/sync/upload")
@@ -3738,8 +3835,45 @@ async def upload_hospital_sync(request: SyncPackageUpload):
     - response_package_id: 回傳封包ID（包含其他站點更新）
     """
     try:
+        logger.info(f"醫院層接收同步上傳: station={request.stationId}, package={request.packageId}")
+
+        # 驗證封包格式
+        if not request.changes:
+            logger.error("封包格式錯誤：changes 清單為空")
+            raise HTTPException(status_code=400, detail="封包格式錯誤：變更記錄清單為空")
+
+        if not request.stationId:
+            logger.error("封包格式錯誤：缺少 stationId")
+            raise HTTPException(status_code=400, detail="封包格式錯誤：缺少站點ID")
+
+        if not request.packageId:
+            logger.error("封包格式錯誤：缺少 packageId")
+            raise HTTPException(status_code=400, detail="封包格式錯誤：缺少封包ID")
+
+        if not request.checksum:
+            logger.error("封包格式錯誤：缺少 checksum")
+            raise HTTPException(status_code=400, detail="封包格式錯誤：缺少校驗碼")
+
+        logger.info(f"準備處理來自站點 {request.stationId} 的 {len(request.changes)} 筆變更")
+
         # 將 Pydantic 模型轉換為 dict 以支援 JSON 序列化
-        changes_dict = [change.dict() for change in request.changes]
+        changes_dict = []
+        for i, change in enumerate(request.changes):
+            try:
+                change_dict = change.dict()
+                # 驗證必要欄位
+                if 'table' not in change_dict or 'operation' not in change_dict or 'data' not in change_dict:
+                    logger.error(f"變更 {i+1} 格式錯誤: 缺少必要欄位")
+                    raise ValueError(f"變更 {i+1} 缺少必要欄位 (table/operation/data)")
+
+                changes_dict.append(change_dict)
+                logger.debug(f"處理變更 {i+1}/{len(request.changes)}: table={change_dict.get('table')}, operation={change_dict.get('operation')}")
+            except Exception as e:
+                logger.error(f"處理變更 {i+1} 失敗: {str(e)}")
+                logger.error(f"變更內容: {change}")
+                raise
+
+        logger.info(f"變更記錄轉換完成，共 {len(changes_dict)} 筆")
 
         result = db.upload_sync_package(
             station_id=request.stationId,
@@ -3747,11 +3881,24 @@ async def upload_hospital_sync(request: SyncPackageUpload):
             changes=changes_dict,
             checksum=request.checksum
         )
-        logger.info(f"醫院層已接收同步: {request.stationId} - {request.packageId}")
+
+        if result.get('success'):
+            logger.info(f"✓ 醫院層已接收同步: {request.stationId} - {request.packageId} ({result.get('changes_applied', 0)} 項變更)")
+            if result.get('response_package_id'):
+                logger.info(f"已產生回傳封包: {result['response_package_id']}")
+        else:
+            logger.error(f"✗ 醫院層接收同步失敗: {result.get('error', 'Unknown error')}")
+
         return result
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        logger.error(f"✗ 封包驗證失敗: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"醫院層接收同步失敗: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"✗ 醫院層接收同步失敗: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"醫院層接收同步失敗: {str(e)}")
 
 
 @app.post("/api/hospital/transfer/coordinate")
