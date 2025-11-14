@@ -3705,9 +3705,12 @@ async def import_station_sync_package(request: SyncPackageUpload):
     - conflicts: 衝突記錄
     """
     try:
+        # 將 Pydantic 模型轉換為 dict 以支援 JSON 序列化
+        changes_dict = [change.dict() for change in request.changes]
+
         result = db.import_sync_package(
             package_id=request.packageId,
-            changes=request.changes,
+            changes=changes_dict,
             checksum=request.checksum
         )
         logger.info(f"同步封包已匯入: {request.packageId} ({result['changes_applied']} 項變更)")
@@ -3735,10 +3738,13 @@ async def upload_hospital_sync(request: SyncPackageUpload):
     - response_package_id: 回傳封包ID（包含其他站點更新）
     """
     try:
+        # 將 Pydantic 模型轉換為 dict 以支援 JSON 序列化
+        changes_dict = [change.dict() for change in request.changes]
+
         result = db.upload_sync_package(
             station_id=request.stationId,
             package_id=request.packageId,
-            changes=request.changes,
+            changes=changes_dict,
             checksum=request.checksum
         )
         logger.info(f"醫院層已接收同步: {request.stationId} - {request.packageId}")
