@@ -333,9 +333,18 @@ def main():
     if not os.path.isabs(config_path):
         config_path = os.path.join(project_root, config_path)
 
-    # 定義資料庫路徑
-    general_db = os.path.join(project_root, 'database', 'general_inventory.db')
-    pharmacy_db = os.path.join(project_root, 'database', 'pharmacy.db')
+    # 讀取配置以取得資料庫路徑
+    with open(config_path, 'r', encoding='utf-8') as f:
+        config = json.load(f)
+
+    # 從配置檔案取得資料庫路徑
+    db_config = config.get('database', {})
+    general_db_path = db_config.get('general_inventory_path', 'database/general_inventory.db')
+    pharmacy_db_path = db_config.get('pharmacy_path', 'database/pharmacy.db')
+
+    # 轉換為絕對路徑
+    general_db = os.path.join(project_root, general_db_path)
+    pharmacy_db = os.path.join(project_root, pharmacy_db_path)
 
     # 定義 Schema 檔案路徑
     general_schema = os.path.join(project_root, 'database', 'schema_general_inventory.sql')

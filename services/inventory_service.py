@@ -277,24 +277,28 @@ class PharmacyService(InventoryService):
             cursor.execute("""
                 INSERT INTO pharmacy_transactions (
                     transaction_id, transaction_type, transaction_date,
-                    medicine_code, medicine_name, quantity, unit,
-                    station_code, operator, operator_role, verified_by,
-                    is_controlled_drug, patient_id, patient_name,
+                    medicine_code, generic_name, brand_name,
+                    is_controlled_drug, controlled_level,
+                    quantity, unit, station_code,
+                    operator, operator_role, verified_by,
+                    patient_id, patient_name,
                     remarks, status, created_by
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 transaction_id,
                 transaction_type,
                 datetime.now().isoformat(),
                 item_id,
                 medicine_info.get('generic_name', ''),
+                medicine_info.get('brand_name', ''),
+                is_controlled,
+                medicine_info.get('controlled_level'),
                 quantity,
                 medicine_info.get('unit', ''),
                 station_code,
                 operator,
                 operator_role,
                 verified_by,
-                is_controlled,
                 kwargs.get('patient_id'),
                 kwargs.get('patient_name'),
                 kwargs.get('remarks'),
@@ -308,37 +312,7 @@ class PharmacyService(InventoryService):
                 (quantity_change, item_id)
             )
 
-            # 如果是管制藥，寫入 controlled_drug_log
-            if is_controlled:
-                cursor.execute("""
-                    INSERT INTO controlled_drug_log (
-                        transaction_id, transaction_type, transaction_date,
-                        medicine_code, medicine_name, controlled_level,
-                        quantity, unit, station_code,
-                        operator, operator_role, verified_by,
-                        balance_before, balance_after,
-                        patient_id, patient_name, remarks, created_by
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    transaction_id,
-                    transaction_type,
-                    datetime.now().isoformat(),
-                    item_id,
-                    medicine_info.get('generic_name', ''),
-                    medicine_info.get('controlled_level', ''),
-                    quantity,
-                    medicine_info.get('unit', ''),
-                    station_code,
-                    operator,
-                    operator_role,
-                    verified_by,
-                    balance_before,
-                    balance_after,
-                    kwargs.get('patient_id'),
-                    kwargs.get('patient_name'),
-                    kwargs.get('remarks'),
-                    operator
-                ))
+            # 注意：controlled_drug_log 會由資料庫 trigger 自動處理
 
             conn.commit()
             return transaction_id

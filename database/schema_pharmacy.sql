@@ -444,9 +444,10 @@ BEGIN
         prescription_id, prescriber_id, prescriber_name,
         patient_id, purpose, reason,
         operator, operator_role, verified_by,
+        balance_before, balance_after,
         storage_location, reference_doc, remarks,
         created_by
-    ) VALUES (
+    ) SELECT
         'LOG-' || NEW.transaction_id,
         NEW.medicine_code, NEW.generic_name, NEW.brand_name, NEW.controlled_level,
         NEW.dosage_form, NEW.strength, NEW.transaction_type, NEW.transaction_id,
@@ -455,9 +456,17 @@ BEGIN
         NEW.prescription_id, NEW.prescriber_id, NEW.prescriber_name,
         NEW.patient_id, NEW.purpose, NEW.reason,
         NEW.operator, NEW.operator_role, NEW.verified_by,
+        -- Calculate balance_before: get current stock after the transaction, then subtract the change
+        CASE
+            WHEN NEW.transaction_type IN ('IN', 'RETURN') THEN m.current_stock - NEW.quantity
+            WHEN NEW.transaction_type IN ('OUT', 'DISPENSE', 'TRANSFER', 'DESTROY') THEN m.current_stock + NEW.quantity
+            ELSE m.current_stock
+        END as balance_before,
+        m.current_stock as balance_after,
         NEW.storage_location, NEW.reference_doc, NEW.remarks,
         NEW.created_by
-    );
+    FROM medicines m
+    WHERE m.medicine_code = NEW.medicine_code;
 END;
 
 -- ============================================================================
