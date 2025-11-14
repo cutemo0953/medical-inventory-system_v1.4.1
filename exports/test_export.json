@@ -1,0 +1,27 @@
+{
+  "export_meta": {
+    "station_id": "TC-01",
+    "station_name": "前線醫療站01",
+    "station_type": "THIRD_CLASS_BORP",
+    "exported_at": "2025-11-14T05:33:39.442339",
+    "schema_version": "1.5.0"
+  },
+  "pharmacy_data": {
+    "medicines": [],
+    "transactions": [],
+    "controlled_drug_logs": [],
+    "record_count": {
+      "medicines": 0,
+      "transactions": 0,
+      "controlled_drug_logs": 0
+    }
+  },
+  "general_data": {
+    "items": [],
+    "transactions": [],
+    "record_count": {
+      "items": 0,
+      "transactions": 0
+    }
+  }
+}
