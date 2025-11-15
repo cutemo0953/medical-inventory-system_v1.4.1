@@ -17,6 +17,14 @@
                             700: '#123333',
                             50: '#e6f2f2',
                         },
+                        'teal-variant': {
+                            900: '#224D60',
+                            800: '#205555',
+                            700: '#2C7471',
+                            600: '#286768',
+                            500: '#83D4D2',
+                            100: '#D5EEEE',
+                        },
                         'treatment': {
                             500: '#4E5488',
                             50: '#F3F2F8',
@@ -27,8 +35,16 @@
                             200: '#F6CCCD',
                             50: '#FDF5F5',
                         },
+                        'claude-red': {
+                            500: '#D96754',
+                            600: '#C4564A',
+                        },
                         'equipment': {
                             500: '#6C7362',
+                        },
+                        'sky-custom': {
+                            600: '#245FA7',
+                            500: '#5B9BD5',
                         }
                     }
                 }
@@ -181,9 +197,9 @@
         <!-- 分頁選單 - 深色底白字 -->
         <div class="bg-white rounded-xl shadow mb-4 sm:mb-6">
             <div class="grid grid-cols-2 sm:flex sm:flex-nowrap gap-1.5 sm:gap-2 p-1.5 sm:p-2">
-                <!-- 物品查詢 - 天藍色系 -->
+                <!-- 物品查詢 - Teal色系 -->
                 <button @click="switchTab('items')"
-                        :class="currentTab === 'items' ? 'bg-sky-600 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                        :class="currentTab === 'items' ? 'bg-teal-custom-500 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
                         class="flex-1 py-2.5 sm:py-3 px-2 sm:px-3 md:px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
@@ -191,9 +207,9 @@
                     <span class="text-xs sm:text-sm truncate">物品查詢</span>
                 </button>
 
-                <!-- 進貨登記 - Teal色系 #205555 -->
+                <!-- 進貨登記 - 天藍色系 -->
                 <button @click="switchTab('receive')"
-                        :class="currentTab === 'receive' ? 'bg-teal-custom-500 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                        :class="currentTab === 'receive' ? 'bg-sky-custom-600 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
                         class="flex-1 py-2.5 sm:py-3 px-2 sm:px-3 md:px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
@@ -234,7 +250,7 @@
 
                 <!-- 同步管理 - Teal色系（聯邦架構） -->
                 <button @click="switchTab('sync')"
-                        :class="currentTab === 'sync' ? 'bg-teal-600 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                        :class="currentTab === 'sync' ? 'bg-teal-custom-500 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
                         class="col-span-2 sm:col-span-1 flex-1 py-2.5 sm:py-3 px-2 sm:px-3 md:px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -652,8 +668,9 @@
                             <div class="text-center">
                                 <!-- 血型標籤 -->
                                 <div class="text-sm font-bold text-red-100 mb-2" x-text="blood.blood_type"></div>
-                                <!-- 數量大字顯示 - 白色大字 -->
-                                <div class="text-4xl font-extrabold mb-1 text-white"
+                                <!-- 數量大字顯示 - 非0白色，0淺灰色 -->
+                                <div class="text-4xl font-extrabold mb-1"
+                                     :class="blood.quantity > 0 ? 'text-white' : 'text-gray-400'"
                                      x-text="blood.quantity"></div>
                                 <div class="text-xs text-red-200">袋</div>
                             </div>
@@ -732,13 +749,13 @@
                             <input type="text" x-model="bloodReceiveForm.remarks" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="批號、來源等">
                         </div>
                         <div class="grid grid-cols-2 gap-2">
-                            <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center gap-2 font-medium shadow-md">
+                            <button type="submit" class="bg-claude-red-500 text-white px-4 py-2 rounded-lg hover:bg-claude-red-600 transition-colors flex items-center justify-center gap-2 font-medium shadow-md">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                 </svg>
                                 <span>確認入庫</span>
                             </button>
-                            <button type="button" @click="printBloodLabel()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 border-2 border-gray-400">
+                            <button type="button" @click="printBloodLabel()" class="bg-white text-claude-red-500 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center gap-2 border-2 border-claude-red-500">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                                 </svg>
@@ -798,7 +815,7 @@
                                 <textarea x-model="bloodConsumeForm.purpose" rows="2" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="手術、緊急輸血等"></textarea>
                             </div>
                         </div>
-                        <button type="submit" class="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center gap-2 font-medium shadow-md">
+                        <button type="submit" class="w-full bg-claude-red-500 text-white px-4 py-2 rounded-lg hover:bg-claude-red-600 transition-colors flex items-center justify-center gap-2 font-medium shadow-md">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
@@ -1671,7 +1688,7 @@
         <div x-show="currentTab === 'sync'" class="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-teal-custom-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
                     同步管理
@@ -1684,35 +1701,35 @@
 
             <!-- 站點資訊卡片 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="bg-purple-50 border-2 border-purple-200 rounded-lg p-4">
+                <div class="bg-teal-variant-100 border-2 border-teal-variant-500 rounded-lg p-4">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600">待同步變更</p>
-                            <p class="text-2xl font-bold text-purple-600" x-text="syncStats.pendingChanges"></p>
+                            <p class="text-2xl font-bold text-teal-variant-700" x-text="syncStats.pendingChanges"></p>
                         </div>
-                        <svg class="w-10 h-10 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-10 h-10 text-teal-variant-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                         </svg>
                     </div>
                 </div>
-                <div class="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                <div class="bg-gray-50 border-2 border-gray-300 rounded-lg p-4">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600">已同步封包</p>
-                            <p class="text-2xl font-bold text-green-600" x-text="syncStats.syncedPackages"></p>
+                            <p class="text-2xl font-bold text-gray-700" x-text="syncStats.syncedPackages"></p>
                         </div>
-                        <svg class="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
                 </div>
-                <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                <div class="bg-teal-variant-100 border-2 border-teal-variant-600 rounded-lg p-4">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600">上次同步</p>
-                            <p class="text-sm font-semibold text-blue-600" x-text="syncStats.lastSync || '尚未同步'"></p>
+                            <p class="text-sm font-semibold text-teal-variant-800" x-text="syncStats.lastSync || '尚未同步'"></p>
                         </div>
-                        <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-10 h-10 text-teal-variant-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
@@ -1720,9 +1737,9 @@
             </div>
 
             <!-- 產生同步封包區塊 -->
-            <div class="bg-purple-50 border-2 border-purple-200 rounded-lg p-4 mb-6">
+            <div class="bg-teal-variant-100 border-2 border-teal-variant-600 rounded-lg p-4 mb-6">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-teal-variant-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
                     產生同步封包
@@ -1730,17 +1747,17 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">同步類型</label>
-                        <select x-model="syncPackageForm.syncType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                        <select x-model="syncPackageForm.syncType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-variant-700">
                             <option value="DELTA">增量同步 (DELTA)</option>
                             <option value="FULL">全量同步 (FULL)</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">起始時間 (增量用)</label>
-                        <input type="datetime-local" x-model="syncPackageForm.sinceTimestamp" :disabled="syncPackageForm.syncType === 'FULL'" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 disabled:bg-gray-100">
+                        <input type="datetime-local" x-model="syncPackageForm.sinceTimestamp" :disabled="syncPackageForm.syncType === 'FULL'" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-variant-700 disabled:bg-gray-100">
                     </div>
                     <div class="flex items-end">
-                        <button @click="generateSyncPackage()" class="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
+                        <button @click="generateSyncPackage()" class="w-full bg-teal-variant-700 text-white px-4 py-2 rounded-lg hover:bg-teal-variant-800 transition-colors flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                             </svg>
@@ -1750,12 +1767,12 @@
                 </div>
 
                 <!-- 產生的封包資訊 -->
-                <div x-show="generatedPackage" class="mt-4 bg-white border-2 border-purple-300 rounded-lg p-4">
+                <div x-show="generatedPackage" class="mt-4 bg-white border-2 border-teal-variant-500 rounded-lg p-4">
                     <div class="flex justify-between items-start mb-3">
                         <div>
                             <h4 class="font-bold text-gray-800 mb-2">封包資訊</h4>
                             <div class="text-sm space-y-1">
-                                <p><span class="font-semibold">封包ID:</span> <span x-text="generatedPackage?.package_id" class="text-purple-600 font-mono text-xs"></span></p>
+                                <p><span class="font-semibold">封包ID:</span> <span x-text="generatedPackage?.package_id" class="text-teal-variant-700 font-mono text-xs"></span></p>
                                 <p><span class="font-semibold">類型:</span> <span x-text="generatedPackage?.package_type"></span></p>
                                 <p><span class="font-semibold">變更數:</span> <span x-text="generatedPackage?.changes_count"></span> 項</p>
                                 <p><span class="font-semibold">大小:</span> <span x-text="formatBytes(generatedPackage?.package_size)"></span></p>
@@ -1763,13 +1780,13 @@
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <button @click="downloadSyncPackage()" class="bg-green-600 text-white px-3 py-1.5 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1.5 text-sm">
+                            <button @click="downloadSyncPackage()" class="bg-gray-600 text-white px-3 py-1.5 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-1.5 text-sm">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                 </svg>
                                 下載 JSON
                             </button>
-                            <button @click="copySyncPackage()" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-sm">
+                            <button @click="copySyncPackage()" class="bg-gray-500 text-white px-3 py-1.5 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-1.5 text-sm">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                                 </svg>
@@ -1784,9 +1801,9 @@
             </div>
 
             <!-- 匯入同步封包區塊 -->
-            <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 mb-6">
+            <div class="bg-gray-50 border-2 border-gray-300 rounded-lg p-4 mb-6">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-teal-variant-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                     </svg>
                     匯入同步封包
@@ -1794,10 +1811,10 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">選擇同步封包檔案 (JSON)</label>
-                        <input type="file" @change="handleSyncFileUpload($event)" accept=".json" class="w-full px-4 py-2 border-2 border-dashed border-blue-300 rounded-lg focus:border-blue-500 bg-white">
+                        <input type="file" @change="handleSyncFileUpload($event)" accept=".json" class="w-full px-4 py-2 border-2 border-dashed border-teal-variant-500 rounded-lg focus:border-teal-variant-700 bg-white">
                     </div>
                     <div class="flex gap-3">
-                        <button @click="importSyncPackage()" :disabled="!uploadedPackage" class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        <button @click="importSyncPackage()" :disabled="!uploadedPackage" class="flex-1 bg-teal-variant-700 text-white px-4 py-2 rounded-lg hover:bg-teal-variant-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                             </svg>
@@ -1809,10 +1826,10 @@
                     </div>
 
                     <!-- 上傳的封包預覽 -->
-                    <div x-show="uploadedPackage" class="bg-white border-2 border-blue-300 rounded-lg p-4">
+                    <div x-show="uploadedPackage" class="bg-white border-2 border-teal-variant-500 rounded-lg p-4">
                         <h4 class="font-bold text-gray-800 mb-2">已上傳封包</h4>
                         <div class="text-sm space-y-1 mb-3">
-                            <p><span class="font-semibold">封包ID:</span> <span x-text="uploadedPackage?.packageId" class="text-blue-600 font-mono text-xs"></span></p>
+                            <p><span class="font-semibold">封包ID:</span> <span x-text="uploadedPackage?.packageId" class="text-teal-variant-700 font-mono text-xs"></span></p>
                             <p><span class="font-semibold">變更數:</span> <span x-text="uploadedPackage?.changes?.length"></span> 項</p>
                             <p><span class="font-semibold">校驗碼:</span> <span x-text="uploadedPackage?.checksum?.substring(0, 16) + '...'" class="text-xs font-mono"></span></p>
                         </div>
