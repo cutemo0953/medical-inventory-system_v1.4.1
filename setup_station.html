@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>站點設定工具</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'teal-variant': {
+                            900: '#224D60',
+                            800: '#205555',
+                            700: '#2C7471',
+                            600: '#286768',
+                            500: '#83D4D2',
+                            100: '#D5EEEE',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         /* 與 Index.html 相同的漸層背景 */
         body {
@@ -26,11 +44,11 @@
         </div>
 
         <!-- 當前站點資訊 -->
-        <div class="bg-teal-50 border-2 border-teal-200 rounded-lg p-4 mb-6">
-            <h3 class="font-semibold text-teal-800 mb-2">當前站點資訊：</h3>
+        <div class="bg-teal-variant-100 border-2 border-teal-variant-500 rounded-lg p-4 mb-6">
+            <h3 class="font-semibold text-teal-variant-800 mb-2">當前站點資訊：</h3>
             <div id="currentInfo" class="text-sm text-gray-700">
-                <p><strong>站點ID:</strong> <span id="currentId" class="text-teal-600"></span></p>
-                <p><strong>站點名稱:</strong> <span id="currentName" class="text-teal-600"></span></p>
+                <p><strong>站點ID:</strong> <span id="currentId" class="text-teal-variant-700"></span></p>
+                <p><strong>站點名稱:</strong> <span id="currentName" class="text-teal-variant-700"></span></p>
             </div>
         </div>
 
@@ -39,7 +57,7 @@
             <h3 class="font-semibold text-gray-800 mb-3">快速設定預設站點：</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <button onclick="setStation('TC-01', '前線醫療站01')"
-                        class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
+                        class="bg-teal-variant-700 hover:bg-teal-variant-900 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -48,7 +66,7 @@
                 </button>
 
                 <button onclick="setStation('TC-02', '後勤補給站02')"
-                        class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
+                        class="bg-teal-variant-600 hover:bg-teal-variant-900 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
@@ -56,7 +74,7 @@
                 </button>
 
                 <button onclick="setStation('TC-03', '野戰醫院03')"
-                        class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
+                        class="bg-teal-variant-800 hover:bg-teal-variant-900 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                     </svg>
@@ -64,7 +82,7 @@
                 </button>
 
                 <button onclick="setStation('TC-04', '機動救護站04')"
-                        class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
+                        class="bg-teal-variant-600 hover:bg-teal-variant-900 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                     </svg>
@@ -80,15 +98,15 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">站點ID (必填)</label>
                     <input type="text" id="customId" placeholder="例如: TC-05"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all">
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-variant-600 focus:border-transparent transition-all">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">站點名稱 (選填)</label>
                     <input type="text" id="customName" placeholder="例如: 緊急救護站05"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all">
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-variant-600 focus:border-transparent transition-all">
                 </div>
                 <button onclick="setCustomStation()"
-                        class="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md">
+                        class="w-full bg-teal-variant-600 hover:bg-teal-variant-900 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md">
                     設定自訂站點
                 </button>
             </div>
@@ -104,7 +122,7 @@
 
         <!-- 跳轉按鈕 -->
         <div class="mt-6 text-center">
-            <a href="/" class="inline-flex items-center gap-2 bg-gradient-to-r from-teal-600 to-teal-700 text-white font-bold py-3 px-8 rounded-lg hover:shadow-lg transition-all duration-200">
+            <a href="/" class="inline-flex items-center gap-2 bg-gradient-to-r from-teal-variant-700 to-teal-variant-800 text-white font-bold py-3 px-8 rounded-lg hover:shadow-lg transition-all duration-200">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                 </svg>
@@ -179,7 +197,8 @@
         // 顯示成功訊息
         function showSuccess(message) {
             const toast = document.createElement('div');
-            toast.className = 'fixed top-4 right-4 bg-teal-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce flex items-center gap-2';
+            toast.className = 'fixed top-4 right-4 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce flex items-center gap-2';
+            toast.style.backgroundColor = '#2C7471';
             toast.innerHTML = `
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
