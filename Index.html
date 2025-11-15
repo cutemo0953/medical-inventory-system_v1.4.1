@@ -90,7 +90,7 @@
             <div class="flex items-center justify-between flex-wrap gap-3 sm:gap-4">
                 <div class="flex items-center gap-2 sm:gap-3 md:gap-4">
                     <!-- 古陵Logo -->
-                    <img src="guling_logo.png" alt="De Novo Orthopedics Logo" class="h-10 sm:h-12 md:h-16 w-auto object-contain flex-shrink-0">
+                    <img src="/static/guling_logo.png" alt="De Novo Orthopedics Logo" class="h-10 sm:h-12 md:h-16 w-auto object-contain flex-shrink-0">
 
                     <div class="border-l border-gray-300 pl-2 sm:pl-3 md:pl-4">
                         <h1 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-1 sm:gap-2">
@@ -232,9 +232,9 @@
                     <span class="text-xs sm:text-sm truncate">設備管理</span>
                 </button>
 
-                <!-- 同步管理 - 紫色系（聯邦架構） -->
+                <!-- 同步管理 - Teal色系（聯邦架構） -->
                 <button @click="switchTab('sync')"
-                        :class="currentTab === 'sync' ? 'bg-purple-600 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                        :class="currentTab === 'sync' ? 'bg-teal-600 text-white font-semibold shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
                         class="col-span-2 sm:col-span-1 flex-1 py-2.5 sm:py-3 px-2 sm:px-3 md:px-4 rounded-lg transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 min-w-0">
                     <svg class="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -638,8 +638,8 @@
                 </button>
             </div>
 
-            <!-- 血型庫存統計區 - 深色風格 -->
-            <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-6 mb-8 shadow-xl">
+            <!-- 血型庫存統計區 - 深紅色背景 -->
+            <div class="bg-gradient-to-br from-red-900 to-red-950 rounded-xl p-6 mb-8 shadow-xl">
                 <h3 class="text-white text-lg font-bold mb-4 flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
@@ -648,15 +648,14 @@
                 </h3>
                 <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3">
                     <template x-for="blood in bloodInventory" :key="blood.blood_type">
-                        <div class="bg-gray-700 bg-opacity-50 backdrop-blur rounded-lg p-4 border border-gray-600 hover:border-claude-red-400 transition-all duration-200 hover:shadow-lg">
+                        <div class="bg-red-800 bg-opacity-50 backdrop-blur rounded-lg p-4 border border-red-700 hover:border-red-500 transition-all duration-200 hover:shadow-lg">
                             <div class="text-center">
                                 <!-- 血型標籤 -->
-                                <div class="text-sm font-bold text-gray-300 mb-2" x-text="blood.blood_type"></div>
-                                <!-- 數量大字顯示 - 非0顯示淺紅色，0顯示灰色 -->
-                                <div class="text-4xl font-extrabold mb-1"
-                                     :class="blood.quantity > 0 ? 'text-claude-red-200' : 'text-gray-500'"
+                                <div class="text-sm font-bold text-red-100 mb-2" x-text="blood.blood_type"></div>
+                                <!-- 數量大字顯示 - 白色大字 -->
+                                <div class="text-4xl font-extrabold mb-1 text-white"
                                      x-text="blood.quantity"></div>
-                                <div class="text-xs text-gray-400">袋</div>
+                                <div class="text-xs text-red-200">袋</div>
                             </div>
                         </div>
                     </template>
@@ -666,8 +665,8 @@
             <!-- 功能區 - 淺色風格，統一 red 色系 -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- 血袋入庫 -->
-                <div class="bg-white border-2 border-claude-red-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
-                    <h3 class="text-lg font-semibold text-claude-red-700 mb-4 flex items-center gap-2">
+                <div class="bg-white border-2 border-red-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                    <h3 class="text-lg font-semibold text-red-700 mb-4 flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                         </svg>
@@ -677,7 +676,7 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">血型 *</label>
-                                <select x-model="bloodReceiveForm.bloodType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-claude-red-500 focus:border-transparent">
+                                <select x-model="bloodReceiveForm.bloodType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
                                     <option value="">選擇血型</option>
                                     <option value="A+">A+</option>
                                     <option value="A-">A-</option>
@@ -691,22 +690,22 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">數量 (U) *</label>
-                                <input type="number" x-model="bloodReceiveForm.quantity" required min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-claude-red-500 focus:border-transparent">
+                                <input type="number" x-model="bloodReceiveForm.quantity" required min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
                             </div>
                         </div>
 
                         <!-- 來源選擇 -->
                         <div class="col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-1">血液來源</label>
-                            <select x-model="bloodReceiveForm.source" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-claude-red-500 focus:border-transparent">
+                            <select x-model="bloodReceiveForm.source" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
                                 <option value="blood_center">捐血中心</option>
                                 <option value="walking_donor">Walking Blood Bank (緊急捐血者)</option>
                             </select>
                         </div>
 
                         <!-- Walking Blood Bank 資訊 (條件顯示) -->
-                        <div x-show="bloodReceiveForm.source === 'walking_donor'" class="col-span-2 border-t border-claude-red-200 pt-3 space-y-2">
-                            <div class="text-sm font-medium text-claude-red-700 flex items-center gap-1 mb-2">
+                        <div x-show="bloodReceiveForm.source === 'walking_donor'" class="col-span-2 border-t border-red-200 pt-3 space-y-2">
+                            <div class="text-sm font-medium text-red-700 flex items-center gap-1 mb-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                 </svg>
@@ -716,13 +715,13 @@
                                 <div>
                                     <label class="block text-xs font-medium text-gray-600 mb-1">捐血者姓名</label>
                                     <input type="text" x-model="bloodReceiveForm.donorName"
-                                           class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-claude-red-500 focus:border-transparent"
+                                           class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-red-500 focus:border-transparent"
                                            placeholder="選填">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-medium text-gray-600 mb-1">聯絡電話</label>
                                     <input type="tel" x-model="bloodReceiveForm.donorPhone"
-                                           class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-claude-red-500 focus:border-transparent"
+                                           class="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-red-500 focus:border-transparent"
                                            placeholder="選填">
                                 </div>
                             </div>
@@ -730,10 +729,10 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">備註</label>
-                            <input type="text" x-model="bloodReceiveForm.remarks" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-claude-red-500 focus:border-transparent" placeholder="批號、來源等">
+                            <input type="text" x-model="bloodReceiveForm.remarks" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="批號、來源等">
                         </div>
                         <div class="grid grid-cols-2 gap-2">
-                            <button type="submit" class="bg-claude-red-500 text-white px-4 py-2 rounded-lg hover:bg-claude-red-600 transition-colors flex items-center justify-center gap-2 font-medium shadow-md">
+                            <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center gap-2 font-medium shadow-md">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                 </svg>
@@ -750,8 +749,8 @@
                 </div>
 
                 <!-- 血袋出庫 (含病患資訊) -->
-                <div class="border-2 border-claude-red-200 rounded-lg p-4 bg-white">
-                    <h3 class="text-lg font-semibold text-claude-red-700 mb-4 flex items-center gap-2">
+                <div class="border-2 border-red-200 rounded-lg p-4 bg-white">
+                    <h3 class="text-lg font-semibold text-red-700 mb-4 flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
                         </svg>
@@ -761,7 +760,7 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">血型 *</label>
-                                <select x-model="bloodConsumeForm.bloodType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-claude-red-500 focus:border-transparent">
+                                <select x-model="bloodConsumeForm.bloodType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
                                     <option value="">選擇血型</option>
                                     <option value="A+">A+</option>
                                     <option value="A-">A-</option>
@@ -775,31 +774,31 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">數量 (U) *</label>
-                                <input type="number" x-model="bloodConsumeForm.quantity" required min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-claude-red-500 focus:border-transparent">
+                                <input type="number" x-model="bloodConsumeForm.quantity" required min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
                             </div>
                         </div>
                         <!-- 病患資訊 -->
-                        <div class="border-t border-claude-red-200 pt-3 space-y-3">
+                        <div class="border-t border-red-200 pt-3 space-y-3">
                             <div class="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-claude-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                                 </svg>
                                 病患資訊
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">病患姓名 *</label>
-                                <input type="text" x-model="bloodConsumeForm.patientName" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-claude-red-500 focus:border-transparent" placeholder="請輸入病患姓名">
+                                <input type="text" x-model="bloodConsumeForm.patientName" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="請輸入病患姓名">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">病歷號</label>
-                                <input type="text" x-model="bloodConsumeForm.patientId" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-claude-red-500 focus:border-transparent" placeholder="選填">
+                                <input type="text" x-model="bloodConsumeForm.patientId" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="選填">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-600 mb-1">用途說明</label>
-                                <textarea x-model="bloodConsumeForm.purpose" rows="2" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-claude-red-500 focus:border-transparent" placeholder="手術、緊急輸血等"></textarea>
+                                <textarea x-model="bloodConsumeForm.purpose" rows="2" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="手術、緊急輸血等"></textarea>
                             </div>
                         </div>
-                        <button type="submit" class="w-full bg-claude-red-500 text-white px-4 py-2 rounded-lg hover:bg-claude-red-600 transition-colors flex items-center justify-center gap-2 font-medium shadow-md">
+                        <button type="submit" class="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center gap-2 font-medium shadow-md">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                             </svg>
@@ -1672,7 +1671,7 @@
         <div x-show="currentTab === 'sync'" class="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
                     同步管理
@@ -1932,19 +1931,7 @@
                         </div>
                     </button>
 
-                    <!-- 選項3: 生成緊急 QR Code -->
-                    <button @click="emergencyQRCode()"
-                            class="w-full bg-yellow-600 hover:bg-yellow-700 text-white p-4 rounded-xl transition-all duration-200 flex items-center gap-3 shadow-lg">
-                        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
-                        </svg>
-                        <div class="text-left flex-1">
-                            <p class="font-bold">生成緊急 QR Code</p>
-                            <p class="text-xs text-yellow-100">關鍵資訊快速掃描</p>
-                        </div>
-                    </button>
-
-                    <!-- 選項4: 取消 -->
+                    <!-- 選項3: 取消 -->
                     <button @click="showEmergencyModal = false"
                             class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 p-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1970,7 +1957,7 @@
             <div class="flex flex-col items-center justify-center gap-4">
                 <!-- iRehab Logo -->
                 <div class="flex items-center justify-center">
-                    <img src="iRehab_logo.png" alt="iRehab Logo" class="h-12 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity">
+                    <img src="/static/iRehab_logo.png" alt="iRehab Logo" class="h-12 w-auto object-contain opacity-80 hover:opacity-100 transition-opacity">
                 </div>
 
                 <!-- Footer Text -->
@@ -3215,12 +3202,6 @@
                     window.open(`${this.apiUrl}/emergency/quick-backup`, '_blank');
                     this.showEmergencyModal = false;
                     this.toast('正在下載資料庫備份...', 'info');
-                },
-
-                emergencyQRCode() {
-                    window.open(`${this.apiUrl}/emergency/qr-code`, '_blank');
-                    this.showEmergencyModal = false;
-                    this.toast('正在生成緊急QR Code...', 'info');
                 },
 
                 // ========== 同步管理功能 (聯邦架構 Phase 1-2) ==========
