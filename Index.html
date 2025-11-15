@@ -22,8 +22,10 @@
                             50: '#F3F2F8',
                         },
                         'blood': {
-                            500: '#D96754',
-                            200: '#F1AAAB',
+                            600: '#B85D42',
+                            500: '#CC7251',
+                            200: '#F6CCCD',
+                            50: '#FDF5F5',
                         },
                         'equipment': {
                             500: '#6C7362',
@@ -639,13 +641,15 @@
             <!-- 血液庫存卡片 - 優先顯示數量 -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <template x-for="blood in bloodInventory" :key="blood.blood_type">
-                    <div class="border-2 border-blood-200 rounded-lg p-4 hover:border-blood-500 transition-colors bg-gradient-to-br from-white to-blood-50">
+                    <div class="border-2 border-blood-200 rounded-lg p-4 hover:border-blood-500 transition-colors bg-gradient-to-br from-gray-800 to-gray-700">
                         <div class="text-center">
-                            <!-- 數量優先，更大更醒目 -->
-                            <div class="text-5xl font-bold text-blood-500 my-3" x-text="blood.quantity"></div>
-                            <div class="text-xs text-gray-500 mb-2">單位 (U)</div>
+                            <!-- 數量優先，更大更醒目 - 非0數字顯示淺紅色 -->
+                            <div class="text-5xl font-bold my-3"
+                                 :class="blood.quantity > 0 ? 'text-blood-200' : 'text-gray-500'"
+                                 x-text="blood.quantity"></div>
+                            <div class="text-xs text-gray-400 mb-2">單位 (U)</div>
                             <!-- 血型次要，較小 -->
-                            <div class="text-lg font-semibold text-gray-700 bg-white px-3 py-1 rounded-full inline-block" x-text="blood.blood_type"></div>
+                            <div class="text-lg font-semibold text-white bg-gray-600 px-3 py-1 rounded-full inline-block" x-text="blood.blood_type"></div>
                         </div>
                     </div>
                 </template>
@@ -720,13 +724,13 @@
                             <input type="text" x-model="bloodReceiveForm.remarks" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blood-500 focus:border-transparent" placeholder="批號、來源等">
                         </div>
                         <div class="grid grid-cols-2 gap-2">
-                            <button type="submit" class="bg-blood-500 text-white px-4 py-2 rounded-lg hover:bg-[#c4564a] transition-colors flex items-center justify-center gap-2">
+                            <button type="submit" class="bg-blood-500 text-white px-4 py-2 rounded-lg hover:bg-blood-600 transition-colors flex items-center justify-center gap-2 shadow-md">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                 </svg>
                                 <span>確認入庫</span>
                             </button>
-                            <button type="button" @click="printBloodLabel()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                            <button type="button" @click="printBloodLabel()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center justify-center gap-2 border-2 border-gray-400">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
                                 </svg>
@@ -796,59 +800,6 @@
                 </div>
             </div>
 
-            <!-- 站點轉移 -->
-            <div class="border-2 border-purple-200 rounded-lg p-4 bg-purple-50 mt-6">
-                <h3 class="text-lg font-semibold text-purple-700 mb-4 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                    </svg>
-                    血袋站點轉移（調撥）
-                </h3>
-                <form @submit.prevent="submitBloodTransfer()" class="space-y-3">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">來源站點 *</label>
-                            <input type="text" x-model="bloodTransferForm.sourceStationId" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="例: TC-01">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">目標站點 *</label>
-                            <input type="text" x-model="bloodTransferForm.targetStationId" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="例: TC-02">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">血型 *</label>
-                            <select x-model="bloodTransferForm.bloodType" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                                <option value="">選擇血型</option>
-                                <option value="A+">A+</option>
-                                <option value="A-">A-</option>
-                                <option value="B+">B+</option>
-                                <option value="B-">B-</option>
-                                <option value="O+">O+</option>
-                                <option value="O-">O-</option>
-                                <option value="AB+">AB+</option>
-                                <option value="AB-">AB-</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">數量 (U) *</label>
-                            <input type="number" x-model="bloodTransferForm.quantity" required min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">操作人員</label>
-                        <input type="text" x-model="bloodTransferForm.operator" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="選填">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">調撥原因/備註</label>
-                        <textarea x-model="bloodTransferForm.remarks" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="例: 緊急支援、資源整合等"></textarea>
-                    </div>
-                    <button type="submit" class="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                        </svg>
-                        <span>執行轉移</span>
-                    </button>
-                </form>
-            </div>
         </div>
 
         <!-- 設備分頁 -->
