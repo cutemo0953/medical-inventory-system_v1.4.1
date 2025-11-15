@@ -264,13 +264,13 @@
         <div x-show="currentTab === 'items'" class="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-teal-custom-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
                     </svg>
                     庫存查詢
                 </h2>
                 <div class="flex gap-2">
-                    <button @click="showAddItemModal = true" class="bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors flex items-center gap-2">
+                    <button @click="showAddItemModal = true" class="bg-teal-custom-500 text-white px-4 py-2 rounded-lg hover:bg-teal-custom-600 transition-colors flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -294,7 +294,7 @@
                         </svg>
                         搜尋物品
                     </label>
-                    <input type="text" x-model="itemSearchText" @input="filterItems()" placeholder="輸入代碼或名稱搜尋..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500">
+                    <input type="text" x-model="itemSearchText" @input="filterItems()" placeholder="輸入代碼或名稱搜尋..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-custom-500">
                 </div>
                 <div class="flex gap-2">
                     <button @click.prevent.stop="exportInventoryCSV()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
@@ -331,7 +331,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900" x-text="item.code"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="item.name"></td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800" x-text="item.category"></span>
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-teal-variant-100 text-teal-variant-700" x-text="item.category"></span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
                                     <span :class="item.current_stock < item.min_stock ? 'text-red-600 font-bold' : 'text-green-600 font-semibold'" 
@@ -340,7 +340,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="item.min_stock"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="item.unit"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                                    <button @click="editItem(item)" class="text-sky-600 hover:text-sky-800">編輯</button>
+                                    <button @click="editItem(item)" class="text-teal-custom-500 hover:text-teal-custom-600">編輯</button>
                                     <button @click="deleteItem(item.code, item.name)" class="text-red-600 hover:text-red-800">刪除</button>
                                 </td>
                             </tr>
@@ -354,12 +354,12 @@
         <div x-show="currentTab === 'receive'" class="bg-white rounded-xl shadow-lg p-3 sm:p-4 md:p-6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-teal-custom-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-6 h-6 text-sky-custom-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
                     </svg>
                     進貨登記
                 </h2>
-                <button @click.prevent.stop="showReceiveHistoryModal = true; loadReceiveHistory()" class="bg-teal-custom-500 text-white px-4 py-2 rounded-lg hover:bg-teal-custom-600 transition-colors flex items-center gap-2">
+                <button @click.prevent.stop="showReceiveHistoryModal = true; loadReceiveHistory()" class="bg-sky-custom-600 text-white px-4 py-2 rounded-lg hover:bg-sky-custom-500 transition-colors flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
@@ -378,11 +378,11 @@
                             @focus="showReceiveDropdown = true; if (filteredReceiveItems.length === 0) filterReceiveItems();"
                             @blur="setTimeout(() => showReceiveDropdown = false, 200)"
                             placeholder="輸入代碼或名稱搜尋..."
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-custom-500 focus:border-transparent"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-custom-600 focus:border-transparent"
                         >
                         <div x-show="showReceiveDropdown && filteredReceiveItems.length > 0" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                             <template x-for="item in filteredReceiveItems.slice(0, 10)" :key="item.code">
-                                <div @click.stop="selectReceiveItem(item)" class="px-4 py-2 hover:bg-teal-custom-50 cursor-pointer">
+                                <div @click.stop="selectReceiveItem(item)" class="px-4 py-2 hover:bg-sky-100 cursor-pointer">
                                     <span class="font-mono text-sm" x-text="item.code"></span> -
                                     <span x-text="item.name"></span>
                                     <span class="text-xs text-gray-500" x-text="`(庫存: ${item.current_stock})`"></span>
@@ -393,27 +393,27 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">數量 *</label>
-                        <input type="number" x-model="receiveForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-custom-500 focus:border-transparent">
+                        <input type="number" x-model="receiveForm.quantity" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-custom-600 focus:border-transparent">
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">批號</label>
-                        <input type="text" x-model="receiveForm.batchNumber" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-custom-500 focus:border-transparent">
+                        <input type="text" x-model="receiveForm.batchNumber" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-custom-600 focus:border-transparent">
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">效期</label>
-                        <input type="date" x-model="receiveForm.expiryDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-custom-500 focus:border-transparent">
+                        <input type="date" x-model="receiveForm.expiryDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-custom-600 focus:border-transparent">
                     </div>
 
                     <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-2">備註</label>
-                        <textarea x-model="receiveForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-custom-500 focus:border-transparent"></textarea>
+                        <textarea x-model="receiveForm.remarks" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-custom-600 focus:border-transparent"></textarea>
                     </div>
                 </div>
 
                 <div class="flex gap-4">
-                    <button type="submit" class="bg-teal-custom-500 text-white px-6 py-2 rounded-lg hover:bg-teal-custom-600 transition-colors flex items-center gap-2">
+                    <button type="submit" class="bg-sky-custom-600 text-white px-6 py-2 rounded-lg hover:bg-sky-custom-500 transition-colors flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
